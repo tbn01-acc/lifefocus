@@ -8,6 +8,7 @@ import { DayCard } from '@/components/dashboard/DayCard';
 import { TodoSection } from '@/components/dashboard/TodoSection';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
+import { ShareButtons } from '@/components/ShareButtons';
 import { Sparkles } from 'lucide-react';
 
 export default function Dashboard() {
@@ -37,13 +38,27 @@ export default function Dashboard() {
   const todayExercises = getTodayExercises();
   const completedExercises = todayExercises.filter(e => e.completed);
 
-  // Colors for modules
+  // Colors for modules (using CSS variables)
   const colors = {
-    habits: 'hsl(145, 70%, 45%)',
-    tasks: 'hsl(200, 80%, 50%)',
-    finance: 'hsl(160, 30%, 45%)',
-    fitness: 'hsl(262, 80%, 55%)',
+    habits: 'hsl(var(--habit))',
+    tasks: 'hsl(var(--task))',
+    finance: 'hsl(var(--finance))',
+    fitness: 'hsl(var(--fitness))',
   };
+
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 6) return t('goodNight');
+    if (hour < 12) return t('goodMorning');
+    if (hour < 18) return t('goodAfternoon');
+    return t('goodEvening');
+  };
+
+  const dateString = new Date().toLocaleDateString('ru-RU', { 
+    weekday: 'long', 
+    day: 'numeric', 
+    month: 'long' 
+  });
 
   const isLoading = false;
 
@@ -61,21 +76,26 @@ export default function Dashboard() {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{t('yourDay')}</h1>
-            <p className="text-sm text-muted-foreground">
-              {new Date().toLocaleDateString('ru-RU', { 
-                weekday: 'long', 
-                day: 'numeric', 
-                month: 'long' 
-              })}
-            </p>
+        <div className="mb-6">
+          {/* Greeting and Controls Row */}
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <p className="text-lg font-medium text-foreground">{getGreeting()}</p>
+              <p className="text-sm text-muted-foreground capitalize">{dateString}</p>
+            </div>
+            <div className="flex items-center gap-1">
+              <LanguageSelector />
+              <ThemeToggle />
+            </div>
           </div>
-          <div className="flex items-center gap-1">
-            <LanguageSelector />
-            <ThemeToggle />
+
+          {/* Share Buttons */}
+          <div className="mb-4">
+            <ShareButtons />
           </div>
+
+          {/* Title */}
+          <h1 className="text-2xl font-bold text-foreground">{t('yourDay')}</h1>
         </div>
 
         {/* Day Cards */}

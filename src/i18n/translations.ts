@@ -142,6 +142,9 @@ export const translations = {
     reps: 'Повторения',
     duration: 'Длительность',
     scheduledDays: 'Дни тренировок',
+    workoutsCount: 'тренировок',
+    deleteWorkout: 'Удалить тренировку?',
+    deleteWorkoutDescription: 'Тренировка будет удалена. Это действие нельзя отменить.',
   },
   en: {
     // Greetings
@@ -267,6 +270,12 @@ export const translations = {
     expense: 'Expense',
     amount: 'Amount',
     category: 'Category',
+    yesterday: 'Yesterday',
+    noTransactionsForDay: 'No transactions',
+    balanceDynamics: 'Balance Dynamics',
+    expenseByCategory: 'Expenses by Category',
+    noExpensesForPeriod: 'No expenses for period',
+    transactions: 'Transactions',
 
     // Fitness
     fitnessTracker: 'Fitness Tracker',
@@ -278,6 +287,9 @@ export const translations = {
     reps: 'Reps',
     duration: 'Duration',
     scheduledDays: 'Scheduled days',
+    workoutsCount: 'workouts',
+    deleteWorkout: 'Delete workout?',
+    deleteWorkoutDescription: 'The workout will be deleted. This action cannot be undone.',
   },
   es: {
     // Greetings
@@ -403,6 +415,12 @@ export const translations = {
     expense: 'Gasto',
     amount: 'Monto',
     category: 'Categoría',
+    yesterday: 'Ayer',
+    noTransactionsForDay: 'Sin transacciones',
+    balanceDynamics: 'Dinámica del Balance',
+    expenseByCategory: 'Gastos por Categoría',
+    noExpensesForPeriod: 'Sin gastos en el período',
+    transactions: 'Transacciones',
 
     // Fitness
     fitnessTracker: 'Rastreador de Fitness',
@@ -414,6 +432,9 @@ export const translations = {
     reps: 'Repeticiones',
     duration: 'Duración',
     scheduledDays: 'Días programados',
+    workoutsCount: 'entrenamientos',
+    deleteWorkout: '¿Eliminar entrenamiento?',
+    deleteWorkoutDescription: 'El entrenamiento será eliminado. Esta acción no se puede deshacer.',
   },
 } as const;
 

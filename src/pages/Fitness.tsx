@@ -5,8 +5,7 @@ import { useFitness } from '@/hooks/useFitness';
 import { Workout } from '@/types/fitness';
 import { WorkoutCard } from '@/components/WorkoutCard';
 import { WorkoutDialog } from '@/components/WorkoutDialog';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { PageHeader } from '@/components/PageHeader';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/contexts/LanguageContext';
 import {
@@ -76,21 +75,12 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-fitness/20 flex items-center justify-center">
-              <Dumbbell className="w-5 h-5 text-fitness" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">{t('fitnessTracker')}</h1>
-              <p className="text-sm text-muted-foreground">{workouts.length} тренировок</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <LanguageSelector />
-            <ThemeToggle />
-          </div>
-        </div>
+        <PageHeader
+          icon={<Dumbbell className="w-5 h-5 text-fitness" />}
+          iconBgClass="bg-fitness/20"
+          title={t('fitnessTracker')}
+          subtitle={`${workouts.length} ${t('workoutsCount')}`}
+        />
 
         {/* Today's workouts info */}
         {todayWorkouts.length > 0 && (
@@ -181,9 +171,9 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
       <AlertDialog open={!!deleteConfirmWorkout} onOpenChange={() => setDeleteConfirmWorkout(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('delete')} тренировку?</AlertDialogTitle>
+            <AlertDialogTitle>{t('deleteWorkout')}</AlertDialogTitle>
             <AlertDialogDescription>
-              Тренировка будет удалена. Это действие нельзя отменить.
+              {t('deleteWorkoutDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

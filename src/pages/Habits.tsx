@@ -5,8 +5,7 @@ import { useHabits } from '@/hooks/useHabits';
 import { Habit } from '@/types/habit';
 import { HabitCard } from '@/components/HabitCard';
 import { HabitDialog } from '@/components/HabitDialog';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { PageHeader } from '@/components/PageHeader';
 import { ViewTabs, ViewType } from '@/components/ViewTabs';
 import { CalendarView } from '@/components/CalendarView';
 import { ProgressView } from '@/components/ProgressView';
@@ -77,21 +76,12 @@ export default function Habits({ openDialog, onDialogClose }: HabitsProps) {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-habit/20 flex items-center justify-center">
-              <Target className="w-5 h-5 text-habit" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">{t('myHabits')}</h1>
-              <p className="text-sm text-muted-foreground">{habits.length} {t('habits').toLowerCase()}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <LanguageSelector />
-            <ThemeToggle />
-          </div>
-        </div>
+        <PageHeader
+          icon={<Target className="w-5 h-5 text-habit" />}
+          iconBgClass="bg-habit/20"
+          title={t('myHabits')}
+          subtitle={`${habits.length} ${t('habits').toLowerCase()}`}
+        />
 
         {/* View Tabs */}
         <div className="mt-6">

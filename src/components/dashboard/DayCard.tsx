@@ -23,13 +23,14 @@ export function DayCard({ title, completed, total, color, icon, isBalance, balan
       animate={{ opacity: 1, y: 0 }}
       className={cn(
         "rounded-2xl p-4 shadow-card transition-all hover:shadow-lg",
-        "bg-card border border-border"
+        "border border-border/50"
       )}
+      style={{ backgroundColor: `${color}20` }}
     >
       <div className="flex items-center justify-between mb-3">
         <div 
           className="w-10 h-10 rounded-xl flex items-center justify-center"
-          style={{ backgroundColor: `${color}20` }}
+          style={{ backgroundColor: `${color}30` }}
         >
           <div style={{ color }}>{icon}</div>
         </div>
@@ -42,8 +43,9 @@ export function DayCard({ title, completed, total, color, icon, isBalance, balan
               cy="24"
               r={radius}
               fill="none"
-              stroke="hsl(var(--muted))"
+              stroke="hsl(var(--background))"
               strokeWidth="4"
+              opacity="0.5"
             />
             <circle
               cx="24"
@@ -67,17 +69,17 @@ export function DayCard({ title, completed, total, color, icon, isBalance, balan
         </div>
       </div>
 
-      <h3 className="text-sm text-muted-foreground mb-1">{title}</h3>
+      <h3 className="text-sm font-medium mb-1" style={{ color }}>{title}</h3>
       
       {isBalance ? (
         <p 
           className="text-xl font-bold"
-          style={{ color: balanceValue && balanceValue >= 0 ? 'hsl(145, 70%, 45%)' : 'hsl(0, 70%, 55%)' }}
+          style={{ color: balanceValue && balanceValue >= 0 ? 'hsl(145, 70%, 35%)' : 'hsl(0, 70%, 45%)' }}
         >
           {balanceValue && balanceValue >= 0 ? '+' : ''}{balanceValue?.toLocaleString() || 0} ₽
         </p>
       ) : (
-        <p className="text-xl font-bold text-foreground">
+        <p className="text-xl font-bold" style={{ color }}>
           {completed}/{total}
         </p>
       )}

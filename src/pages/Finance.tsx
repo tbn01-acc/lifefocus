@@ -5,8 +5,10 @@ import { useFinance } from '@/hooks/useFinance';
 import { FinanceTransaction } from '@/types/finance';
 import { TransactionCard } from '@/components/TransactionCard';
 import { TransactionDialog } from '@/components/TransactionDialog';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import { LanguageSelector } from '@/components/LanguageSelector';
+import { PageHeader } from '@/components/PageHeader';
+import { FinanceViewTabs, FinanceViewType } from '@/components/finance/FinanceViewTabs';
+import { FinanceCalendarView } from '@/components/finance/FinanceCalendarView';
+import { FinanceProgressView } from '@/components/finance/FinanceProgressView';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/contexts/LanguageContext';
 import {
@@ -30,6 +32,7 @@ export default function Finance({ openDialog, onDialogClose }: FinanceProps) {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<FinanceTransaction | null>(null);
   const [deleteConfirmTransaction, setDeleteConfirmTransaction] = useState<FinanceTransaction | null>(null);
+  const [activeView, setActiveView] = useState<FinanceViewType>('transactions');
   const { t } = useTranslation();
 
   const handleSaveTransaction = (transactionData: Omit<FinanceTransaction, 'id' | 'createdAt' | 'completed'>) => {
@@ -83,21 +86,12 @@ export default function Finance({ openDialog, onDialogClose }: FinanceProps) {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-finance/20 flex items-center justify-center">
-              <Wallet className="w-5 h-5 text-finance" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">{t('financeTracker')}</h1>
-              <p className="text-sm text-muted-foreground">{transactions.length} операций</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1">
-            <LanguageSelector />
-            <ThemeToggle />
-          </div>
-        </div>
+        <PageHeader
+          icon={<Wallet className="w-5 h-5 text-finance" />}
+          iconBgClass="bg-finance/20"
+          title={t('financeTracker')}
+          subtitle={`${transactions.length} ${t('transactions').toLowerCase()}`}
+        />
 
         {/* Balance Card */}
         <div className="bg-card rounded-2xl p-4 shadow-card border border-border mb-6">
@@ -111,52 +105,90 @@ export default function Finance({ openDialog, onDialogClose }: FinanceProps) {
           </div>
         </div>
 
-        {/* Content */}
+        {/* View Tabs */}
         <div className="mt-6">
-          <AnimatePresence mode="popLayout">
-            {sortedTransactions.length === 0 ? (
+          <FinanceViewTabs value={activeView} onValueChange={setActiveView} />
+        </div>
+
+        {/* Content based on active view */}
+        <div className="mt-6">
+          <AnimatePresence mode="wait">
+            {activeView === 'transactions' && (
               <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="text-center py-12"
+                key="transactions"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
               >
-                <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-finance/20 to-finance/10 flex items-center justify-center">
-                  <Wallet className="w-10 h-10 text-finance" />
-                </div>
-                <h3 className="text-lg font-medium text-foreground mb-2">
-                  {t('startFinance')}
-                </h3>
-                <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">
-                  {t('createFirstTransaction')}
-                </p>
-                <Button 
-                  onClick={() => setDialogOpen(true)}
-                  className="bg-finance text-white hover:bg-finance/90"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  {t('createTransaction')}
-                </Button>
+                <AnimatePresence mode="popLayout">
+                  {sortedTransactions.length === 0 ? (
+                    <motion.div
+                      initial={{ opacity: 0, y: 20 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="text-center py-12"
+                    >
+                      <div className="w-20 h-20 mx-auto mb-4 rounded-2xl bg-gradient-to-br from-finance/20 to-finance/10 flex items-center justify-center">
+                        <Wallet className="w-10 h-10 text-finance" />
+                      </div>
+                      <h3 className="text-lg font-medium text-foreground mb-2">
+                        {t('startFinance')}
+                      </h3>
+                      <p className="text-muted-foreground text-sm mb-6 max-w-xs mx-auto">
+                        {t('createFirstTransaction')}
+                      </p>
+                      <Button 
+                        onClick={() => setDialogOpen(true)}
+                        className="bg-finance text-white hover:bg-finance/90"
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        {t('createTransaction')}
+                      </Button>
+                    </motion.div>
+                  ) : (
+                    <div className="space-y-3">
+                      {sortedTransactions.map((transaction, index) => (
+                        <TransactionCard
+                          key={transaction.id}
+                          transaction={transaction}
+                          index={index}
+                          onToggle={() => toggleTransactionCompletion(transaction.id)}
+                          onEdit={() => handleEditTransaction(transaction)}
+                          onDelete={() => handleDeleteTransaction(transaction)}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </AnimatePresence>
               </motion.div>
-            ) : (
-              <div className="space-y-3">
-                {sortedTransactions.map((transaction, index) => (
-                  <TransactionCard
-                    key={transaction.id}
-                    transaction={transaction}
-                    index={index}
-                    onToggle={() => toggleTransactionCompletion(transaction.id)}
-                    onEdit={() => handleEditTransaction(transaction)}
-                    onDelete={() => handleDeleteTransaction(transaction)}
-                  />
-                ))}
-              </div>
+            )}
+
+            {activeView === 'calendar' && (
+              <motion.div
+                key="calendar"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <FinanceCalendarView transactions={transactions} initialPeriod="7" />
+              </motion.div>
+            )}
+
+            {activeView === 'progress' && (
+              <motion.div
+                key="progress"
+                initial={{ opacity: 0, x: -10 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 10 }}
+              >
+                <FinanceProgressView transactions={transactions} initialPeriod="7" />
+              </motion.div>
             )}
           </AnimatePresence>
         </div>
       </div>
 
       {/* FAB */}
-      {sortedTransactions.length > 0 && (
+      {sortedTransactions.length > 0 && activeView === 'transactions' && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -191,9 +223,9 @@ export default function Finance({ openDialog, onDialogClose }: FinanceProps) {
       <AlertDialog open={!!deleteConfirmTransaction} onOpenChange={() => setDeleteConfirmTransaction(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{t('delete')} операцию?</AlertDialogTitle>
+            <AlertDialogTitle>{t('delete')} {t('transaction').toLowerCase()}?</AlertDialogTitle>
             <AlertDialogDescription>
-              Операция будет удалена. Это действие нельзя отменить.
+              {t('deleteTaskDescription')}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
