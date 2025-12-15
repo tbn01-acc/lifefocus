@@ -69,8 +69,9 @@ export function BottomNavigation({
       {/* Quick Add Menu - Centered on screen */}
       <AnimatePresence>
         {isMenuOpen && (
-          <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
-            <div className="relative pointer-events-auto">
+          <div className="fixed inset-0 z-50 pointer-events-none">
+            {/* Center container */}
+            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
               {quickAddItems.map((item, index) => {
                 // Arrange in a semi-circle above center
                 const totalItems = quickAddItems.length;
@@ -85,13 +86,17 @@ export function BottomNavigation({
                 return (
                   <motion.button
                     key={item.label}
-                    initial={{ scale: 0, x: 0, y: 0, opacity: 0 }}
-                    animate={{ scale: 1, x, y, opacity: 1 }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={{ 
+                      scale: 1, 
+                      x, 
+                      y, 
+                      opacity: 1 
+                    }}
                     exit={{ scale: 0, x: 0, y: 0, opacity: 0 }}
                     transition={{ delay: index * 0.05, type: 'spring', stiffness: 300 }}
                     onClick={() => handleQuickAdd(item)}
-                    className="absolute flex flex-col items-center justify-center gap-1"
-                    style={{ transform: `translate(${x}px, ${y}px)` }}
+                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex flex-col items-center justify-center gap-1"
                   >
                     <div 
                       className="w-14 h-14 rounded-full flex items-center justify-center shadow-lg"
@@ -112,7 +117,7 @@ export function BottomNavigation({
                 animate={{ scale: 1 }}
                 exit={{ scale: 0 }}
                 onClick={() => setIsMenuOpen(false)}
-                className="w-14 h-14 rounded-full bg-muted flex items-center justify-center shadow-lg"
+                className="w-14 h-14 rounded-full bg-muted flex items-center justify-center shadow-lg -translate-x-1/2 -translate-y-1/2"
               >
                 <X className="w-6 h-6 text-foreground" />
               </motion.button>
