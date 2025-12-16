@@ -7,13 +7,14 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { ProgressBar } from '@/components/dashboard/ProgressBar';
 import { TodoSection } from '@/components/dashboard/TodoSection';
 import { PageHeader } from '@/components/PageHeader';
+import { DayQualityRing } from '@/components/dashboard/DayQualityRing';
 
 export default function Dashboard() {
   const { habits, toggleHabitCompletion } = useHabits();
   const { tasks, toggleTaskCompletion, getTodayTasks } = useTasks();
   const { transactions, toggleTransactionCompletion, getTodayTransactions } = useFinance();
   const { getTodayExercises, toggleExerciseCompletion } = useFitness();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
 
   const today = getTodayString();
   const dayOfWeek = new Date().getDay();
@@ -33,6 +34,17 @@ export default function Dashboard() {
   // Exercises for today
   const todayExercises = getTodayExercises();
   const completedExercises = todayExercises.filter(e => e.completed);
+
+  // Calculate Day Quality (0-100)
+  const totalItems = todayHabits.length + todayTasks.length + todayTransactions.length + todayExercises.length;
+  const completedItems = completedHabits.length + completedTasks.length + completedTransactions.length + completedExercises.length;
+  const dayQuality = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+  // Format date
+  const formattedDate = new Date().toLocaleDateString(
+    language === 'ru' ? 'ru-RU' : language === 'es' ? 'es-ES' : 'en-US',
+    { day: 'numeric', month: 'long', weekday: 'long' }
+  );
 
   // Colors for modules
   const colors = {
@@ -60,8 +72,14 @@ export default function Dashboard() {
         {/* Header */}
         <PageHeader />
 
-        {/* Section: Сегодня */}
-        <h1 className="text-2xl font-bold text-foreground mb-4">{t('today')}</h1>
+        {/* Section: Сегодня with Day Quality Ring */}
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{t('today')}</h1>
+            <p className="text-sm text-muted-foreground capitalize">{formattedDate}</p>
+          </div>
+          <DayQualityRing value={dayQuality} />
+        </div>
 
         {/* Section: Выполнено */}
         <div className="mb-6">

@@ -70,18 +70,18 @@ export function BottomNavigation({
         )}
       </AnimatePresence>
 
-      {/* Quick Add Menu - Centered on screen */}
+      {/* Quick Add Menu - Above bottom navigation, arc centered on + button */}
       <AnimatePresence>
         {isMenuOpen && (
-          <div className="fixed inset-0 z-50 pointer-events-none">
-            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-auto">
+          <div className="fixed bottom-20 left-1/2 -translate-x-1/2 z-50">
+            <div className="relative">
               {quickAddItems.map((item, index) => {
                 const totalItems = quickAddItems.length;
                 const angleSpread = 140;
                 const startAngle = -180 + (180 - angleSpread) / 2;
                 const angleStep = angleSpread / (totalItems - 1);
                 const angle = startAngle + (index * angleStep);
-                const radius = 100;
+                const radius = 90;
                 const x = Math.cos((angle * Math.PI) / 180) * radius;
                 const y = Math.sin((angle * Math.PI) / 180) * radius;
 
@@ -107,17 +107,6 @@ export function BottomNavigation({
                   </motion.button>
                 );
               })}
-              
-              {/* Close button in center */}
-              <motion.button
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                exit={{ scale: 0 }}
-                onClick={() => setIsMenuOpen(false)}
-                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-14 h-14 rounded-full bg-muted flex items-center justify-center shadow-lg"
-              >
-                <X className="w-6 h-6 text-foreground" />
-              </motion.button>
             </div>
           </div>
         )}
