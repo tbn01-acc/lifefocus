@@ -1,10 +1,12 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Sparkles, CheckSquare } from 'lucide-react';
+import { Plus, Sparkles, CheckSquare, Settings } from 'lucide-react';
 import { useTasks } from '@/hooks/useTasks';
+import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { Task, TaskStatus } from '@/types/task';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskDialog } from '@/components/TaskDialog';
+import { TaskSettingsDialog } from '@/components/TaskSettingsDialog';
 import { TaskViewTabs } from '@/components/TaskViewTabs';
 import { TaskProgressView } from '@/components/TaskProgressView';
 import { TaskCalendarView } from '@/components/TaskCalendarView';
@@ -33,9 +35,11 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
   const { 
     tasks, categories, tags, isLoading, 
     addTask, updateTask, deleteTask, toggleTaskCompletion,
-    addCategory, addTag
+    addCategory, updateCategory, deleteCategory,
+    addTag, updateTag, deleteTag
   } = useTasks();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<Task | null>(null);
   const [activeView, setActiveView] = useState<'list' | 'calendar' | 'progress'>('list');
@@ -44,6 +48,9 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [selectedStatuses, setSelectedStatuses] = useState<TaskStatus[]>([]);
   const { t } = useTranslation();
+
+  // Show notifications for overdue and high-priority tasks
+  useTaskNotifications(tasks);
 
   const handleSaveTask = (taskData: Omit<Task, 'id' | 'createdAt' | 'completed'>) => {
     if (editingTask) {
@@ -110,13 +117,23 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
     <div className="min-h-screen bg-background pb-24">
       <div className="max-w-lg mx-auto px-4 py-6">
         {/* Header */}
-        <PageHeader
-          showTitle
-          icon={<CheckSquare className="w-5 h-5 text-task" />}
-          iconBgClass="bg-task/20"
-          title={t('taskTracker')}
-          subtitle={`${tasks.length} ${t('tasks').toLowerCase()}`}
-        />
+        <div className="flex items-center justify-between">
+          <PageHeader
+            showTitle
+            icon={<CheckSquare className="w-5 h-5 text-task" />}
+            iconBgClass="bg-task/20"
+            title={t('taskTracker')}
+            subtitle={`${tasks.length} ${t('tasks').toLowerCase()}`}
+          />
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setSettingsOpen(true)}
+            className="rounded-xl hover:bg-task/10"
+          >
+            <Settings className="w-5 h-5 text-task" />
+          </Button>
+        </div>
 
         {/* View Tabs */}
         <div className="mt-4">
@@ -247,6 +264,19 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
         tags={tags}
         onAddCategory={addCategory}
         onAddTag={addTag}
+      />
+
+      <TaskSettingsDialog
+        open={settingsOpen}
+        onClose={() => setSettingsOpen(false)}
+        categories={categories}
+        tags={tags}
+        onAddCategory={addCategory}
+        onUpdateCategory={updateCategory}
+        onDeleteCategory={deleteCategory}
+        onAddTag={addTag}
+        onUpdateTag={updateTag}
+        onDeleteTag={deleteTag}
       />
 
       <AlertDialog open={!!deleteConfirmTask} onOpenChange={() => setDeleteConfirmTask(null)}>

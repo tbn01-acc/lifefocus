@@ -108,7 +108,7 @@ export function WorkoutDialog({ open, onClose, onSave, workout }: WorkoutDialogP
             initial={{ opacity: 0, scale: 0.95, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 20 }}
-            className="fixed inset-x-4 top-1/2 -translate-y-1/2 max-w-md mx-auto bg-card rounded-3xl p-6 shadow-lg z-50 max-h-[85vh] overflow-y-auto"
+            className="fixed inset-x-4 top-[5%] bottom-24 max-w-md mx-auto bg-card rounded-3xl p-6 shadow-lg z-50 overflow-y-auto"
           >
             {/* Header */}
             <div className="flex items-center justify-between mb-6">

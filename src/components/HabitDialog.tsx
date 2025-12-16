@@ -77,7 +77,7 @@ export function HabitDialog({ open, onClose, onSave, habit }: HabitDialogProps) 
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: '100%' }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 max-h-[90vh] overflow-auto rounded-t-3xl bg-card shadow-lg"
+            className="fixed inset-x-0 bottom-20 z-50 max-h-[80vh] overflow-auto rounded-t-3xl bg-card shadow-lg"
           >
             <div className="sticky top-0 bg-card z-10 px-6 pt-4 pb-2 flex items-center justify-between border-b border-border">
               <h2 className="text-lg font-semibold text-foreground">
