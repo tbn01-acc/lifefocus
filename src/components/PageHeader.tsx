@@ -2,6 +2,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ShareButtons } from '@/components/ShareButtons';
+import { useAuth } from '@/hooks/useAuth';
 
 interface PageHeaderProps {
   showTitle?: boolean;
@@ -13,6 +14,7 @@ interface PageHeaderProps {
 
 export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtitle }: PageHeaderProps) {
   const { t } = useTranslation();
+  const { profile, user } = useAuth();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -22,8 +24,7 @@ export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtit
     return t('goodEvening');
   };
 
-  // TODO: Replace with actual user name from auth
-  const userName = t('guest');
+  const userName = profile?.display_name || user?.email?.split('@')[0] || t('guest');
 
   return (
     <div className="mb-6">

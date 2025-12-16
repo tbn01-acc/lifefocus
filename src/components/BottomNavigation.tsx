@@ -73,15 +73,15 @@ export function BottomNavigation({
       {/* Quick Add Menu - Above bottom navigation, arc centered on + button */}
       <AnimatePresence>
         {isMenuOpen && (
-          <div className="fixed bottom-36 inset-x-0 z-50 flex justify-center">
+          <div className="fixed bottom-28 inset-x-0 z-50 flex justify-center">
             <div className="relative w-0 h-0">
               {quickAddItems.map((item, index) => {
                 const totalItems = quickAddItems.length;
-                const angleSpread = 140;
+                const angleSpread = 120;
                 const startAngle = -180 + (180 - angleSpread) / 2;
                 const angleStep = angleSpread / (totalItems - 1);
                 const angle = startAngle + (index * angleStep);
-                const radius = 90;
+                const radius = 100;
                 const x = Math.cos((angle * Math.PI) / 180) * radius;
                 const y = Math.sin((angle * Math.PI) / 180) * radius;
 

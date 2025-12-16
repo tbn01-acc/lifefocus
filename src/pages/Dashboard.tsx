@@ -1,4 +1,6 @@
-import { Target, CheckSquare, Wallet, Dumbbell, Sparkles } from 'lucide-react';
+import { useState } from 'react';
+import { Target, CheckSquare, Wallet, Dumbbell, Sparkles, ChevronDown, ChevronUp } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { useHabits, getTodayString } from '@/hooks/useHabits';
 import { useTasks } from '@/hooks/useTasks';
 import { useFinance } from '@/hooks/useFinance';
@@ -10,6 +12,7 @@ import { PageHeader } from '@/components/PageHeader';
 import { DayQualityRing } from '@/components/dashboard/DayQualityRing';
 
 export default function Dashboard() {
+  const [isCompletedExpanded, setIsCompletedExpanded] = useState(true);
   const { habits, toggleHabitCompletion } = useHabits();
   const { tasks, toggleTaskCompletion, getTodayTasks } = useTasks();
   const { transactions, toggleTransactionCompletion, getTodayTransactions } = useFinance();
@@ -81,39 +84,61 @@ export default function Dashboard() {
           <DayQualityRing value={dayQuality} />
         </div>
 
-        {/* Section: Выполнено */}
+        {/* Section: Выполнено (Collapsible) */}
         <div className="mb-6">
-          <h2 className="text-sm font-medium text-muted-foreground mb-3">{t('completed')}:</h2>
-          <div className="bg-card rounded-2xl p-4 shadow-card border border-border">
-            <ProgressBar
-              icon={<Target className="w-4 h-4" />}
-              completed={completedHabits.length}
-              total={todayHabits.length}
-              label={t('habitsLabel')}
-              color={colors.habits}
-            />
-            <ProgressBar
-              icon={<CheckSquare className="w-4 h-4" />}
-              completed={completedTasks.length}
-              total={todayTasks.length}
-              label={t('tasksLabel')}
-              color={colors.tasks}
-            />
-            <ProgressBar
-              icon={<Wallet className="w-4 h-4" />}
-              completed={completedTransactions.length}
-              total={todayTransactions.length}
-              label={t('operationsLabel')}
-              color={colors.finance}
-            />
-            <ProgressBar
-              icon={<Dumbbell className="w-4 h-4" />}
-              completed={completedExercises.length}
-              total={todayExercises.length}
-              label={t('exercisesLabel')}
-              color={colors.fitness}
-            />
-          </div>
+          <button 
+            onClick={() => setIsCompletedExpanded(!isCompletedExpanded)}
+            className="flex items-center gap-2 text-sm font-medium text-muted-foreground mb-3 hover:text-foreground transition-colors"
+          >
+            {t('completed')}:
+            {isCompletedExpanded ? (
+              <ChevronUp className="w-4 h-4" />
+            ) : (
+              <ChevronDown className="w-4 h-4" />
+            )}
+          </button>
+          <AnimatePresence initial={false}>
+            {isCompletedExpanded && (
+              <motion.div
+                initial={{ height: 0, opacity: 0 }}
+                animate={{ height: 'auto', opacity: 1 }}
+                exit={{ height: 0, opacity: 0 }}
+                transition={{ duration: 0.2, ease: 'easeInOut' }}
+                className="overflow-hidden"
+              >
+                <div className="bg-card rounded-2xl p-4 shadow-card border border-border">
+                  <ProgressBar
+                    icon={<Target className="w-4 h-4" />}
+                    completed={completedHabits.length}
+                    total={todayHabits.length}
+                    label={t('habitsLabel')}
+                    color={colors.habits}
+                  />
+                  <ProgressBar
+                    icon={<CheckSquare className="w-4 h-4" />}
+                    completed={completedTasks.length}
+                    total={todayTasks.length}
+                    label={t('tasksLabel')}
+                    color={colors.tasks}
+                  />
+                  <ProgressBar
+                    icon={<Wallet className="w-4 h-4" />}
+                    completed={completedTransactions.length}
+                    total={todayTransactions.length}
+                    label={t('operationsLabel')}
+                    color={colors.finance}
+                  />
+                  <ProgressBar
+                    icon={<Dumbbell className="w-4 h-4" />}
+                    completed={completedExercises.length}
+                    total={todayExercises.length}
+                    label={t('exercisesLabel')}
+                    color={colors.fitness}
+                  />
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
 
         {/* Section: Сделать */}

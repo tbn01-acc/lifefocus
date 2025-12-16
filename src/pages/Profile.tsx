@@ -1,9 +1,31 @@
-import { User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { User, LogOut, LogIn } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { Button } from '@/components/ui/button';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 export default function Profile() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
+  const { user, profile, signOut, loading } = useAuth();
+
+  const handleSignOut = async () => {
+    await signOut();
+  };
+
+  const handleSignIn = () => {
+    navigate('/auth');
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-background pb-24 flex items-center justify-center">
+        <div className="animate-pulse text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background pb-24">
@@ -17,13 +39,38 @@ export default function Profile() {
         />
 
         <div className="flex flex-col items-center justify-center py-16">
-          <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">
-            <User className="w-12 h-12 text-muted-foreground" />
-          </div>
-          <h2 className="text-xl font-semibold text-foreground mb-2">{t('guest')}</h2>
-          <p className="text-sm text-muted-foreground text-center max-w-xs">
-            {t('profileDescription')}
-          </p>
+          {user ? (
+            <>
+              <Avatar className="w-24 h-24 mb-4">
+                <AvatarImage src={profile?.avatar_url || undefined} />
+                <AvatarFallback className="bg-primary text-primary-foreground text-2xl">
+                  {(profile?.display_name || user.email)?.[0]?.toUpperCase() || 'U'}
+                </AvatarFallback>
+              </Avatar>
+              <h2 className="text-xl font-semibold text-foreground mb-2">
+                {profile?.display_name || user.email?.split('@')[0]}
+              </h2>
+              <p className="text-sm text-muted-foreground mb-6">{user.email}</p>
+              <Button variant="outline" onClick={handleSignOut} className="gap-2">
+                <LogOut className="w-4 h-4" />
+                {t('signOut')}
+              </Button>
+            </>
+          ) : (
+            <>
+              <div className="w-24 h-24 rounded-full bg-muted flex items-center justify-center mb-4">
+                <User className="w-12 h-12 text-muted-foreground" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground mb-2">{t('guest')}</h2>
+              <p className="text-sm text-muted-foreground text-center max-w-xs mb-6">
+                {t('profileDescription')}
+              </p>
+              <Button onClick={handleSignIn} className="gap-2">
+                <LogIn className="w-4 h-4" />
+                {t('signIn')}
+              </Button>
+            </>
+          )}
         </div>
       </div>
     </div>
