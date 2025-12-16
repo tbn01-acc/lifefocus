@@ -25,20 +25,6 @@ interface TodoSectionProps {
   hasPrev?: boolean;
 }
 
-function getProgressColor(percentage: number): string {
-  if (percentage <= 20) return 'hsl(0, 70%, 50%)'; // red
-  if (percentage <= 40) return 'hsl(30, 90%, 50%)'; // orange
-  if (percentage <= 60) return 'hsl(50, 90%, 50%)'; // yellow
-  if (percentage <= 80) return 'hsl(145, 70%, 45%)'; // green
-  if (percentage <= 90) return 'hsl(200, 80%, 50%)'; // cyan
-  if (percentage < 100) return 'hsl(220, 80%, 55%)'; // blue
-  return 'hsl(262, 80%, 55%)'; // purple (100%)
-}
-
-function getContrastColor(percentage: number): string {
-  if (percentage <= 60) return percentage <= 40 ? 'white' : 'hsl(0, 0%, 15%)';
-  return 'white';
-}
 
 export function TodoSection({ 
   title, 
@@ -58,10 +44,6 @@ export function TodoSection({
   const incompleteItems = items.filter(i => !i.completed);
   const completedCount = items.filter(i => i.completed).length;
   const totalCount = items.length;
-  const percentage = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  
-  const progressColor = getProgressColor(percentage);
-  const textColor = getContrastColor(percentage);
 
   const handleRingClick = () => {
     if (onExpand) onExpand();
@@ -80,39 +62,34 @@ export function TodoSection({
     }
   };
 
-  // Collapsed view - just the ring
+  // Collapsed view - square tile with indicator
   if (!isExpanded) {
     return (
       <motion.button
         onClick={handleRingClick}
-        className="flex flex-col items-center gap-2 p-3"
-        initial={{ opacity: 0, scale: 0.8 }}
+        className="w-full aspect-square rounded-2xl p-4 flex flex-col items-center justify-center gap-3 shadow-card"
+        style={{ backgroundColor: color }}
+        initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        exit={{ opacity: 0, scale: 0.8 }}
+        exit={{ opacity: 0, scale: 0.9 }}
         transition={{ duration: 0.2 }}
-        whileHover={{ scale: 1.05 }}
-        whileTap={{ scale: 0.95 }}
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
+        layoutId={`tile-${title}`}
       >
         <motion.div 
-          className="w-16 h-16 rounded-full flex items-center justify-center shadow-lg cursor-pointer"
-          style={{ backgroundColor: progressColor }}
+          className="w-14 h-14 rounded-full flex items-center justify-center bg-white/20"
           layoutId={`ring-${title}`}
         >
-          <span 
-            className="text-lg font-bold"
-            style={{ color: textColor }}
-          >
-            {percentage}
+          <span className="text-lg font-bold text-white">
+            {completedCount}/{totalCount}
           </span>
         </motion.div>
-        <div className="flex items-center gap-1.5">
-          <div 
-            className="w-5 h-5 rounded-md flex items-center justify-center"
-            style={{ backgroundColor: color }}
-          >
-            <div className="text-white scale-75">{icon}</div>
+        <div className="flex items-center gap-2">
+          <div className="w-6 h-6 rounded-lg flex items-center justify-center bg-white/20">
+            <div className="text-white">{icon}</div>
           </div>
-          <span className="text-xs font-medium text-muted-foreground">{title}</span>
+          <span className="text-sm font-medium text-white">{title}</span>
         </div>
       </motion.button>
     );
@@ -121,9 +98,9 @@ export function TodoSection({
   // Expanded view - full list with swipe support
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.9, y: 20 }}
-      animate={{ opacity: 1, scale: 1, y: 0 }}
-      exit={{ opacity: 0, scale: 0.9, y: -20 }}
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       drag="x"
       dragConstraints={{ left: 0, right: 0 }}
@@ -131,6 +108,7 @@ export function TodoSection({
       onDragEnd={handleDragEnd}
       className="col-span-2 lg:col-span-4 w-full rounded-2xl p-4 shadow-card touch-pan-y"
       style={{ backgroundColor: color }}
+      layoutId={`tile-${title}`}
     >
       <button 
         onClick={handleHeaderClick}

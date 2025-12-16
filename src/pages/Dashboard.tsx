@@ -154,7 +154,7 @@ export default function Dashboard() {
         {/* Section: Сделать */}
         <h2 className="text-sm font-medium text-muted-foreground mb-3">{t('toDo')}:</h2>
         
-        <div className="flex flex-wrap justify-center gap-3">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
           <AnimatePresence mode="wait">
             {expandedSection === null && (
               <>
