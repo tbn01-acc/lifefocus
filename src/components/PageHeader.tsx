@@ -3,7 +3,8 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ShareButtons } from '@/components/ShareButtons';
 import { useAuth } from '@/hooks/useAuth';
-import { Sun, Moon, Sunrise, Sunset } from 'lucide-react';
+import { useWeather, getWeatherIcon } from '@/hooks/useWeather';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface PageHeaderProps {
   showTitle?: boolean;
@@ -16,6 +17,7 @@ interface PageHeaderProps {
 export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtitle }: PageHeaderProps) {
   const { t } = useTranslation();
   const { profile, user } = useAuth();
+  const { weather, loading } = useWeather();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -23,14 +25,6 @@ export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtit
     if (hour < 12) return t('goodMorning');
     if (hour < 18) return t('goodAfternoon');
     return t('goodEvening');
-  };
-
-  const getTimeIcon = () => {
-    const hour = new Date().getHours();
-    if (hour >= 6 && hour < 10) return <Sunrise className="w-6 h-6 text-amber-500" />;
-    if (hour >= 10 && hour < 17) return <Sun className="w-6 h-6 text-yellow-500" />;
-    if (hour >= 17 && hour < 20) return <Sunset className="w-6 h-6 text-orange-500" />;
-    return <Moon className="w-6 h-6 text-indigo-400" />;
   };
 
   const userName = profile?.display_name || user?.email?.split('@')[0] || t('guest');
@@ -46,10 +40,26 @@ export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtit
         </div>
       </div>
 
-      {/* Greeting with User Name and Time Icon */}
-      <div className="mb-4 flex items-center gap-2">
-        <p className="text-lg font-medium text-foreground">{getGreeting()}, {userName}!</p>
-        {getTimeIcon()}
+      {/* Greeting with User Name and Weather */}
+      <div className="mb-4 flex items-center gap-3">
+        <p className="text-lg font-medium text-foreground">
+          {getGreeting()}, {userName}
+        </p>
+        <AnimatePresence mode="wait">
+          {!loading && weather && (
+            <motion.div
+              key={`${weather.weatherCode}-${weather.isDay}`}
+              initial={{ opacity: 0, scale: 0.8, y: -5 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.8, y: 5 }}
+              transition={{ duration: 0.3, ease: "easeOut" }}
+              className="flex items-center gap-1.5 bg-muted/50 px-2.5 py-1 rounded-full"
+            >
+              <span className="text-xl">{getWeatherIcon(weather.weatherCode, weather.isDay)}</span>
+              <span className="text-sm font-medium text-muted-foreground">{weather.temperature}°</span>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Optional Page Title with Icon */}
