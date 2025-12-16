@@ -10,6 +10,7 @@ import { ProgressBar } from '@/components/dashboard/ProgressBar';
 import { TodoSection } from '@/components/dashboard/TodoSection';
 import { PageHeader } from '@/components/PageHeader';
 import { DayQualityRing } from '@/components/dashboard/DayQualityRing';
+import { useWeather, getWeatherIcon } from '@/hooks/useWeather';
 
 export default function Dashboard() {
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
@@ -18,6 +19,7 @@ export default function Dashboard() {
   const { transactions, toggleTransactionCompletion, getTodayTransactions } = useFinance();
   const { getTodayExercises, toggleExerciseCompletion } = useFitness();
   const { t, language } = useTranslation();
+  const { weather, loading: weatherLoading } = useWeather();
 
   const today = getTodayString();
   const dayOfWeek = new Date().getDay();
@@ -79,7 +81,14 @@ export default function Dashboard() {
         <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{t('today')}</h1>
-            <p className="text-sm text-muted-foreground capitalize">{formattedDate}</p>
+            <div className="flex items-center gap-2">
+              <p className="text-sm text-muted-foreground capitalize">{formattedDate}</p>
+              {!weatherLoading && weather && (
+                <span className="text-sm text-muted-foreground">
+                  {getWeatherIcon(weather.weatherCode, weather.isDay)}{weather.temperature}°
+                </span>
+              )}
+            </div>
           </div>
           <DayQualityRing value={dayQuality} />
         </div>
