@@ -14,6 +14,7 @@ import { useWeather, getWeatherIcon } from '@/hooks/useWeather';
 
 export default function Dashboard() {
   const [isCompletedExpanded, setIsCompletedExpanded] = useState(false);
+  const [expandedSection, setExpandedSection] = useState<string | null>(null);
   const { habits, toggleHabitCompletion } = useHabits();
   const { tasks, toggleTaskCompletion, getTodayTasks } = useTasks();
   const { transactions, toggleTransactionCompletion, getTodayTransactions } = useFinance();
@@ -153,60 +154,148 @@ export default function Dashboard() {
         {/* Section: Сделать */}
         <h2 className="text-sm font-medium text-muted-foreground mb-3">{t('toDo')}:</h2>
         
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-          <TodoSection
-            title={t('habits')}
-            items={todayHabits.map(h => ({
-              id: h.id,
-              name: h.name,
-              icon: h.icon,
-              completed: h.completedDates.includes(today),
-            }))}
-            color={colors.habits}
-            icon={<Target className="w-4 h-4" />}
-            onToggle={(id) => toggleHabitCompletion(id, today)}
-          />
-          
-          <TodoSection
-            title={t('tasks')}
-            items={todayTasks.map(t => ({
-              id: t.id,
-              name: t.name,
-              icon: t.icon,
-              completed: t.completed,
-            }))}
-            color={colors.tasks}
-            icon={<CheckSquare className="w-4 h-4" />}
-            onToggle={toggleTaskCompletion}
-          />
-          
-          <TodoSection
-            title={t('finance')}
-            items={todayTransactions.map(t => ({
-              id: t.id,
-              name: `${t.type === 'income' ? '+' : '-'}${t.amount}₽ ${t.name}`,
-              completed: t.completed,
-            }))}
-            color={colors.finance}
-            icon={<Wallet className="w-4 h-4" />}
-            onToggle={toggleTransactionCompletion}
-          />
-          
-          <TodoSection
-            title={t('fitness')}
-            items={todayExercises.map(e => ({
-              id: `${e.workoutId}-${e.id}`,
-              name: e.name,
-              completed: e.completed,
-            }))}
-            color={colors.fitness}
-            icon={<Dumbbell className="w-4 h-4" />}
-            onToggle={(id) => {
-              const [workoutId, exerciseId] = id.split('-');
-              toggleExerciseCompletion(workoutId, exerciseId, today);
-            }}
-            emptyMessage={t('recoveryDay')}
-          />
+        <div className="flex flex-wrap justify-center gap-3">
+          <AnimatePresence mode="wait">
+            {expandedSection === null && (
+              <>
+                <TodoSection
+                  title={t('habits')}
+                  items={todayHabits.map(h => ({
+                    id: h.id,
+                    name: h.name,
+                    icon: h.icon,
+                    completed: h.completedDates.includes(today),
+                  }))}
+                  color={colors.habits}
+                  icon={<Target className="w-4 h-4" />}
+                  onToggle={(id) => toggleHabitCompletion(id, today)}
+                  isExpanded={false}
+                  onExpand={() => setExpandedSection('habits')}
+                />
+                
+                <TodoSection
+                  title={t('tasks')}
+                  items={todayTasks.map(t => ({
+                    id: t.id,
+                    name: t.name,
+                    icon: t.icon,
+                    completed: t.completed,
+                  }))}
+                  color={colors.tasks}
+                  icon={<CheckSquare className="w-4 h-4" />}
+                  onToggle={toggleTaskCompletion}
+                  isExpanded={false}
+                  onExpand={() => setExpandedSection('tasks')}
+                />
+                
+                <TodoSection
+                  title={t('finance')}
+                  items={todayTransactions.map(t => ({
+                    id: t.id,
+                    name: `${t.type === 'income' ? '+' : '-'}${t.amount}₽ ${t.name}`,
+                    completed: t.completed,
+                  }))}
+                  color={colors.finance}
+                  icon={<Wallet className="w-4 h-4" />}
+                  onToggle={toggleTransactionCompletion}
+                  isExpanded={false}
+                  onExpand={() => setExpandedSection('finance')}
+                />
+                
+                <TodoSection
+                  title={t('fitness')}
+                  items={todayExercises.map(e => ({
+                    id: `${e.workoutId}-${e.id}`,
+                    name: e.name,
+                    completed: e.completed,
+                  }))}
+                  color={colors.fitness}
+                  icon={<Dumbbell className="w-4 h-4" />}
+                  onToggle={(id) => {
+                    const [workoutId, exerciseId] = id.split('-');
+                    toggleExerciseCompletion(workoutId, exerciseId, today);
+                  }}
+                  emptyMessage={t('recoveryDay')}
+                  isExpanded={false}
+                  onExpand={() => setExpandedSection('fitness')}
+                />
+              </>
+            )}
+
+            {expandedSection === 'habits' && (
+              <TodoSection
+                key="habits-expanded"
+                title={t('habits')}
+                items={todayHabits.map(h => ({
+                  id: h.id,
+                  name: h.name,
+                  icon: h.icon,
+                  completed: h.completedDates.includes(today),
+                }))}
+                color={colors.habits}
+                icon={<Target className="w-4 h-4" />}
+                onToggle={(id) => toggleHabitCompletion(id, today)}
+                isExpanded={true}
+                onCollapse={() => setExpandedSection(null)}
+              />
+            )}
+
+            {expandedSection === 'tasks' && (
+              <TodoSection
+                key="tasks-expanded"
+                title={t('tasks')}
+                items={todayTasks.map(t => ({
+                  id: t.id,
+                  name: t.name,
+                  icon: t.icon,
+                  completed: t.completed,
+                }))}
+                color={colors.tasks}
+                icon={<CheckSquare className="w-4 h-4" />}
+                onToggle={toggleTaskCompletion}
+                isExpanded={true}
+                onCollapse={() => setExpandedSection(null)}
+              />
+            )}
+
+            {expandedSection === 'finance' && (
+              <TodoSection
+                key="finance-expanded"
+                title={t('finance')}
+                items={todayTransactions.map(t => ({
+                  id: t.id,
+                  name: `${t.type === 'income' ? '+' : '-'}${t.amount}₽ ${t.name}`,
+                  completed: t.completed,
+                }))}
+                color={colors.finance}
+                icon={<Wallet className="w-4 h-4" />}
+                onToggle={toggleTransactionCompletion}
+                isExpanded={true}
+                onCollapse={() => setExpandedSection(null)}
+              />
+            )}
+
+            {expandedSection === 'fitness' && (
+              <TodoSection
+                key="fitness-expanded"
+                title={t('fitness')}
+                items={todayExercises.map(e => ({
+                  id: `${e.workoutId}-${e.id}`,
+                  name: e.name,
+                  completed: e.completed,
+                }))}
+                color={colors.fitness}
+                icon={<Dumbbell className="w-4 h-4" />}
+                onToggle={(id) => {
+                  const [workoutId, exerciseId] = id.split('-');
+                  toggleExerciseCompletion(workoutId, exerciseId, today);
+                }}
+                emptyMessage={t('recoveryDay')}
+                isExpanded={true}
+                onCollapse={() => setExpandedSection(null)}
+              />
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>
