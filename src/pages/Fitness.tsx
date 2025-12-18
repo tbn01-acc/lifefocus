@@ -1,17 +1,20 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Sparkles, Dumbbell, Settings, BarChart3, List } from 'lucide-react';
+import { Plus, Sparkles, Dumbbell, Settings, BarChart3, List, History, Download } from 'lucide-react';
 import { useFitness } from '@/hooks/useFitness';
 import { Workout, WORKOUT_COLORS } from '@/types/fitness';
 import { WorkoutCard } from '@/components/WorkoutCard';
 import { WorkoutDialog } from '@/components/WorkoutDialog';
 import { FitnessAnalytics } from '@/components/FitnessAnalytics';
+import { WorkoutHistory } from '@/components/WorkoutHistory';
 import { PageHeader } from '@/components/PageHeader';
 import { GenericSettingsDialog } from '@/components/GenericSettingsDialog';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { Period } from '@/components/PeriodSelector';
+import { exportFitnessToCSV, exportWorkoutsToCSV } from '@/utils/fitnessExport';
+import { toast } from 'sonner';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -22,6 +25,12 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface FitnessProps {
   openDialog?: boolean;
@@ -29,11 +38,10 @@ interface FitnessProps {
 }
 
 type FitnessView = 'workouts' | 'analytics';
-type FilterStatus = 'all' | 'not_started' | 'in_progress' | 'completed';
 
 export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
   const { 
-    workouts, categories, exerciseCategories, tags, isLoading, 
+    workouts, completions, categories, exerciseCategories, tags, exerciseLogs, isLoading, 
     addWorkout, updateWorkout, deleteWorkout, toggleExerciseCompletion, getTodayWorkouts,
     addCategory, updateCategory, deleteCategory,
     addExerciseCategory, updateExerciseCategory, deleteExerciseCategory,
@@ -42,11 +50,11 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
   const [deleteConfirmWorkout, setDeleteConfirmWorkout] = useState<Workout | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
   const [filterTag, setFilterTag] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [currentView, setCurrentView] = useState<FitnessView>('workouts');
   const [analyticsPeriod, setAnalyticsPeriod] = useState<Period>('7');
   const [showDetailedTracking, setShowDetailedTracking] = useState(true);
@@ -79,6 +87,16 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
     }
   };
 
+  const handleExportHistory = () => {
+    exportFitnessToCSV(exerciseLogs, workouts, completions);
+    toast.success(t('exportData'));
+  };
+
+  const handleExportWorkouts = () => {
+    exportWorkoutsToCSV(workouts);
+    toast.success(t('exportData'));
+  };
+
   // Filter workouts
   const filteredWorkouts = workouts.filter(w => {
     if (filterCategory && w.categoryId !== filterCategory) return false;
@@ -86,7 +104,7 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
     return true;
   });
 
-  const hasFilters = filterCategory || filterTag || filterStatus !== 'all';
+  const hasFilters = filterCategory || filterTag;
 
   const todayWorkouts = getTodayWorkouts().filter(w => {
     if (filterCategory && w.categoryId !== filterCategory) return false;
@@ -116,14 +134,39 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
           title={t('myFitness')}
           subtitle={`${workouts.length} ${t('workoutsCount')}`}
           rightAction={
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setSettingsOpen(true)}
-              className="w-9 h-9"
-            >
-              <Settings className="w-5 h-5 text-fitness" />
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setHistoryOpen(true)}
+                className="w-9 h-9"
+              >
+                <History className="w-5 h-5 text-fitness" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon" className="w-9 h-9">
+                    <Download className="w-5 h-5 text-fitness" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={handleExportHistory}>
+                    {t('exportHistory')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={handleExportWorkouts}>
+                    {t('exportWorkouts')}
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSettingsOpen(true)}
+                className="w-9 h-9"
+              >
+                <Settings className="w-5 h-5 text-fitness" />
+              </Button>
+            </div>
           }
         />
 
@@ -223,7 +266,7 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
                 )}
                 {hasFilters && (
                   <button
-                    onClick={() => { setFilterCategory(null); setFilterTag(null); setFilterStatus('all'); }}
+                    onClick={() => { setFilterCategory(null); setFilterTag(null); }}
                     className="text-xs text-muted-foreground hover:text-foreground"
                   >
                     {t('clearFilters')}
@@ -332,6 +375,15 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
         colors={WORKOUT_COLORS}
         accentColor="hsl(262, 80%, 55%)"
         title={t('fitnessSettings')}
+        exerciseCategories={exerciseCategories}
+        onAddExerciseCategory={addExerciseCategory}
+        onUpdateExerciseCategory={updateExerciseCategory}
+        onDeleteExerciseCategory={deleteExerciseCategory}
+      />
+
+      <WorkoutHistory
+        open={historyOpen}
+        onClose={() => setHistoryOpen(false)}
       />
 
       <AlertDialog open={!!deleteConfirmWorkout} onOpenChange={() => setDeleteConfirmWorkout(null)}>

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
+import { ExerciseCategory } from '@/types/fitness';
 
 export interface GenericCategory {
   id: string;
@@ -32,7 +33,14 @@ interface GenericSettingsDialogProps {
   colors: string[];
   accentColor: string;
   title: string;
+  // Optional exercise categories for fitness
+  exerciseCategories?: ExerciseCategory[];
+  onAddExerciseCategory?: (category: Omit<ExerciseCategory, 'id'>) => void;
+  onUpdateExerciseCategory?: (id: string, updates: Partial<ExerciseCategory>) => void;
+  onDeleteExerciseCategory?: (id: string) => void;
 }
+
+type TabType = 'categories' | 'tags' | 'exerciseCategories';
 
 export function GenericSettingsDialog({
   open,
@@ -48,9 +56,15 @@ export function GenericSettingsDialog({
   colors,
   accentColor,
   title,
+  exerciseCategories,
+  onAddExerciseCategory,
+  onUpdateExerciseCategory,
+  onDeleteExerciseCategory,
 }: GenericSettingsDialogProps) {
   const { t } = useTranslation();
-  const [activeTab, setActiveTab] = useState<'categories' | 'tags'>('categories');
+  const hasExerciseCategories = exerciseCategories && onAddExerciseCategory && onUpdateExerciseCategory && onDeleteExerciseCategory;
+  
+  const [activeTab, setActiveTab] = useState<TabType>('categories');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editingName, setEditingName] = useState('');
   const [editingColor, setEditingColor] = useState('');
@@ -67,8 +81,10 @@ export function GenericSettingsDialog({
     if (!editingId || !editingName.trim()) return;
     if (activeTab === 'categories') {
       onUpdateCategory(editingId, { name: editingName.trim(), color: editingColor });
-    } else {
+    } else if (activeTab === 'tags') {
       onUpdateTag(editingId, { name: editingName.trim(), color: editingColor });
+    } else if (activeTab === 'exerciseCategories' && onUpdateExerciseCategory) {
+      onUpdateExerciseCategory(editingId, { name: editingName.trim(), color: editingColor });
     }
     setEditingId(null);
     setEditingName('');
@@ -79,8 +95,10 @@ export function GenericSettingsDialog({
     if (!newName.trim()) return;
     if (activeTab === 'categories') {
       onAddCategory({ name: newName.trim(), color: newColor });
-    } else {
+    } else if (activeTab === 'tags') {
       onAddTag({ name: newName.trim(), color: newColor });
+    } else if (activeTab === 'exerciseCategories' && onAddExerciseCategory) {
+      onAddExerciseCategory({ name: newName.trim(), color: newColor });
     }
     setNewName('');
     setNewColor(colors[0]);
@@ -89,12 +107,39 @@ export function GenericSettingsDialog({
   const handleDelete = (id: string) => {
     if (activeTab === 'categories') {
       onDeleteCategory(id);
-    } else {
+    } else if (activeTab === 'tags') {
       onDeleteTag(id);
+    } else if (activeTab === 'exerciseCategories' && onDeleteExerciseCategory) {
+      onDeleteExerciseCategory(id);
     }
   };
 
-  const items = activeTab === 'categories' ? categories : tags;
+  const getItems = () => {
+    if (activeTab === 'categories') return categories;
+    if (activeTab === 'tags') return tags;
+    if (activeTab === 'exerciseCategories') return exerciseCategories || [];
+    return [];
+  };
+
+  const items = getItems();
+
+  const getAddLabel = () => {
+    if (activeTab === 'categories') return t('addCategory');
+    if (activeTab === 'tags') return t('addTag');
+    return t('addExerciseCategory');
+  };
+
+  const getPlaceholder = () => {
+    if (activeTab === 'categories') return t('categoryNamePlaceholder');
+    if (activeTab === 'tags') return t('tagNamePlaceholder');
+    return t('exerciseCategoryPlaceholder');
+  };
+
+  const getEmptyMessage = () => {
+    if (activeTab === 'categories') return t('noCategoriesYet');
+    if (activeTab === 'tags') return t('noTagsYet');
+    return t('noExerciseCategoriesYet');
+  };
 
   return (
     <AnimatePresence>
@@ -128,11 +173,11 @@ export function GenericSettingsDialog({
             </div>
 
             {/* Tabs */}
-            <div className="flex gap-2 mb-4">
+            <div className="flex gap-1 mb-4 overflow-x-auto">
               <button
                 onClick={() => setActiveTab('categories')}
                 className={cn(
-                  "flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all",
+                  "flex-1 py-2 px-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap",
                   activeTab === 'categories'
                     ? "text-white"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -144,7 +189,7 @@ export function GenericSettingsDialog({
               <button
                 onClick={() => setActiveTab('tags')}
                 className={cn(
-                  "flex-1 py-2 px-3 rounded-xl text-sm font-medium transition-all",
+                  "flex-1 py-2 px-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap",
                   activeTab === 'tags'
                     ? "text-white"
                     : "bg-muted text-muted-foreground hover:bg-muted/80"
@@ -153,6 +198,20 @@ export function GenericSettingsDialog({
               >
                 {t('tagsLabel')}
               </button>
+              {hasExerciseCategories && (
+                <button
+                  onClick={() => setActiveTab('exerciseCategories')}
+                  className={cn(
+                    "flex-1 py-2 px-2 rounded-xl text-xs font-medium transition-all whitespace-nowrap",
+                    activeTab === 'exerciseCategories'
+                      ? "text-white"
+                      : "bg-muted text-muted-foreground hover:bg-muted/80"
+                  )}
+                  style={activeTab === 'exerciseCategories' ? { backgroundColor: accentColor } : undefined}
+                >
+                  {t('exerciseCategoriesLabel')}
+                </button>
+              )}
             </div>
 
             {/* Items List */}
@@ -213,7 +272,7 @@ export function GenericSettingsDialog({
               ))}
               {items.length === 0 && (
                 <p className="text-center text-muted-foreground py-4">
-                  {activeTab === 'categories' ? t('noCategoriesYet') : t('noTagsYet')}
+                  {getEmptyMessage()}
                 </p>
               )}
             </div>
@@ -221,7 +280,7 @@ export function GenericSettingsDialog({
             {/* Add New */}
             <div className="border-t border-border pt-4">
               <p className="text-sm font-medium text-foreground mb-2">
-                {activeTab === 'categories' ? t('addCategory') : t('addTag')}
+                {getAddLabel()}
               </p>
               <div className="flex gap-2">
                 <div
@@ -235,7 +294,7 @@ export function GenericSettingsDialog({
                 <Input
                   value={newName}
                   onChange={(e) => setNewName(e.target.value)}
-                  placeholder={activeTab === 'categories' ? t('categoryNamePlaceholder') : t('tagNamePlaceholder')}
+                  placeholder={getPlaceholder()}
                   className="flex-1"
                   onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
                 />
