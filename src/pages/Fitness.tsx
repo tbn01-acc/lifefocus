@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Sparkles, Dumbbell, Settings, BarChart3, List, History, Download } from 'lucide-react';
+import { Plus, Sparkles, Dumbbell, Settings, BarChart3, List, History, Download, FileText, Timer } from 'lucide-react';
 import { useFitness } from '@/hooks/useFitness';
 import { Workout, WORKOUT_COLORS } from '@/types/fitness';
 import { WorkoutCard } from '@/components/WorkoutCard';
 import { WorkoutDialog } from '@/components/WorkoutDialog';
 import { FitnessAnalytics } from '@/components/FitnessAnalytics';
 import { WorkoutHistory } from '@/components/WorkoutHistory';
+import { WorkoutTemplates } from '@/components/WorkoutTemplates';
+import { WeightProgressChart } from '@/components/WeightProgressChart';
+import { RestTimer } from '@/components/RestTimer';
 import { PageHeader } from '@/components/PageHeader';
 import { GenericSettingsDialog } from '@/components/GenericSettingsDialog';
 import { Button } from '@/components/ui/button';
@@ -41,16 +44,19 @@ type FitnessView = 'workouts' | 'analytics';
 
 export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
   const { 
-    workouts, completions, categories, exerciseCategories, tags, exerciseLogs, isLoading, 
+    workouts, completions, categories, exerciseCategories, tags, exerciseLogs, templates, isLoading, 
     addWorkout, updateWorkout, deleteWorkout, toggleExerciseCompletion, getTodayWorkouts,
     addCategory, updateCategory, deleteCategory,
     addExerciseCategory, updateExerciseCategory, deleteExerciseCategory,
-    addTag, updateTag, deleteTag
+    addTag, updateTag, deleteTag,
+    addTemplate, deleteTemplate, createWorkoutFromTemplate
   } = useFitness();
   
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [templatesOpen, setTemplatesOpen] = useState(false);
+  const [showTimer, setShowTimer] = useState(false);
   const [editingWorkout, setEditingWorkout] = useState<Workout | null>(null);
   const [deleteConfirmWorkout, setDeleteConfirmWorkout] = useState<Workout | null>(null);
   const [filterCategory, setFilterCategory] = useState<string | null>(null);
@@ -138,6 +144,22 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => setShowTimer(!showTimer)}
+                className={cn("w-9 h-9", showTimer && "bg-fitness/20")}
+              >
+                <Timer className="w-5 h-5 text-fitness" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setTemplatesOpen(true)}
+                className="w-9 h-9"
+              >
+                <FileText className="w-5 h-5 text-fitness" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setHistoryOpen(true)}
                 className="w-9 h-9"
               >
@@ -170,6 +192,20 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
           }
         />
 
+        {/* Rest Timer (collapsible) */}
+        <AnimatePresence>
+          {showTimer && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6 overflow-hidden"
+            >
+              <RestTimer defaultDuration={90} />
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* View Tabs */}
         <div className="flex gap-2 mb-6">
           <button
@@ -200,10 +236,13 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
 
         {/* Analytics View */}
         {currentView === 'analytics' && (
-          <FitnessAnalytics 
-            period={analyticsPeriod} 
-            onPeriodChange={setAnalyticsPeriod} 
-          />
+          <div className="space-y-6">
+            <FitnessAnalytics 
+              period={analyticsPeriod} 
+              onPeriodChange={setAnalyticsPeriod} 
+            />
+            <WeightProgressChart period={analyticsPeriod === '7' ? 7 : analyticsPeriod === '14' ? 14 : 30} />
+          </div>
         )}
 
         {/* Workouts View */}
@@ -294,13 +333,24 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
                       {hasFilters ? t('clearFilters') : t('createFirstWorkout')}
                     </p>
                     {!hasFilters && (
-                      <Button 
-                        onClick={() => setDialogOpen(true)}
-                        className="bg-fitness text-white hover:bg-fitness/90"
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        {t('createWorkout')}
-                      </Button>
+                      <div className="flex flex-col gap-2 items-center">
+                        <Button 
+                          onClick={() => setDialogOpen(true)}
+                          className="bg-fitness text-white hover:bg-fitness/90"
+                        >
+                          <Plus className="w-4 h-4 mr-2" />
+                          {t('createWorkout')}
+                        </Button>
+                        {templates.length > 0 && (
+                          <Button 
+                            variant="outline"
+                            onClick={() => setTemplatesOpen(true)}
+                          >
+                            <FileText className="w-4 h-4 mr-2" />
+                            {t('workoutTemplates')}
+                          </Button>
+                        )}
+                      </div>
                     )}
                   </motion.div>
                 ) : (
@@ -384,6 +434,16 @@ export default function Fitness({ openDialog, onDialogClose }: FitnessProps) {
       <WorkoutHistory
         open={historyOpen}
         onClose={() => setHistoryOpen(false)}
+      />
+
+      <WorkoutTemplates
+        open={templatesOpen}
+        onClose={() => setTemplatesOpen(false)}
+        templates={templates}
+        onSaveTemplate={addTemplate}
+        onDeleteTemplate={deleteTemplate}
+        onCreateFromTemplate={createWorkoutFromTemplate}
+        workouts={workouts}
       />
 
       <AlertDialog open={!!deleteConfirmWorkout} onOpenChange={() => setDeleteConfirmWorkout(null)}>

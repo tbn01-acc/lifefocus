@@ -266,9 +266,38 @@ export const translations = {
     workoutHistory: 'История тренировок',
     noWorkoutsForDay: 'Нет тренировок за этот день',
     set: 'Подход',
-    exportData: 'Экспорт данных',
+    exportData: 'Данные экспортированы',
     exportHistory: 'Экспорт истории',
     exportWorkouts: 'Экспорт тренировок',
+    
+    // Rest Timer
+    restTimer: 'Таймер отдыха',
+    timerDuration: 'Длительность таймера',
+    seconds: 'секунд',
+    
+    // Weight Progress
+    weightProgress: 'Прогресс по весам',
+    noWeightData: 'Нет данных о весах',
+    startLoggingWeights: 'Начните записывать веса в тренировках',
+    selectExercise: 'Выберите упражнение',
+    maxWeight: 'Макс. вес',
+    avgWeight: 'Средний вес',
+    totalVolume: 'Общий объём',
+    noDataForExercise: 'Нет данных для этого упражнения',
+    selectExerciseToSeeProgress: 'Выберите упражнение для просмотра прогресса',
+    
+    // Workout Templates
+    workoutTemplates: 'Шаблоны тренировок',
+    myTemplates: 'Мои шаблоны',
+    saveAsTemplate: 'Сохранить как шаблон',
+    noTemplatesYet: 'Шаблонов пока нет',
+    saveWorkoutAsTemplate: 'Сохраните тренировку как шаблон для быстрого копирования',
+    templateSaved: 'Шаблон сохранён',
+    workoutCreatedFromTemplate: 'Тренировка создана из шаблона',
+    selectWorkout: 'Выберите тренировку',
+    templateName: 'Название шаблона',
+    templateNamePlaceholder: 'Например: Моя силовая',
+    saveTemplate: 'Сохранить шаблон',
 
     // Auth
     signIn: 'Войти',
@@ -558,6 +587,35 @@ export const translations = {
     exportData: 'Data exported',
     exportHistory: 'Export history',
     exportWorkouts: 'Export workouts',
+    
+    // Rest Timer
+    restTimer: 'Rest Timer',
+    timerDuration: 'Timer duration',
+    seconds: 'seconds',
+    
+    // Weight Progress
+    weightProgress: 'Weight Progress',
+    noWeightData: 'No weight data',
+    startLoggingWeights: 'Start logging weights in your workouts',
+    selectExercise: 'Select exercise',
+    maxWeight: 'Max weight',
+    avgWeight: 'Avg weight',
+    totalVolume: 'Total volume',
+    noDataForExercise: 'No data for this exercise',
+    selectExerciseToSeeProgress: 'Select an exercise to see progress',
+    
+    // Workout Templates
+    workoutTemplates: 'Workout Templates',
+    myTemplates: 'My Templates',
+    saveAsTemplate: 'Save as Template',
+    noTemplatesYet: 'No templates yet',
+    saveWorkoutAsTemplate: 'Save a workout as a template for quick copying',
+    templateSaved: 'Template saved',
+    workoutCreatedFromTemplate: 'Workout created from template',
+    selectWorkout: 'Select workout',
+    templateName: 'Template name',
+    templateNamePlaceholder: 'E.g.: My strength workout',
+    saveTemplate: 'Save template',
 
     // Auth
     signIn: 'Sign In',
@@ -847,6 +905,35 @@ export const translations = {
     exportData: 'Datos exportados',
     exportHistory: 'Exportar historial',
     exportWorkouts: 'Exportar entrenamientos',
+    
+    // Rest Timer
+    restTimer: 'Temporizador de descanso',
+    timerDuration: 'Duración del temporizador',
+    seconds: 'segundos',
+    
+    // Weight Progress
+    weightProgress: 'Progreso de peso',
+    noWeightData: 'Sin datos de peso',
+    startLoggingWeights: 'Comienza a registrar pesos en tus entrenamientos',
+    selectExercise: 'Seleccionar ejercicio',
+    maxWeight: 'Peso máx.',
+    avgWeight: 'Peso prom.',
+    totalVolume: 'Volumen total',
+    noDataForExercise: 'Sin datos para este ejercicio',
+    selectExerciseToSeeProgress: 'Selecciona un ejercicio para ver el progreso',
+    
+    // Workout Templates
+    workoutTemplates: 'Plantillas de entrenamiento',
+    myTemplates: 'Mis plantillas',
+    saveAsTemplate: 'Guardar como plantilla',
+    noTemplatesYet: 'Aún no hay plantillas',
+    saveWorkoutAsTemplate: 'Guarda un entrenamiento como plantilla para copiar rápidamente',
+    templateSaved: 'Plantilla guardada',
+    workoutCreatedFromTemplate: 'Entrenamiento creado desde plantilla',
+    selectWorkout: 'Seleccionar entrenamiento',
+    templateName: 'Nombre de plantilla',
+    templateNamePlaceholder: 'Ej: Mi fuerza',
+    saveTemplate: 'Guardar plantilla',
 
     // Auth
     signIn: 'Iniciar sesión',

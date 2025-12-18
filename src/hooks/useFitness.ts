@@ -3,6 +3,7 @@ import {
   Workout, WorkoutCompletion, FitnessCategory, ExerciseCategory, FitnessTag, ExerciseLog, ExerciseSet, ExerciseStatus,
   DEFAULT_FITNESS_CATEGORIES, DEFAULT_EXERCISE_CATEGORIES, DEFAULT_FITNESS_TAGS 
 } from '@/types/fitness';
+import { WorkoutTemplate } from '@/components/WorkoutTemplates';
 
 const WORKOUTS_KEY = 'habitflow_workouts';
 const COMPLETIONS_KEY = 'habitflow_workout_completions';
@@ -10,6 +11,7 @@ const CATEGORIES_KEY = 'habitflow_fitness_categories';
 const EXERCISE_CATEGORIES_KEY = 'habitflow_exercise_categories';
 const TAGS_KEY = 'habitflow_fitness_tags';
 const EXERCISE_LOGS_KEY = 'habitflow_exercise_logs';
+const TEMPLATES_KEY = 'habitflow_workout_templates';
 
 export function useFitness() {
   const [workouts, setWorkouts] = useState<Workout[]>([]);
@@ -18,6 +20,7 @@ export function useFitness() {
   const [exerciseCategories, setExerciseCategories] = useState<ExerciseCategory[]>([]);
   const [tags, setTags] = useState<FitnessTag[]>([]);
   const [exerciseLogs, setExerciseLogs] = useState<ExerciseLog[]>([]);
+  const [templates, setTemplates] = useState<WorkoutTemplate[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -103,6 +106,16 @@ export function useFitness() {
         setExerciseLogs([]);
       }
     }
+
+    // Load templates
+    const storedTemplates = localStorage.getItem(TEMPLATES_KEY);
+    if (storedTemplates) {
+      try {
+        setTemplates(JSON.parse(storedTemplates));
+      } catch (e) {
+        setTemplates([]);
+      }
+    }
     
     setIsLoading(false);
   }, []);
@@ -135,6 +148,11 @@ export function useFitness() {
   const saveExerciseLogs = useCallback((newLogs: ExerciseLog[]) => {
     setExerciseLogs(newLogs);
     localStorage.setItem(EXERCISE_LOGS_KEY, JSON.stringify(newLogs));
+  }, []);
+
+  const saveTemplates = useCallback((newTemplates: WorkoutTemplate[]) => {
+    setTemplates(newTemplates);
+    localStorage.setItem(TEMPLATES_KEY, JSON.stringify(newTemplates));
   }, []);
 
   const addWorkout = useCallback((workout: Omit<Workout, 'id' | 'createdAt'>) => {
@@ -420,6 +438,33 @@ export function useFitness() {
     };
   }, [exerciseLogs]);
 
+  // Template management
+  const addTemplate = useCallback((template: Omit<WorkoutTemplate, 'id' | 'createdAt'>) => {
+    const newTemplate: WorkoutTemplate = {
+      ...template,
+      id: crypto.randomUUID(),
+      createdAt: new Date().toISOString(),
+    };
+    saveTemplates([...templates, newTemplate]);
+    return newTemplate;
+  }, [templates, saveTemplates]);
+
+  const deleteTemplate = useCallback((id: string) => {
+    saveTemplates(templates.filter(t => t.id !== id));
+  }, [templates, saveTemplates]);
+
+  const createWorkoutFromTemplate = useCallback((template: WorkoutTemplate) => {
+    return addWorkout({
+      ...template.workout,
+      exercises: template.workout.exercises.map(e => ({
+        ...e,
+        id: crypto.randomUUID(),
+        sets: [],
+        status: 'not_started' as const,
+      })),
+    });
+  }, [addWorkout]);
+
   return {
     workouts,
     completions,
@@ -427,6 +472,7 @@ export function useFitness() {
     exerciseCategories,
     tags,
     exerciseLogs,
+    templates,
     isLoading,
     addWorkout,
     updateWorkout,
@@ -442,6 +488,9 @@ export function useFitness() {
     addTag,
     updateTag,
     deleteTag,
+    addTemplate,
+    deleteTemplate,
+    createWorkoutFromTemplate,
     getTodayWorkouts,
     getTodayExercises,
     isExerciseCompleted,
