@@ -33,15 +33,15 @@ export default function Dashboard() {
   const dayOfWeek = new Date().getDay();
 
   // User name and avatar
-  const userName = profile?.display_name || user?.email?.split('@')[0] || t('guest');
+  const userName = profile?.display_name || user?.email?.split("@")[0] || t("guest");
   const userInitials = userName.slice(0, 2).toUpperCase();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
-    if (hour < 6) return t('goodNight');
-    if (hour < 12) return t('goodMorning');
-    if (hour < 18) return t('goodAfternoon');
-    return t('goodEvening');
+    if (hour < 6) return t("goodNight");
+    if (hour < 12) return t("goodMorning");
+    if (hour < 18) return t("goodAfternoon");
+    return t("goodEvening");
   };
 
   // Habits for today
@@ -55,14 +55,10 @@ export default function Dashboard() {
   // Transactions for today
   const todayTransactions = getTodayTransactions();
   const completedTransactions = todayTransactions.filter((t) => t.completed);
-  
+
   // Calculate today's income and expense
-  const todayIncome = todayTransactions
-    .filter((t) => t.type === "income")
-    .reduce((sum, t) => sum + t.amount, 0);
-  const todayExpense = todayTransactions
-    .filter((t) => t.type === "expense")
-    .reduce((sum, t) => sum + t.amount, 0);
+  const todayIncome = todayTransactions.filter((t) => t.type === "income").reduce((sum, t) => sum + t.amount, 0);
+  const todayExpense = todayTransactions.filter((t) => t.type === "expense").reduce((sum, t) => sum + t.amount, 0);
 
   // Calculate Day Quality (0-100)
   const totalItems = todayHabits.length + todayTasks.length + todayTransactions.length;
@@ -108,12 +104,10 @@ export default function Dashboard() {
 
         {/* Avatar + Greeting */}
         <div className="flex items-center gap-3 mb-4">
-          <button onClick={() => navigate('/profile')} className="shrink-0">
+          <button onClick={() => navigate("/profile")} className="shrink-0">
             <Avatar className="w-12 h-12 border-2 border-primary/20 hover:border-primary/50 transition-colors">
               <AvatarImage src={profile?.avatar_url || undefined} />
-              <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                {userInitials}
-              </AvatarFallback>
+              <AvatarFallback className="bg-primary/10 text-primary font-medium">{userInitials}</AvatarFallback>
             </Avatar>
           </button>
           <p className="text-lg font-medium text-foreground">
@@ -138,16 +132,13 @@ export default function Dashboard() {
           <DayQualityRing value={dayQuality} />
         </div>
 
-        {/* Top Widgets Section (2 widgets, expanded by default) */}
-        <TopWidgetsSection />
-
         {/* Section: Сделать/Выполнено (Tabbed) */}
         <Tabs defaultValue="todo" className="mb-6">
           <TabsList className="grid w-full grid-cols-2 mb-4">
             <TabsTrigger value="todo">{t("todoTab")}</TabsTrigger>
             <TabsTrigger value="done">{t("doneTab")}</TabsTrigger>
           </TabsList>
-          
+
           <TabsContent value="todo" className="mt-0">
             <div className="space-y-3">
               <AnimatePresence mode="wait">
@@ -262,7 +253,7 @@ export default function Dashboard() {
               </AnimatePresence>
             </div>
           </TabsContent>
-          
+
           <TabsContent value="done" className="mt-0">
             <div className="bg-card rounded-2xl p-4 shadow-card border border-border">
               <ProgressBar
@@ -290,6 +281,8 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
 
+        {/* Top Widgets Section (2 widgets, expanded by default) */}
+        <TopWidgetsSection />
       </div>
     </div>
   );
