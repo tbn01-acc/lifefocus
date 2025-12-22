@@ -12,7 +12,6 @@ import { FinanceWidget } from "@/components/dashboard/FinanceWidget";
 import { DayQualityRing } from "@/components/dashboard/DayQualityRing";
 import { useWeather, getWeatherIcon } from "@/hooks/useWeather";
 import { TopWidgetsSection } from "@/components/dashboard/TopWidgetsSection";
-import { WaterCounter, StepsCounter } from "@/components/dashboard/WaterStepsCounters";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { LanguageSelector } from "@/components/LanguageSelector";
 import { ShareButtons } from "@/components/ShareButtons";
@@ -291,11 +290,6 @@ export default function Dashboard() {
           </TabsContent>
         </Tabs>
 
-        {/* Water and Steps Counters */}
-        <div className="grid grid-cols-2 gap-4">
-          <WaterCounter />
-          <StepsCounter />
-        </div>
       </div>
     </div>
   );
