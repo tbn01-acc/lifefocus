@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Mail, Lock, User, Github, Eye, EyeOff, Loader2 } from 'lucide-react';
+import { Mail, Lock, User, Github, Eye, EyeOff, Loader2, Gift } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/hooks/useAuth';
 import { useTranslation } from '@/contexts/LanguageContext';
+import { supabase } from '@/integrations/supabase/client';
 import { z } from 'zod';
 
 const emailSchema = z.string().email();
@@ -20,6 +21,8 @@ export default function Auth() {
   const [displayName, setDisplayName] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const referralCode = searchParams.get('ref');
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -37,6 +40,13 @@ export default function Auth() {
       navigate('/');
     }
   }, [user, navigate]);
+
+  // If referral code is present, switch to signup mode
+  useEffect(() => {
+    if (referralCode) {
+      setIsLogin(false);
+    }
+  }, [referralCode]);
 
   const validateForm = () => {
     try {
@@ -83,7 +93,7 @@ export default function Auth() {
         });
       }
     } else {
-      const { error } = await signUpWithEmail(email, password, displayName);
+      const { error } = await signUpWithEmail(email, password, displayName, referralCode || undefined);
       if (error) {
         toast({
           title: t('error'),
@@ -143,6 +153,16 @@ export default function Auth() {
           <p className="text-muted-foreground text-center mb-6">
             {isLogin ? t('welcomeBack') : t('createAccount')}
           </p>
+
+          {/* Referral Badge */}
+          {referralCode && !isLogin && (
+            <div className="flex items-center justify-center gap-2 mb-4 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+              <Gift className="w-4 h-4 text-green-500" />
+              <span className="text-sm text-green-500 font-medium">
+                {t('language') === 'ru' ? 'Вы приглашены по реферальной ссылке!' : 'You were invited by a friend!'}
+              </span>
+            </div>
+          )}
 
           {/* Social Login Buttons */}
           <div className="grid grid-cols-2 gap-3 mb-6">

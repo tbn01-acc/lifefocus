@@ -5,6 +5,7 @@ import { useTasks } from '@/hooks/useTasks';
 import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { useTaskReminders } from '@/hooks/useTaskReminders';
 import { useTimeTracker } from '@/hooks/useTimeTracker';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { Task, TaskStatus } from '@/types/task';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskDialog } from '@/components/TaskDialog';
@@ -16,6 +17,7 @@ import { TaskFilters } from '@/components/TaskFilters';
 import { PeriodSelector } from '@/components/PeriodSelector';
 import { PageHeader } from '@/components/PageHeader';
 import { ExportButtons } from '@/components/ExportButtons';
+import { LimitWarning, LimitBadge } from '@/components/LimitWarning';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { exportTasksToCSV, exportTasksToPDF } from '@/utils/exportData';
@@ -44,6 +46,8 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
     addTag, updateTag, deleteTag
   } = useTasks();
   const timeTracker = useTimeTracker();
+  const { getTasksLimit } = useUsageLimits();
+  const tasksLimit = getTasksLimit(tasks.length);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -65,6 +69,11 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
     if (editingTask) {
       updateTask(editingTask.id, taskData);
     } else {
+      // Check limit before adding
+      if (!tasksLimit.canAdd) {
+        toast.error(t('language') === 'ru' ? 'Достигнут лимит задач. Перейдите на PRO!' : 'Task limit reached. Upgrade to PRO!');
+        return;
+      }
       addTask(taskData);
     }
     setEditingTask(null);
@@ -131,7 +140,12 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
           icon={<CheckSquare className="w-5 h-5 text-task" />}
           iconBgClass="bg-task/20"
           title={t('myTasks')}
-          subtitle={`${tasks.length} ${t('tasks').toLowerCase()}`}
+          subtitle={
+            <span className="flex items-center gap-2">
+              {`${tasks.length} ${t('tasks').toLowerCase()}`}
+              <LimitBadge current={tasks.length} max={tasksLimit.max} />
+            </span>
+          }
           rightAction={
             <div className="flex items-center gap-1">
               <ExportButtons

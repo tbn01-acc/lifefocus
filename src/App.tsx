@@ -14,6 +14,7 @@ import Finance from "./pages/Finance";
 import Services from "./pages/Services";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
+import Upgrade from "./pages/Upgrade";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -57,6 +58,7 @@ const AppContent = () => {
         <Route path="/services" element={<Services />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/upgrade" element={<Upgrade />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNavigation 

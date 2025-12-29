@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Sparkles, Wallet, Settings } from 'lucide-react';
 import { useFinance } from '@/hooks/useFinance';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { FinanceTransaction, FINANCE_COLORS } from '@/types/finance';
 import { TransactionCard } from '@/components/TransactionCard';
 import { TransactionDialog } from '@/components/TransactionDialog';
@@ -11,6 +12,7 @@ import { FinanceCalendarView } from '@/components/finance/FinanceCalendarView';
 import { FinanceProgressView } from '@/components/finance/FinanceProgressView';
 import { GenericSettingsDialog } from '@/components/GenericSettingsDialog';
 import { ExportButtons } from '@/components/ExportButtons';
+import { LimitWarning, LimitBadge } from '@/components/LimitWarning';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -39,6 +41,8 @@ export default function Finance({ openDialog, onDialogClose }: FinanceProps) {
     addCategory, updateCategory, deleteCategory,
     addTag, updateTag, deleteTag
   } = useFinance();
+  const { getTransactionsLimit } = useUsageLimits();
+  const transactionsLimit = getTransactionsLimit(transactions.length);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<FinanceTransaction | null>(null);
@@ -52,6 +56,11 @@ export default function Finance({ openDialog, onDialogClose }: FinanceProps) {
     if (editingTransaction) {
       updateTransaction(editingTransaction.id, transactionData);
     } else {
+      // Check limit before adding
+      if (!transactionsLimit.canAdd) {
+        toast.error(t('language') === 'ru' ? 'Достигнут лимит операций. Перейдите на PRO!' : 'Transaction limit reached. Upgrade to PRO!');
+        return;
+      }
       addTransaction(transactionData);
     }
     setEditingTransaction(null);
@@ -113,7 +122,12 @@ export default function Finance({ openDialog, onDialogClose }: FinanceProps) {
           icon={<Wallet className="w-5 h-5 text-finance" />}
           iconBgClass="bg-finance/20"
           title={t('myFinance')}
-          subtitle={`${transactions.length} ${t('transactions').toLowerCase()}`}
+          subtitle={
+            <span className="flex items-center gap-2">
+              {`${transactions.length} ${t('transactions').toLowerCase()}`}
+              <LimitBadge current={transactions.length} max={transactionsLimit.max} />
+            </span>
+          }
           rightAction={
             <div className="flex items-center gap-1">
               <ExportButtons

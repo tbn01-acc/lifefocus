@@ -9,7 +9,7 @@ interface PageHeaderProps {
   icon?: React.ReactNode;
   iconBgClass?: string;
   title?: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   rightAction?: React.ReactNode;
 }
 
@@ -53,7 +53,7 @@ export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtit
           </div>
           <div className="flex-1">
             <h1 className="text-xl font-bold text-foreground">{title}</h1>
-            {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+            {subtitle && <div className="text-sm text-muted-foreground">{subtitle}</div>}
           </div>
           {rightAction}
         </div>

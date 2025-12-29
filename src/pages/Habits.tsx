@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Plus, Sparkles, Target, Settings } from 'lucide-react';
 import { useHabits } from '@/hooks/useHabits';
 import { useHabitNotifications } from '@/hooks/useHabitNotifications';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 import { Habit, HABIT_COLORS } from '@/types/habit';
 import { HabitCard } from '@/components/HabitCard';
 import { HabitDialog } from '@/components/HabitDialog';
@@ -12,6 +13,7 @@ import { CalendarView } from '@/components/CalendarView';
 import { ProgressView } from '@/components/ProgressView';
 import { GenericSettingsDialog } from '@/components/GenericSettingsDialog';
 import { ExportButtons } from '@/components/ExportButtons';
+import { LimitWarning, LimitBadge } from '@/components/LimitWarning';
 import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
@@ -44,6 +46,10 @@ export default function Habits({ openDialog, onDialogClose }: HabitsProps) {
   // Enable habit notifications
   useHabitNotifications(habits);
   
+  // Usage limits
+  const { getHabitsLimit } = useUsageLimits();
+  const habitsLimit = getHabitsLimit(habits.length);
+  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingHabit, setEditingHabit] = useState<Habit | null>(null);
@@ -57,6 +63,11 @@ export default function Habits({ openDialog, onDialogClose }: HabitsProps) {
     if (editingHabit) {
       updateHabit(editingHabit.id, habitData);
     } else {
+      // Check limit before adding
+      if (!habitsLimit.canAdd) {
+        toast.error(t('language') === 'ru' ? 'Достигнут лимит привычек. Перейдите на PRO!' : 'Habit limit reached. Upgrade to PRO!');
+        return;
+      }
       addHabit(habitData);
     }
     setEditingHabit(null);
@@ -108,7 +119,12 @@ export default function Habits({ openDialog, onDialogClose }: HabitsProps) {
           icon={<Target className="w-5 h-5 text-habit" />}
           iconBgClass="bg-habit/20"
           title={t('myHabits')}
-          subtitle={`${habits.length} ${t('habits').toLowerCase()}`}
+          subtitle={
+            <span className="flex items-center gap-2">
+              {`${habits.length} ${t('habits').toLowerCase()}`}
+              <LimitBadge current={habits.length} max={habitsLimit.max} />
+            </span>
+          }
           rightAction={
             <div className="flex items-center gap-1">
               <ExportButtons
@@ -132,6 +148,9 @@ export default function Habits({ openDialog, onDialogClose }: HabitsProps) {
             </div>
           }
         />
+
+        {/* Limit Warning */}
+        <LimitWarning current={habits.length} max={habitsLimit.max} type="habits" />
 
         {/* Category/Tag Filters */}
         {(categories.length > 0 || tags.length > 0) && (
