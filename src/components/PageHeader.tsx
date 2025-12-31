@@ -1,8 +1,10 @@
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { LanguageSelector } from '@/components/LanguageSelector';
 import { ShareButtons } from '@/components/ShareButtons';
 import { useAuth } from '@/hooks/useAuth';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 
 interface PageHeaderProps {
   showTitle?: boolean;
@@ -16,6 +18,7 @@ interface PageHeaderProps {
 export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtitle, rightAction }: PageHeaderProps) {
   const { t } = useTranslation();
   const { profile, user } = useAuth();
+  const navigate = useNavigate();
 
   const getGreeting = () => {
     const hour = new Date().getHours();
@@ -38,8 +41,19 @@ export function PageHeader({ showTitle = false, icon, iconBgClass, title, subtit
         </div>
       </div>
 
-      {/* Greeting without avatar */}
-      <div className="mb-4">
+      {/* Greeting with Avatar */}
+      <div className="flex items-center gap-3 mb-4">
+        <button 
+          onClick={() => navigate('/profile')}
+          className="focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 rounded-full"
+        >
+          <Avatar className="w-12 h-12 border-2 border-primary/20 hover:border-primary/50 transition-colors cursor-pointer">
+            <AvatarImage src={profile?.avatar_url || undefined} />
+            <AvatarFallback className="bg-primary text-primary-foreground text-lg">
+              {(profile?.display_name || user?.email || 'G')[0].toUpperCase()}
+            </AvatarFallback>
+          </Avatar>
+        </button>
         <p className="text-lg font-medium text-foreground">
           {getGreeting()}, {userName}!
         </p>

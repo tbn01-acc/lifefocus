@@ -356,6 +356,9 @@ export const translations = {
     worldTime: 'Мировое время',
     checklists: 'Чек-листы',
     unitConverter: 'Конвертер',
+    statistics: 'Статистика',
+    commonTags: 'Общие теги',
+    commonTagsDescription: 'Создавайте теги для сквозной работы между задачами, привычками и финансами',
     
     // Pomodoro
     work: 'Работа',
@@ -848,6 +851,9 @@ export const translations = {
     worldTime: 'World Time',
     checklists: 'Checklists',
     unitConverter: 'Converter',
+    statistics: 'Statistics',
+    commonTags: 'Common Tags',
+    commonTagsDescription: 'Create tags for cross-work between tasks, habits, and finances',
     
     // Pomodoro
     work: 'Work',
@@ -1340,6 +1346,9 @@ export const translations = {
     worldTime: 'Hora mundial',
     checklists: 'Listas de control',
     unitConverter: 'Convertidor',
+    statistics: 'Estadísticas',
+    commonTags: 'Etiquetas comunes',
+    commonTagsDescription: 'Crea etiquetas para trabajo transversal entre tareas, hábitos y finanzas',
     
     // Pomodoro
     work: 'Trabajo',

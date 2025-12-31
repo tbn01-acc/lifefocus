@@ -1,9 +1,8 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Target, CheckSquare, Wallet, Plus, Wrench, User } from 'lucide-react';
+import { Home, Target, CheckSquare, Wallet, Plus, Wrench, BarChart3 } from 'lucide-react';
 import { useTranslation } from '@/contexts/LanguageContext';
-import { useAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 interface BottomNavigationProps {
@@ -21,7 +20,6 @@ export function BottomNavigation({
   const navigate = useNavigate();
   const location = useLocation();
   const { t } = useTranslation();
-  const { profile, user } = useAuth();
 
   const navItems = [
     { path: '/', icon: Home, label: t('home'), color: 'hsl(var(--primary))' },
@@ -30,6 +28,7 @@ export function BottomNavigation({
     // Plus button goes here (index 3)
     { path: '/finance', icon: Wallet, label: t('finance'), color: 'hsl(var(--finance))' },
     { path: '/services', icon: Wrench, label: t('services'), color: 'hsl(var(--service))' },
+    { path: '/statistics', icon: BarChart3, label: t('statistics'), color: 'hsl(var(--primary))' },
   ];
 
   const quickAddItems = [
@@ -51,7 +50,7 @@ export function BottomNavigation({
   };
 
   const leftItems = navItems.slice(0, 3); // Home, Habits, Tasks
-  const rightItems = navItems.slice(3); // Finance, Profile
+  const rightItems = navItems.slice(3); // Finance, Services, Statistics
 
   return (
     <>
@@ -120,7 +119,7 @@ export function BottomNavigation({
               key={item.path}
               onClick={() => handleNavClick(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-2 rounded-lg transition-colors min-w-[48px]",
+                "flex flex-col items-center justify-center py-2 px-1.5 rounded-lg transition-colors min-w-[40px]",
                 location.pathname === item.path
                   ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -128,7 +127,7 @@ export function BottomNavigation({
               style={location.pathname === item.path ? { color: item.color } : undefined}
             >
               <item.icon className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5 hidden sm:block">{item.label}</span>
+              <span className="text-[9px] mt-0.5 hidden sm:block">{item.label}</span>
             </button>
           ))}
 
@@ -136,24 +135,21 @@ export function BottomNavigation({
           <div className="relative">
             <motion.button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="w-12 h-12 sm:w-14 sm:h-14 rounded-full bg-primary flex items-center justify-center shadow-glow -mt-6"
+              className="w-11 h-11 sm:w-12 sm:h-12 rounded-full bg-primary flex items-center justify-center shadow-glow -mt-6"
               whileTap={{ scale: 0.95 }}
               animate={{ rotate: isMenuOpen ? 45 : 0 }}
             >
-              <Plus className="w-6 h-6 text-primary-foreground" />
+              <Plus className="w-5 h-5 text-primary-foreground" />
             </motion.button>
-            <span className="text-[10px] text-muted-foreground mt-0.5 hidden sm:block text-center absolute -bottom-4 left-1/2 -translate-x-1/2 whitespace-nowrap">
-              {t('new')}
-            </span>
           </div>
 
-          {/* Right side items: Finance, Services */}
+          {/* Right side items: Finance, Services, Statistics */}
           {rightItems.map((item) => (
             <button
               key={item.path}
               onClick={() => handleNavClick(item.path)}
               className={cn(
-                "flex flex-col items-center justify-center py-2 px-2 rounded-lg transition-colors min-w-[48px]",
+                "flex flex-col items-center justify-center py-2 px-1.5 rounded-lg transition-colors min-w-[40px]",
                 location.pathname === item.path
                   ? "text-foreground"
                   : "text-muted-foreground hover:text-foreground"
@@ -161,39 +157,9 @@ export function BottomNavigation({
               style={location.pathname === item.path ? { color: item.color } : undefined}
             >
               <item.icon className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5 hidden sm:block">{item.label}</span>
+              <span className="text-[9px] mt-0.5 hidden sm:block">{item.label}</span>
             </button>
           ))}
-
-          {/* Profile Avatar */}
-          <button
-            onClick={() => handleNavClick('/profile')}
-            className={cn(
-              "flex flex-col items-center justify-center py-2 px-2 rounded-lg transition-colors min-w-[48px]",
-              location.pathname === '/profile'
-                ? "text-foreground"
-                : "text-muted-foreground hover:text-foreground"
-            )}
-          >
-            <div className={cn(
-              "w-7 h-7 rounded-full flex items-center justify-center overflow-hidden border-2 transition-colors",
-              location.pathname === '/profile' 
-                ? "border-primary" 
-                : "border-muted"
-            )}>
-              {profile?.avatar_url ? (
-                <img 
-                  src={profile.avatar_url} 
-                  alt="" 
-                  className="w-full h-full object-cover" 
-                />
-              ) : (
-                <span className="text-xs font-semibold">
-                  {(profile?.display_name || user?.email || 'U')[0].toUpperCase()}
-                </span>
-              )}
-            </div>
-          </button>
         </div>
       </nav>
     </>

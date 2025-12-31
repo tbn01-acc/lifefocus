@@ -12,6 +12,7 @@ import Habits from "./pages/Habits";
 import Tasks from "./pages/Tasks";
 import Finance from "./pages/Finance";
 import Services from "./pages/Services";
+import Statistics from "./pages/Statistics";
 import Profile from "./pages/Profile";
 import Auth from "./pages/Auth";
 import Upgrade from "./pages/Upgrade";
@@ -56,6 +57,7 @@ const AppContent = () => {
           } 
         />
         <Route path="/services" element={<Services />} />
+        <Route path="/statistics" element={<Statistics />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/auth" element={<Auth />} />
         <Route path="/upgrade" element={<Upgrade />} />
