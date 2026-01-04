@@ -1,4 +1,4 @@
-# HabitFlow - Личный продуктивности PWA
+# Top-Focus - Личный помощник роста и контроля продуктивности (PWA)
 
 <p align="center">
   <img src="public/pwa-512x512.png" alt="HabitFlow Logo" width="128" height="128">
