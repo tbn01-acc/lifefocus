@@ -14,6 +14,99 @@ export type Database = {
   }
   public: {
     Tables: {
+      achievement_posts: {
+        Row: {
+          comments_count: number
+          created_at: string
+          description: string | null
+          dislikes_count: number
+          habit_id: string | null
+          id: string
+          image_url: string
+          is_visible: boolean
+          likes_count: number
+          task_id: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          comments_count?: number
+          created_at?: string
+          description?: string | null
+          dislikes_count?: number
+          habit_id?: string | null
+          id?: string
+          image_url: string
+          is_visible?: boolean
+          likes_count?: number
+          task_id?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          comments_count?: number
+          created_at?: string
+          description?: string | null
+          dislikes_count?: number
+          habit_id?: string | null
+          id?: string
+          image_url?: string
+          is_visible?: boolean
+          likes_count?: number
+          task_id?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_post_count: {
+        Row: {
+          created_at: string
+          id: string
+          post_count: number
+          post_date: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_count?: number
+          post_date: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_count?: number
+          post_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      daily_verified_tasks: {
+        Row: {
+          activity_date: string
+          created_at: string
+          id: string
+          user_id: string
+          verified_count: number
+        }
+        Insert: {
+          activity_date: string
+          created_at?: string
+          id?: string
+          user_id: string
+          verified_count?: number
+        }
+        Update: {
+          activity_date?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+          verified_count?: number
+        }
+        Relationships: []
+      }
       habits: {
         Row: {
           category_id: string | null
@@ -164,38 +257,167 @@ export type Database = {
         }
         Relationships: []
       }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_visible: boolean
+          post_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          post_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_visible?: boolean
+          post_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_reactions: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          reaction_type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          reaction_type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_reactions_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
+          ban_count: number | null
+          ban_until: string | null
+          bio: string | null
           created_at: string
           display_name: string | null
           id: string
+          is_banned: boolean | null
+          is_public: boolean | null
+          read_only_until: string | null
           referral_code: string | null
           referred_by: string | null
+          telegram_username: string | null
           updated_at: string
           user_id: string
         }
         Insert: {
           avatar_url?: string | null
+          ban_count?: number | null
+          ban_until?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          is_banned?: boolean | null
+          is_public?: boolean | null
+          read_only_until?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          telegram_username?: string | null
           updated_at?: string
           user_id: string
         }
         Update: {
           avatar_url?: string | null
+          ban_count?: number | null
+          ban_until?: string | null
+          bio?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          is_banned?: boolean | null
+          is_public?: boolean | null
+          read_only_until?: string | null
           referral_code?: string | null
           referred_by?: string | null
+          telegram_username?: string | null
           updated_at?: string
           user_id?: string
         }
         Relationships: []
+      }
+      purchased_rewards: {
+        Row: {
+          created_at: string
+          id: string
+          is_used: boolean | null
+          reward_id: string
+          stars_spent: number
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          reward_id: string
+          stars_spent: number
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_used?: boolean | null
+          reward_id?: string
+          stars_spent?: number
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "purchased_rewards_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "rewards_shop"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referral_activity_log: {
         Row: {
@@ -229,6 +451,8 @@ export type Database = {
           created_at: string
           earning_type: string
           id: string
+          milestone_bonus_rub: number | null
+          milestone_type: string | null
           payment_id: string | null
           referred_id: string
           referrer_id: string
@@ -240,6 +464,8 @@ export type Database = {
           created_at?: string
           earning_type: string
           id?: string
+          milestone_bonus_rub?: number | null
+          milestone_type?: string | null
           payment_id?: string | null
           referred_id: string
           referrer_id: string
@@ -251,6 +477,8 @@ export type Database = {
           created_at?: string
           earning_type?: string
           id?: string
+          milestone_bonus_rub?: number | null
+          milestone_type?: string | null
           payment_id?: string | null
           referred_id?: string
           referrer_id?: string
@@ -298,6 +526,72 @@ export type Database = {
           referred_id?: string
           referrer_id?: string
           total_time_minutes?: number | null
+        }
+        Relationships: []
+      }
+      rewards_shop: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          price_stars: number
+          reward_type: string
+          reward_value: Json | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          price_stars: number
+          reward_type: string
+          reward_value?: Json | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          price_stars?: number
+          reward_type?: string
+          reward_value?: Json | null
+        }
+        Relationships: []
+      }
+      star_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string | null
+          id: string
+          reference_id: string | null
+          timer_minutes: number | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          timer_minutes?: number | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          reference_id?: string | null
+          timer_minutes?: number | null
+          transaction_type?: string
+          user_id?: string
         }
         Relationships: []
       }
@@ -640,6 +934,45 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_stars: {
+        Row: {
+          created_at: string
+          current_streak_days: number
+          freeze_available: boolean | null
+          freeze_used_at: string | null
+          id: string
+          last_activity_date: string | null
+          longest_streak_days: number
+          total_stars: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          current_streak_days?: number
+          freeze_available?: boolean | null
+          freeze_used_at?: string | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak_days?: number
+          total_stars?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          current_streak_days?: number
+          freeze_available?: boolean | null
+          freeze_used_at?: string | null
+          id?: string
+          last_activity_date?: string | null
+          longest_streak_days?: number
+          total_stars?: number
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

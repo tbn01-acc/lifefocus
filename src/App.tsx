@@ -24,6 +24,8 @@ import Auth from "./pages/Auth";
 import Upgrade from "./pages/Upgrade";
 import Admin from "./pages/Admin";
 import TagPage from "./pages/TagPage";
+import Rating from "./pages/Rating";
+import RewardsShop from "./pages/RewardsShop";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -79,6 +81,8 @@ const AppContent = () => {
         <Route path="/upgrade" element={<Upgrade />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/tag/:tagId" element={<TagPage />} />
+        <Route path="/rating" element={<Rating />} />
+        <Route path="/rewards" element={<RewardsShop />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNavigation 
