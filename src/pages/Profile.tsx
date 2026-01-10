@@ -1,12 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { User, Settings, Trophy, Users, Crown, Lock, LogIn } from 'lucide-react';
+import { User, Settings, Trophy, Users, Crown, Lock, LogIn, Info } from 'lucide-react';
 import { AppHeader } from '@/components/AppHeader';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-
 interface TileProps {
   icon: React.ReactNode;
   title: string;

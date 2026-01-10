@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Check, MoreVertical, Pencil, Trash2, Repeat, Bell, ListTodo, Paperclip, StickyNote, Play, Square, Timer, Tag } from 'lucide-react';
+import { Check, MoreVertical, Pencil, Trash2, Repeat, Bell, ListTodo, Paperclip, StickyNote, Play, Square, Timer, Tag, Zap } from 'lucide-react';
 import { Task } from '@/types/task';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useUserTags } from '@/hooks/useUserTags';
@@ -15,6 +15,7 @@ import { usePomodoro } from '@/contexts/PomodoroContext';
 import { toast } from 'sonner';
 import { TaskDetailDialog } from './TaskDetailDialog';
 import { triggerCompletionCelebration } from '@/utils/celebrations';
+import { isBefore, startOfDay, parseISO, differenceInDays } from 'date-fns';
 
 interface TaskCardProps {
   task: Task;
@@ -90,7 +91,10 @@ export function TaskCard({
     monthly: t('recurrenceMonthly'),
   };
 
-  const isOverdue = !task.completed && new Date(task.dueDate) < new Date(new Date().toDateString());
+  const today = startOfDay(new Date());
+  const taskDueDate = startOfDay(parseISO(task.dueDate));
+  const isOverdue = !task.completed && task.status !== 'done' && isBefore(taskDueDate, today);
+  const daysOverdue = isOverdue ? differenceInDays(today, taskDueDate) : 0;
   const isToday = task.dueDate === new Date().toISOString().split('T')[0];
   const completedSubtasks = task.subtasks?.filter(st => st.completed).length || 0;
   const totalSubtasks = task.subtasks?.length || 0;
@@ -173,6 +177,13 @@ export function TaskCard({
 
             {/* Meta info */}
             <div className="flex items-center gap-2 mt-2 flex-wrap">
+              {/* Overdue Badge with Lightning */}
+              {isOverdue && (
+                <span className="inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full bg-destructive/20 text-destructive font-medium animate-pulse">
+                  <Zap className="w-3 h-3" />
+                  Просрочено {daysOverdue > 1 ? `(${daysOverdue} дн.)` : ''}
+                </span>
+              )}
               <span className={cn("text-xs px-2 py-0.5 rounded-full", statusColors[task.status])}>
                 {statusLabels[task.status]}
               </span>

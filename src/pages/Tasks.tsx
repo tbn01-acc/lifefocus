@@ -6,6 +6,8 @@ import { useTaskNotifications } from '@/hooks/useTaskNotifications';
 import { useTaskReminders } from '@/hooks/useTaskReminders';
 import { useTimeTracker } from '@/hooks/useTimeTracker';
 import { useUsageLimits } from '@/hooks/useUsageLimits';
+import { useOverdueNotifications } from '@/hooks/useOverdueNotifications';
+import { useOverdueTasks } from '@/hooks/useOverdueTasks';
 import { Task, TaskStatus } from '@/types/task';
 import { TaskCard } from '@/components/TaskCard';
 import { TaskDialog } from '@/components/TaskDialog';
@@ -62,6 +64,12 @@ export default function Tasks({ openDialog, onDialogClose }: TasksProps) {
 
   // Show notifications for overdue and high-priority tasks
   useTaskNotifications(tasks);
+  
+  // Show toast notifications for overdue tasks on app load
+  useOverdueNotifications(tasks);
+  
+  // Auto-move overdue tasks to today
+  useOverdueTasks(tasks, updateTask);
   
   // Task reminders with push notifications
   const { requestPermission } = useTaskReminders(tasks, updateTask);

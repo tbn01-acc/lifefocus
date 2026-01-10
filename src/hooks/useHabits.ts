@@ -1,6 +1,8 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Habit, HabitCategory, HabitTag, DEFAULT_HABIT_CATEGORIES, DEFAULT_HABIT_TAGS } from '@/types/habit';
 import { triggerCompletionCelebration } from '@/utils/celebrations';
+import { format, parseISO, isBefore, isAfter, startOfDay, subDays } from 'date-fns';
+import { toast } from 'sonner';
 
 const STORAGE_KEY = 'habitflow_habits';
 const CATEGORIES_KEY = 'habitflow_habit_categories';
@@ -99,6 +101,24 @@ export function useHabits() {
     const habit = habits.find(h => h.id === id);
     if (!habit) return null;
 
+    // Check date restrictions
+    const today = startOfDay(new Date());
+    const targetDate = startOfDay(parseISO(date));
+    const twoDaysAgo = startOfDay(subDays(today, 2));
+
+    // Cannot complete in the future
+    if (isAfter(targetDate, today)) {
+      toast.error('Нельзя отмечать привычки в будущем');
+      return null;
+    }
+
+    // Cannot complete more than 2 days in the past
+    if (isBefore(targetDate, twoDaysAgo)) {
+      toast.error('Можно отмечать выполнение только за последние 2 дня');
+      return null;
+    }
+
+    const isToday = format(targetDate, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd');
     const isCompleted = habit.completedDates.includes(date);
     let newCompletedDates: string[];
     
@@ -108,13 +128,19 @@ export function useHabits() {
       newCompletedDates = [...habit.completedDates, date];
       // Trigger celebration when completing
       triggerCompletionCelebration();
+      
+      // Show warning for past completions
+      if (!isToday) {
+        toast.info('Отметка за прошлые дни не учитывается в бонусах и серии');
+      }
     }
 
     const streak = calculateStreak(newCompletedDates, habit.targetDays);
     updateHabit(id, { completedDates: newCompletedDates, streak });
     
     // Return info about the toggle - !isCompleted means it was just completed
-    return { habitId: id, completed: !isCompleted };
+    // Only count as verified if completed today
+    return { habitId: id, completed: !isCompleted && isToday };
   }, [habits, updateHabit]);
 
   // Category management

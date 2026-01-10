@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Shield, Users, FileText, Crown, Search, AlertTriangle, Wallet } from 'lucide-react';
+import { Shield, Users, FileText, Crown, Search, AlertTriangle, Wallet, Settings, BarChart3, Tag, Gift, Ticket, ChevronDown, ChevronUp, Loader2, RefreshCw, Target, CheckSquare, Star, TrendingUp } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -7,13 +7,15 @@ import { useLegalDocuments } from '@/hooks/useLegalDocuments';
 import { supabase } from '@/integrations/supabase/client';
 import { AppHeader } from '@/components/AppHeader';
 import { PageHeader } from '@/components/PageHeader';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 import { AdminReferrals } from '@/components/admin/AdminReferrals';
 import {
   Select,
@@ -32,7 +34,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from '@/components/ui/collapsible';
 import { toast } from 'sonner';
+import { motion } from 'framer-motion';
+import { format } from 'date-fns';
 
 interface UserWithRole {
   id: string;
@@ -40,6 +49,26 @@ interface UserWithRole {
   display_name: string | null;
   role: 'admin' | 'moderator' | 'user' | null;
   created_at: string;
+}
+
+interface AppStats {
+  totalUsers: number;
+  activeUsers: number;
+  proUsers: number;
+  totalHabits: number;
+  totalTasks: number;
+  totalStars: number;
+  rewardsSpent: number;
+}
+
+interface PromoCode {
+  id: string;
+  code: string;
+  discount_percent: number;
+  valid_until: string;
+  max_uses: number;
+  current_uses: number;
+  is_active: boolean;
 }
 
 export default function Admin() {
@@ -55,10 +84,22 @@ export default function Admin() {
   const [roleToAssign, setRoleToAssign] = useState<string>('');
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   
+  // Stats
+  const [stats, setStats] = useState<AppStats | null>(null);
+  const [statsLoading, setStatsLoading] = useState(true);
+  
   // Document editing
   const [editingDoc, setEditingDoc] = useState<string | null>(null);
   const [docTitle, setDocTitle] = useState('');
   const [docContent, setDocContent] = useState('');
+  
+  // Promo codes (mock data for now)
+  const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
+  const [promoLoading, setPromoLoading] = useState(false);
+  
+  // Settings sections
+  const [bonusSettingsOpen, setBonusSettingsOpen] = useState(false);
+  const [limitSettingsOpen, setLimitSettingsOpen] = useState(false);
 
   const isRussian = language === 'ru';
 
@@ -68,6 +109,60 @@ export default function Admin() {
       navigate('/');
     }
   }, [isAdmin, docsLoading, navigate]);
+
+  // Fetch stats
+  useEffect(() => {
+    const fetchStats = async () => {
+      if (!isAdmin) return;
+      setStatsLoading(true);
+      
+      try {
+        // Get user count
+        const { count: userCount } = await supabase
+          .from('profiles')
+          .select('*', { count: 'exact', head: true });
+        
+        // Get subscription stats
+        const { data: subs } = await supabase
+          .from('subscriptions')
+          .select('plan')
+          .eq('plan', 'pro');
+        
+        // Get star transactions
+        const { data: starData } = await supabase
+          .from('user_stars')
+          .select('total_stars');
+        
+        const totalStars = starData?.reduce((sum, u) => sum + (u.total_stars || 0), 0) || 0;
+        
+        // Get habits count
+        const { count: habitsCount } = await supabase
+          .from('habits')
+          .select('*', { count: 'exact', head: true });
+        
+        // Get tasks count  
+        const { count: tasksCount } = await supabase
+          .from('tasks')
+          .select('*', { count: 'exact', head: true });
+        
+        setStats({
+          totalUsers: userCount || 0,
+          activeUsers: Math.floor((userCount || 0) * 0.7), // Estimate
+          proUsers: subs?.length || 0,
+          totalHabits: habitsCount || 0,
+          totalTasks: tasksCount || 0,
+          totalStars: totalStars,
+          rewardsSpent: 0 // TODO: calculate from purchased_rewards
+        });
+      } catch (error) {
+        console.error('Error fetching stats:', error);
+      } finally {
+        setStatsLoading(false);
+      }
+    };
+    
+    fetchStats();
+  }, [isAdmin]);
 
   // Fetch users with their roles
   useEffect(() => {
@@ -94,7 +189,7 @@ export default function Admin() {
           const userRole = roles?.find(r => r.user_id === profile.user_id);
           return {
             id: profile.user_id,
-            email: '', // We don't have access to email from profiles
+            email: '',
             display_name: profile.display_name,
             role: userRole?.role || null,
             created_at: profile.created_at,
@@ -118,7 +213,6 @@ export default function Admin() {
 
     try {
       if (roleToAssign === 'remove') {
-        // Remove role
         const { error } = await supabase
           .from('user_roles')
           .delete()
@@ -126,7 +220,6 @@ export default function Admin() {
 
         if (error) throw error;
       } else {
-        // Upsert role
         const { error } = await supabase
           .from('user_roles')
           .upsert({
@@ -137,7 +230,6 @@ export default function Admin() {
         if (error) throw error;
       }
 
-      // Update local state
       setUsers(users.map(u => 
         u.id === selectedUser.id 
           ? { ...u, role: roleToAssign === 'remove' ? null : roleToAssign as any }
@@ -204,24 +296,160 @@ export default function Admin() {
           icon={<Shield className="w-5 h-5 text-red-500" />}
           iconBgClass="bg-red-500/10"
           title={isRussian ? 'Панель администратора' : 'Admin Panel'}
-          subtitle={isRussian ? 'Управление пользователями и документами' : 'Manage users and documents'}
+          subtitle={isRussian ? 'Полное управление приложением' : 'Full app management'}
         />
 
-        <Tabs defaultValue="users" className="mt-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="users" className="gap-2">
+        <Tabs defaultValue="stats" className="mt-6">
+          <TabsList className="grid w-full grid-cols-5 h-auto">
+            <TabsTrigger value="stats" className="flex flex-col gap-1 py-2 text-xs">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRussian ? 'Статистика' : 'Stats'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="users" className="flex flex-col gap-1 py-2 text-xs">
               <Users className="w-4 h-4" />
-              {isRussian ? 'Пользователи' : 'Users'}
+              <span className="hidden sm:inline">{isRussian ? 'Пользователи' : 'Users'}</span>
             </TabsTrigger>
-            <TabsTrigger value="referrals" className="gap-2">
+            <TabsTrigger value="referrals" className="flex flex-col gap-1 py-2 text-xs">
               <Wallet className="w-4 h-4" />
-              {isRussian ? 'Рефералы' : 'Referrals'}
+              <span className="hidden sm:inline">{isRussian ? 'Рефералы' : 'Referrals'}</span>
             </TabsTrigger>
-            <TabsTrigger value="documents" className="gap-2">
+            <TabsTrigger value="settings" className="flex flex-col gap-1 py-2 text-xs">
+              <Settings className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRussian ? 'Настройки' : 'Settings'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="documents" className="flex flex-col gap-1 py-2 text-xs">
               <FileText className="w-4 h-4" />
-              {isRussian ? 'Документы' : 'Documents'}
+              <span className="hidden sm:inline">{isRussian ? 'Документы' : 'Docs'}</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Stats Tab */}
+          <TabsContent value="stats" className="mt-4 space-y-4">
+            {statsLoading ? (
+              <div className="flex justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
+              </div>
+            ) : stats && (
+              <>
+                {/* Key Metrics Grid */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <Card className="bg-gradient-to-br from-blue-500/10 to-blue-600/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-blue-500/20">
+                            <Users className="w-5 h-5 text-blue-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold">{stats.totalUsers}</p>
+                            <p className="text-xs text-muted-foreground">{isRussian ? 'Всего пользователей' : 'Total Users'}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1 }}
+                  >
+                    <Card className="bg-gradient-to-br from-amber-500/10 to-amber-600/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-amber-500/20">
+                            <Crown className="w-5 h-5 text-amber-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold">{stats.proUsers}</p>
+                            <p className="text-xs text-muted-foreground">{isRussian ? 'PRO подписчики' : 'PRO Users'}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <Card className="bg-gradient-to-br from-green-500/10 to-green-600/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-green-500/20">
+                            <Target className="w-5 h-5 text-green-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold">{stats.totalHabits}</p>
+                            <p className="text-xs text-muted-foreground">{isRussian ? 'Привычек' : 'Habits'}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                  >
+                    <Card className="bg-gradient-to-br from-purple-500/10 to-purple-600/5">
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-3">
+                          <div className="p-2 rounded-lg bg-purple-500/20">
+                            <CheckSquare className="w-5 h-5 text-purple-500" />
+                          </div>
+                          <div>
+                            <p className="text-2xl font-bold">{stats.totalTasks}</p>
+                            <p className="text-xs text-muted-foreground">{isRussian ? 'Задач' : 'Tasks'}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                </div>
+
+                {/* Additional Stats */}
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="text-base flex items-center gap-2">
+                      <TrendingUp className="w-4 h-4" />
+                      {isRussian ? 'Дополнительная статистика' : 'Additional Stats'}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-3">
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        <span className="text-sm">{isRussian ? 'Всего звёзд заработано' : 'Total Stars Earned'}</span>
+                      </div>
+                      <span className="font-bold">{stats.totalStars.toLocaleString()}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <Gift className="w-4 h-4 text-pink-500" />
+                        <span className="text-sm">{isRussian ? 'Наград потрачено' : 'Rewards Spent'}</span>
+                      </div>
+                      <span className="font-bold">{stats.rewardsSpent}</span>
+                    </div>
+                    <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                      <div className="flex items-center gap-2">
+                        <TrendingUp className="w-4 h-4 text-green-500" />
+                        <span className="text-sm">{isRussian ? 'Конверсия в PRO' : 'PRO Conversion'}</span>
+                      </div>
+                      <span className="font-bold">
+                        {stats.totalUsers > 0 ? ((stats.proUsers / stats.totalUsers) * 100).toFixed(1) : 0}%
+                      </span>
+                    </div>
+                  </CardContent>
+                </Card>
+              </>
+            )}
+          </TabsContent>
 
           {/* Users Tab */}
           <TabsContent value="users" className="mt-4">
@@ -315,6 +543,149 @@ export default function Admin() {
           {/* Referrals Tab */}
           <TabsContent value="referrals" className="mt-4">
             <AdminReferrals />
+          </TabsContent>
+
+          {/* Settings Tab */}
+          <TabsContent value="settings" className="mt-4 space-y-4">
+            {/* Bonus Settings */}
+            <Collapsible open={bonusSettingsOpen} onOpenChange={setBonusSettingsOpen}>
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardTitle className="text-base flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Star className="w-4 h-4 text-yellow-500" />
+                        {isRussian ? 'Бонусная программа' : 'Bonus Program'}
+                      </div>
+                      {bonusSettingsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </CardTitle>
+                    <CardDescription>
+                      {isRussian ? 'Настройки начисления звёзд и бонусов' : 'Stars and bonus settings'}
+                    </CardDescription>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4 pt-0">
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Звёзды за ежедневный вход' : 'Stars for daily login'}</Label>
+                        <Input type="number" defaultValue="1" className="w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Звёзды за выполнение привычки' : 'Stars for habit completion'}</Label>
+                        <Input type="number" defaultValue="1" className="w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Звёзды за выполнение задачи' : 'Stars for task completion'}</Label>
+                        <Input type="number" defaultValue="1" className="w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Множитель за серию (7 дней)' : 'Streak multiplier (7 days)'}</Label>
+                        <Input type="number" defaultValue="2" className="w-20 text-right" />
+                      </div>
+                    </div>
+                    <Button className="w-full">{isRussian ? 'Сохранить настройки' : 'Save Settings'}</Button>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            {/* Limit Settings */}
+            <Collapsible open={limitSettingsOpen} onOpenChange={setLimitSettingsOpen}>
+              <Card>
+                <CollapsibleTrigger asChild>
+                  <CardHeader className="cursor-pointer hover:bg-muted/50 transition-colors">
+                    <CardTitle className="text-base flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Settings className="w-4 h-4" />
+                        {isRussian ? 'Лимиты FREE тарифа' : 'FREE Tier Limits'}
+                      </div>
+                      {limitSettingsOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </CardTitle>
+                    <CardDescription>
+                      {isRussian ? 'Ограничения для бесплатных пользователей' : 'Restrictions for free users'}
+                    </CardDescription>
+                  </CardHeader>
+                </CollapsibleTrigger>
+                <CollapsibleContent>
+                  <CardContent className="space-y-4 pt-0">
+                    <div className="grid gap-4">
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Макс. привычек' : 'Max habits'}</Label>
+                        <Input type="number" defaultValue="3" className="w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Макс. задач' : 'Max tasks'}</Label>
+                        <Input type="number" defaultValue="5" className="w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Макс. операций/месяц' : 'Max operations/month'}</Label>
+                        <Input type="number" defaultValue="15" className="w-20 text-right" />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Разрешить подзадачи' : 'Allow subtasks'}</Label>
+                        <Switch defaultChecked={false} />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Разрешить вложения' : 'Allow attachments'}</Label>
+                        <Switch defaultChecked={false} />
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <Label>{isRussian ? 'Разрешить регулярность' : 'Allow recurrence'}</Label>
+                        <Switch defaultChecked={false} />
+                      </div>
+                    </div>
+                    <Button className="w-full">{isRussian ? 'Сохранить настройки' : 'Save Settings'}</Button>
+                  </CardContent>
+                </CollapsibleContent>
+              </Card>
+            </Collapsible>
+
+            {/* Promo Codes */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Ticket className="w-4 h-4 text-purple-500" />
+                  {isRussian ? 'Промо-коды' : 'Promo Codes'}
+                </CardTitle>
+                <CardDescription>
+                  {isRussian ? 'Создание и управление промо-кодами' : 'Create and manage promo codes'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input placeholder={isRussian ? 'Код' : 'Code'} />
+                    <Input type="number" placeholder={isRussian ? 'Скидка %' : 'Discount %'} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <Input type="date" placeholder={isRussian ? 'Действует до' : 'Valid until'} />
+                    <Input type="number" placeholder={isRussian ? 'Макс. использований' : 'Max uses'} />
+                  </div>
+                  <Button className="w-full">
+                    {isRussian ? 'Создать промо-код' : 'Create Promo Code'}
+                  </Button>
+                </div>
+                
+                {promoCodes.length > 0 && (
+                  <div className="mt-4 space-y-2">
+                    {promoCodes.map(code => (
+                      <div key={code.id} className="flex items-center justify-between p-3 rounded-lg border">
+                        <div>
+                          <p className="font-mono font-bold">{code.code}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {code.discount_percent}% • {code.current_uses}/{code.max_uses}
+                          </p>
+                        </div>
+                        <Badge variant={code.is_active ? 'default' : 'secondary'}>
+                          {code.is_active ? (isRussian ? 'Активен' : 'Active') : (isRussian ? 'Неактивен' : 'Inactive')}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Documents Tab */}

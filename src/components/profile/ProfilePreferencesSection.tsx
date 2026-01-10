@@ -185,9 +185,9 @@ export function ProfilePreferencesSection() {
             ) : ownedFrames.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
                 {isRussian ? (
-                  <>У вас пока нет рамок. Купите их в <Link to="/rewards" className="text-primary hover:underline font-medium">магазине наград</Link>!</>
+                  <>У вас пока нет рамок. Купите их в <Link to="/rating" className="text-primary hover:underline font-medium">магазине наград</Link>!</>
                 ) : (
-                  <>You don't have any frames yet. Buy them in the <Link to="/rewards" className="text-primary hover:underline font-medium">rewards shop</Link>!</>
+                  <>You don't have any frames yet. Buy them in the <Link to="/rating" className="text-primary hover:underline font-medium">rewards shop</Link>!</>
                 )}
               </p>
             ) : (
@@ -268,7 +268,11 @@ export function ProfilePreferencesSection() {
               </div>
             ) : ownedBadges.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                {isRussian ? 'У вас пока нет бейджей. Купите их в магазине наград!' : 'You don\'t have any badges yet. Buy them in the rewards shop!'}
+                {isRussian ? (
+                  <>У вас пока нет бейджей. Купите их в <Link to="/rating" className="text-primary hover:underline font-medium">магазине наград</Link>!</>
+                ) : (
+                  <>You don't have any badges yet. Buy them in the <Link to="/rating" className="text-primary hover:underline font-medium">rewards shop</Link>!</>
+                )}
               </p>
             ) : (
               <div className="grid grid-cols-2 gap-2">
