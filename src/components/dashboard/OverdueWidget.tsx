@@ -42,32 +42,32 @@ export function OverdueWidget({ overdueHabits, overdueTasks, overdueTransactions
                     {total}
                   </Badge>
                 </div>
-                <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                <div className="flex items-center gap-6 text-xs text-muted-foreground mt-1">
                   {overdueHabits > 0 && (
                     <button 
                       onClick={() => navigate('/habits')}
-                      className="flex items-center gap-1 hover:text-amber-500 transition-colors"
+                      className="flex items-center gap-1.5 hover:text-amber-500 transition-colors"
                     >
-                      <Target className="w-3 h-3" />
-                      <span>{overdueHabits}</span>
+                      <Target className="w-5 h-5" />
+                      <span className="font-medium">{overdueHabits}</span>
                     </button>
                   )}
                   {overdueTasks > 0 && (
                     <button 
                       onClick={() => navigate('/tasks')}
-                      className="flex items-center gap-1 hover:text-amber-500 transition-colors"
+                      className="flex items-center gap-1.5 hover:text-amber-500 transition-colors"
                     >
-                      <CheckSquare className="w-3 h-3" />
-                      <span>{overdueTasks}</span>
+                      <CheckSquare className="w-5 h-5" />
+                      <span className="font-medium">{overdueTasks}</span>
                     </button>
                   )}
                   {overdueTransactions > 0 && (
                     <button 
                       onClick={() => navigate('/finance')}
-                      className="flex items-center gap-1 hover:text-amber-500 transition-colors"
+                      className="flex items-center gap-1.5 hover:text-amber-500 transition-colors"
                     >
-                      <Wallet className="w-3 h-3" />
-                      <span>{overdueTransactions}</span>
+                      <Wallet className="w-5 h-5" />
+                      <span className="font-medium">{overdueTransactions}</span>
                     </button>
                   )}
                 </div>

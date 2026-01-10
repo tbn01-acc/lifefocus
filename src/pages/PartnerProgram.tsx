@@ -282,9 +282,18 @@ export default function PartnerProgram() {
                         : 'When paying for subscription or gift code'}
                     </div>
                   </div>
-                  <Badge variant="outline" className="text-purple-500 border-purple-500/30">
-                    +50%
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="text-purple-500 border-purple-500/30">
+                      +50%
+                    </Badge>
+                    <Button
+                      size="sm"
+                      onClick={() => navigate('/upgrade?bonus=true')}
+                      className="bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-white text-xs"
+                    >
+                      {isRussian ? 'Оплатить' : 'Pay'}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

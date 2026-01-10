@@ -37,7 +37,7 @@ export function WithdrawalForm() {
   const [history, setHistory] = useState<WithdrawalHistoryItem[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
 
-  const minWithdrawal = 500;
+  const minWithdrawal = 1000;
   const balance = wallet?.balance_rub || 0;
 
   const fetchHistory = async () => {

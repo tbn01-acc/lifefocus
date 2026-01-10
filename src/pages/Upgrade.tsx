@@ -1,19 +1,22 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Crown, Check, ArrowLeft, CreditCard, Smartphone, Building2, Gift, Clock } from 'lucide-react';
+import { Crown, Check, ArrowLeft, CreditCard, Smartphone, Building2, Gift, Clock, Tag, Wallet } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { Input } from '@/components/ui/input';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
+import { usePromoCodes } from '@/hooks/usePromoCodes';
+import { useReferralProgram } from '@/hooks/useReferralProgram';
 import { toast } from 'sonner';
 
 type PlanPeriod = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'biennial' | 'lifetime';
-type PaymentMethod = 'card' | 'sbp' | 'bank';
+type PaymentMethod = 'card' | 'sbp' | 'bank' | 'bonus';
 
 interface PricingPlan {
   period: PlanPeriod;
@@ -56,22 +59,69 @@ const freeFeatures = [
 
 export default function Upgrade() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { user } = useAuth();
   const { isInTrial, trialDaysLeft, trialBonusMonths } = useSubscription();
   const { language } = useTranslation();
+  const { validatePromoCode, usePromoCode } = usePromoCodes();
+  const { wallet } = useReferralProgram();
   const isRussian = language === 'ru';
 
   const [selectedPlan, setSelectedPlan] = useState<PlanPeriod>('annual');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('card');
+  const [promoCode, setPromoCode] = useState('');
+  const [promoDiscount, setPromoDiscount] = useState(0);
+  const [promoLoading, setPromoLoading] = useState(false);
+  const [appliedPromoId, setAppliedPromoId] = useState<string | null>(null);
+
+  // Check if user came from bonus payment link
+  const useBonusPayment = searchParams.get('bonus') === 'true';
+  const bonusBalance = wallet?.balance_rub || 0;
+  const bonusMultiplier = 1.5;
+  const effectiveBonusBalance = bonusBalance * bonusMultiplier;
+
+  useEffect(() => {
+    if (useBonusPayment && bonusBalance >= 266) {
+      setPaymentMethod('bonus');
+    }
+  }, [useBonusPayment, bonusBalance]);
 
   const selectedPlanData = pricingPlans.find(p => p.period === selectedPlan)!;
   const showBonus = isInTrial && trialBonusMonths > 0 && selectedPlanData.bonusEligible;
 
-  const handlePurchase = () => {
+  const handleApplyPromo = async () => {
+    if (!promoCode.trim()) return;
+    setPromoLoading(true);
+    const validation = await validatePromoCode(promoCode.trim().toUpperCase());
+    setPromoLoading(false);
+
+    if (validation.valid && validation.promo) {
+      setPromoDiscount(validation.promo.discount_percent);
+      setAppliedPromoId(validation.promo.id);
+      toast.success(isRussian ? `Промокод применён: -${validation.promo.discount_percent}%` : `Promo code applied: -${validation.promo.discount_percent}%`);
+    } else {
+      toast.error(validation.error || (isRussian ? 'Неверный промокод' : 'Invalid promo code'));
+    }
+  };
+
+  const getFinalPrice = () => {
+    const basePrice = selectedPlanData.priceRub;
+    if (promoDiscount > 0) {
+      return Math.round(basePrice * (1 - promoDiscount / 100));
+    }
+    return basePrice;
+  };
+
+  const handlePurchase = async () => {
     if (!user) {
       toast.error(isRussian ? 'Войдите в аккаунт для покупки' : 'Sign in to purchase');
       navigate('/auth');
       return;
+    }
+
+    // Mark promo code as used if applied
+    if (appliedPromoId) {
+      await usePromoCode(appliedPromoId);
     }
 
     // TODO: Integrate with payment provider
@@ -236,6 +286,39 @@ export default function Upgrade() {
           </CardContent>
         </Card>
 
+        {/* Promo Code */}
+        <Card className="mb-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Tag className="w-4 h-4 text-purple-500" />
+              {isRussian ? 'Промокод' : 'Promo Code'}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex gap-2">
+              <Input
+                placeholder={isRussian ? 'Введите промокод' : 'Enter promo code'}
+                value={promoCode}
+                onChange={(e) => setPromoCode(e.target.value.toUpperCase())}
+                className="font-mono"
+              />
+              <Button 
+                onClick={handleApplyPromo} 
+                disabled={promoLoading || !promoCode.trim()}
+                variant="outline"
+              >
+                {promoLoading ? '...' : (isRussian ? 'Применить' : 'Apply')}
+              </Button>
+            </div>
+            {promoDiscount > 0 && (
+              <div className="mt-2 flex items-center gap-2 text-green-500 text-sm">
+                <Check className="w-4 h-4" />
+                {isRussian ? `Скидка ${promoDiscount}% применена` : `${promoDiscount}% discount applied`}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Payment Method */}
         <Card className="mb-6">
           <CardHeader className="pb-2">
@@ -299,6 +382,32 @@ export default function Upgrade() {
                     </div>
                   </div>
                 </Label>
+
+                {/* Bonus balance payment option */}
+                {bonusBalance >= 266 && (
+                  <Label
+                    htmlFor="bonus"
+                    className={`flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all ${
+                      paymentMethod === 'bonus' ? 'border-purple-500 bg-purple-500/5' : 'border-border hover:border-purple-500/50'
+                    }`}
+                  >
+                    <RadioGroupItem value="bonus" id="bonus" />
+                    <Wallet className="w-5 h-5 text-purple-500" />
+                    <div className="flex-1">
+                      <div className="font-medium text-foreground flex items-center gap-2">
+                        {isRussian ? 'Бонусные рубли' : 'Bonus Rubles'}
+                        <Badge className="bg-purple-500/20 text-purple-500 text-xs">
+                          x{bonusMultiplier}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {isRussian 
+                          ? `${bonusBalance}₽ × ${bonusMultiplier} = ${Math.round(effectiveBonusBalance)}₽ доступно`
+                          : `${bonusBalance}₽ × ${bonusMultiplier} = ${Math.round(effectiveBonusBalance)}₽ available`}
+                      </div>
+                    </div>
+                  </Label>
+                )}
               </div>
             </RadioGroup>
           </CardContent>
@@ -313,10 +422,18 @@ export default function Upgrade() {
                   {isRussian ? 'К оплате:' : 'Total:'}
                 </div>
                 <div className="text-2xl font-bold text-foreground">
-                  {isRussian 
-                    ? `${selectedPlanData.priceRub.toLocaleString()} ₽`
-                    : `$${selectedPlanData.priceUsd}`
-                  }
+                  {promoDiscount > 0 ? (
+                    <>
+                      <span className="line-through text-muted-foreground text-lg mr-2">
+                        {selectedPlanData.priceRub.toLocaleString()} ₽
+                      </span>
+                      {getFinalPrice().toLocaleString()} ₽
+                    </>
+                  ) : (
+                    isRussian 
+                      ? `${selectedPlanData.priceRub.toLocaleString()} ₽`
+                      : `$${selectedPlanData.priceUsd}`
+                  )}
                 </div>
                 {showBonus && (
                   <div className="text-sm text-green-500 font-medium">

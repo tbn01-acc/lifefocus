@@ -30,6 +30,43 @@ import { ru } from 'date-fns/locale';
 import { triggerPurchaseCelebration } from '@/utils/celebrations';
 import { toast } from 'sonner';
 
+// Import HD images
+import badgeStar from '@/assets/rewards/badge-star.png';
+import badgeFire from '@/assets/rewards/badge-fire.png';
+import badgeDiamond from '@/assets/rewards/badge-diamond.png';
+import badgeCrown from '@/assets/rewards/badge-crown.png';
+import frameGold from '@/assets/rewards/frame-gold.png';
+import frameFire from '@/assets/rewards/frame-fire.png';
+import frameNeon from '@/assets/rewards/frame-neon.png';
+import frameDiamond from '@/assets/rewards/frame-diamond.png';
+import avatarPro from '@/assets/rewards/avatar-pro.png';
+import avatarRobot from '@/assets/rewards/avatar-robot.png';
+
+// HD image mapping by reward_value id
+const REWARD_IMAGES: Record<string, string> = {
+  // Badges
+  'badge_star': badgeStar,
+  'badge_fire': badgeFire,
+  'badge_diamond': badgeDiamond,
+  'badge_crown': badgeCrown,
+  'star': badgeStar,
+  'fire': badgeFire,
+  'diamond': badgeDiamond,
+  'crown': badgeCrown,
+  // Frames
+  'frame_gold': frameGold,
+  'frame_fire': frameFire,
+  'frame_neon': frameNeon,
+  'frame_diamond': frameDiamond,
+  'gold': frameGold,
+  'neon': frameNeon,
+  // Avatars
+  'avatar_pro': avatarPro,
+  'avatar_robot': avatarRobot,
+  'pro': avatarPro,
+  'robot': avatarRobot,
+};
+
 // Category filter config
 const CATEGORY_FILTERS = [
   { id: 'all', icon: Sparkles, color: 'bg-gradient-to-r from-violet-500 to-purple-500' },
@@ -49,6 +86,50 @@ interface RewardsShopTabProps {
   purchaseReward: (rewardId: string) => Promise<boolean>;
   useReward: (purchasedRewardId: string) => Promise<boolean>;
   getUnusedRewards: () => PurchasedReward[];
+}
+
+// Helper function to get HD image for a reward
+function getRewardImage(reward: ShopReward): string | null {
+  const rewardValue = reward.reward_value as Record<string, string> | null;
+  if (!rewardValue) return null;
+  
+  const ids = [
+    rewardValue.badge_id,
+    rewardValue.frame_id,
+    rewardValue.avatar_id,
+    rewardValue.icon_id,
+    rewardValue.id,
+  ].filter(Boolean);
+  
+  for (const id of ids) {
+    if (id && REWARD_IMAGES[id]) {
+      return REWARD_IMAGES[id];
+    }
+  }
+  
+  // Try matching by reward name
+  const nameLower = reward.name.toLowerCase();
+  for (const [key, image] of Object.entries(REWARD_IMAGES)) {
+    if (nameLower.includes(key.replace('_', ' '))) {
+      return image;
+    }
+  }
+  
+  return null;
+}
+
+// Helper to get icon fallback
+function getRewardIcon(type: string) {
+  switch (type) {
+    case 'freeze': return <Snowflake className="h-8 w-8 text-blue-500" />;
+    case 'pro_discount': return <Percent className="h-8 w-8 text-green-500" />;
+    case 'theme': return <Palette className="h-8 w-8 text-purple-500" />;
+    case 'avatar': return <User className="h-8 w-8 text-pink-500" />;
+    case 'frame': return <Frame className="h-8 w-8 text-amber-500" />;
+    case 'icon': return <Zap className="h-8 w-8 text-yellow-500" />;
+    case 'badge': return <Award className="h-8 w-8 text-red-500" />;
+    default: return <Gift className="h-8 w-8 text-primary" />;
+  }
 }
 
 export function RewardsShopTab({
@@ -80,19 +161,6 @@ export function RewardsShopTab({
       frame: { ru: 'Рамки', en: 'Frames' },
     };
     return labels[id] ? (isRussian ? labels[id].ru : labels[id].en) : id;
-  };
-
-  const getRewardIcon = (type: string) => {
-    switch (type) {
-      case 'freeze': return <Snowflake className="h-8 w-8 text-blue-500" />;
-      case 'pro_discount': return <Percent className="h-8 w-8 text-green-500" />;
-      case 'theme': return <Palette className="h-8 w-8 text-purple-500" />;
-      case 'avatar': return <User className="h-8 w-8 text-pink-500" />;
-      case 'frame': return <Frame className="h-8 w-8 text-amber-500" />;
-      case 'icon': return <Zap className="h-8 w-8 text-yellow-500" />;
-      case 'badge': return <Award className="h-8 w-8 text-red-500" />;
-      default: return <Gift className="h-8 w-8 text-primary" />;
-    }
   };
 
   const getRewardTypeLabel = (type: string) => {
@@ -242,7 +310,15 @@ export function RewardsShopTab({
                       <CardContent className="p-3 sm:p-4">
                         <div className="flex items-start gap-3 sm:gap-4">
                           <div className="p-2 sm:p-3 bg-muted rounded-lg flex-shrink-0">
-                            {getRewardIcon(reward.reward_type)}
+                            {getRewardImage(reward) ? (
+                              <img 
+                                src={getRewardImage(reward)!} 
+                                alt={reward.name}
+                                className="h-12 w-12 sm:h-14 sm:w-14 object-contain rounded"
+                              />
+                            ) : (
+                              getRewardIcon(reward.reward_type)
+                            )}
                           </div>
                           
                           <div className="flex-1 min-w-0">

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Gift, Trophy, Newspaper, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ReferralModal } from '@/components/ReferralModal';
+import { WeatherModal } from '@/components/WeatherModal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { UserAvatarWithFrame } from '@/components/rewards/UserAvatarWithFrame';
 import { UserBadges } from '@/components/rewards/UserBadges';
@@ -21,6 +22,7 @@ export function AppHeader() {
   const { userStars } = useStars();
   const { t } = useTranslation();
   const [referralModalOpen, setReferralModalOpen] = useState(false);
+  const [weatherModalOpen, setWeatherModalOpen] = useState(false);
 
   const userName = profile?.display_name || user?.email?.split('@')[0] || t('guest');
 
@@ -48,10 +50,13 @@ export function AppHeader() {
             {/* Center: Weather + Streak */}
             <div className="flex items-center gap-3">
               {!weatherLoading && weather && (
-                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                <button 
+                  onClick={() => setWeatherModalOpen(true)}
+                  className="flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+                >
                   <span className="text-base">{getWeatherIcon(weather.weatherCode, weather.isDay)}</span>
                   <span className="font-medium">{weather.temperature}°C</span>
-                </div>
+                </button>
               )}
               
               {/* Streak Display only */}
@@ -120,6 +125,11 @@ export function AppHeader() {
       <ReferralModal 
         open={referralModalOpen} 
         onOpenChange={setReferralModalOpen} 
+      />
+
+      <WeatherModal
+        open={weatherModalOpen}
+        onOpenChange={setWeatherModalOpen}
       />
     </>
   );
