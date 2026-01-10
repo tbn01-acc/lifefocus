@@ -1,15 +1,18 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useLeaderboard, PublicProfile } from '@/hooks/useLeaderboard';
 import { useAchievementsFeed } from '@/hooks/useAchievementsFeed';
 import { useStars } from '@/hooks/useStars';
 import { useAuth } from '@/hooks/useAuth';
 import { useRewardsShop } from '@/hooks/useRewardsShop';
+import { fetchUserRewardItemsBatch, UserRewardItems } from '@/hooks/useUserRewardItems';
 import { AppHeader } from '@/components/AppHeader';
 import { AchievementPublishDialog } from '@/components/AchievementPublishDialog';
 import { PublicProfileEditDialog } from '@/components/profile/PublicProfileEditDialog';
 import { ContactsGatedDialog } from '@/components/profile/ContactsGatedDialog';
 import { RewardsShopTab } from '@/components/rewards/RewardsShopTab';
+import { UserAvatarWithFrame } from '@/components/rewards/UserAvatarWithFrame';
+import { UserBadges } from '@/components/rewards/UserBadges';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -54,6 +57,15 @@ export default function Rating() {
   const [showProfileEditDialog, setShowProfileEditDialog] = useState(false);
   const [showContactsDialog, setShowContactsDialog] = useState(false);
   const [contactsProfile, setContactsProfile] = useState<PublicProfile | null>(null);
+  const [userRewards, setUserRewards] = useState<Map<string, UserRewardItems>>(new Map());
+
+  // Fetch reward items for leaderboard users
+  useEffect(() => {
+    if (leaderboard.length > 0) {
+      const userIds = leaderboard.map(u => u.user_id);
+      fetchUserRewardItemsBatch(userIds).then(setUserRewards);
+    }
+  }, [leaderboard]);
 
   const handleUserClick = async (userId: string) => {
     setProfileLoading(true);
@@ -171,22 +183,28 @@ export default function Rating() {
                             {getRankIcon(leaderboardUser.rank)}
                           </div>
                           
-                          <Avatar>
-                            <AvatarImage src={leaderboardUser.avatar_url || undefined} />
-                            <AvatarFallback>
-                              <User className="h-4 w-4" />
-                            </AvatarFallback>
-                          </Avatar>
+                          <UserAvatarWithFrame
+                            avatarUrl={leaderboardUser.avatar_url}
+                            displayName={leaderboardUser.display_name}
+                            frameId={userRewards.get(leaderboardUser.user_id)?.activeFrame}
+                            size="md"
+                          />
                           
                           <div className="flex-1 min-w-0">
-                            <p className="font-medium truncate">
-                              {leaderboardUser.display_name}
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium truncate">
+                                {leaderboardUser.display_name}
+                              </p>
                               {leaderboardUser.is_current_user && (
-                                <Badge variant="outline" className="ml-2 text-xs">
+                                <Badge variant="outline" className="text-xs shrink-0">
                                   {isRussian ? 'Вы' : 'You'}
                                 </Badge>
                               )}
-                            </p>
+                              <UserBadges 
+                                badgeIds={userRewards.get(leaderboardUser.user_id)?.activeBadges || []}
+                                maxDisplay={2}
+                              />
+                            </div>
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Flame className="h-3 w-3 text-orange-500" />

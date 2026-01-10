@@ -9,7 +9,7 @@ import { HabitCard } from '@/components/HabitCard';
 import { HabitDialog } from '@/components/HabitDialog';
 import { PageHeader } from '@/components/PageHeader';
 import { ViewTabs, ViewType } from '@/components/ViewTabs';
-import { CalendarView } from '@/components/CalendarView';
+import { CalendarViewNew } from '@/components/CalendarViewNew';
 import { ProgressView } from '@/components/ProgressView';
 import { GenericSettingsDialog } from '@/components/GenericSettingsDialog';
 import { ExportButtons } from '@/components/ExportButtons';
@@ -278,10 +278,11 @@ export default function Habits({ openDialog, onDialogClose }: HabitsProps) {
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: 10 }}
               >
-                <CalendarView 
+                <CalendarViewNew 
                   habits={filteredHabits} 
                   onToggle={toggleHabitCompletion}
                   initialPeriod="7"
+                  firstDayOfWeek={1}
                 />
               </motion.div>
             )}

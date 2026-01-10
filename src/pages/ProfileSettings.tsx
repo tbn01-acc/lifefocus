@@ -7,6 +7,7 @@ import { TrialStatusCard } from '@/components/profile/TrialStatusCard';
 import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
 import { CommonTagsManager } from '@/components/profile/CommonTagsManager';
 import { SettingsSection } from '@/components/profile/SettingsSection';
+import { ThemeSwitcher } from '@/components/profile/ThemeSwitcher';
 import { AppHeader } from '@/components/AppHeader';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -141,6 +142,16 @@ export default function ProfileSettings() {
             onSync={syncAll}
             isSyncing={isSyncing}
           />
+        </motion.div>
+
+        {/* Theme Switcher */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.2 }}
+          className="mt-8"
+        >
+          <ThemeSwitcher />
         </motion.div>
 
         {/* Common Tags */}
