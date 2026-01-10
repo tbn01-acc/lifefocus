@@ -25,37 +25,44 @@ interface EarningsCalculatorProps {
 // VIP (200+): One-time 5000₽ bonus
 
 function calculateAffiliateEarnings(paidReferrals: number, avgPayment: number) {
+  // Calculate commissions in rubles
   let commissions = 0;
-  let milestones = 0;
   
-  // Calculate commissions
-  for (let i = 1; i <= paidReferrals; i++) {
-    const commission = i <= 50 ? 0.20 : 0.30;
-    commissions += avgPayment * commission;
+  // Level 1: first 50 referrals at 20%
+  const level1Count = Math.min(paidReferrals, 50);
+  commissions += level1Count * avgPayment * 0.20;
+  
+  // Level 2: referrals after 50 at 30%
+  if (paidReferrals > 50) {
+    const level2Count = paidReferrals - 50;
+    commissions += level2Count * avgPayment * 0.30;
   }
   
-  // Calculate milestone bonuses
+  // Calculate milestone bonuses in rubles (cumulative)
+  let milestones = 0;
   if (paidReferrals >= 10) milestones += 500;
   if (paidReferrals >= 20) milestones += 500;
   if (paidReferrals >= 30) milestones += 500;
   if (paidReferrals >= 40) milestones += 500;
   if (paidReferrals >= 50) milestones += 1000;
   
-  // Level 2 milestones (every 25 after 50)
+  // Level 2 milestones: +1000₽ for every 25 referrals after 50
   if (paidReferrals > 50) {
     const level2Milestones = Math.floor((paidReferrals - 50) / 25);
     milestones += level2Milestones * 1000;
   }
   
-  // VIP bonus
+  // VIP bonus at 200+ referrals
   if (paidReferrals >= 200) {
     milestones += 5000;
   }
   
+  const totalRubles = Math.round(commissions) + milestones;
+  
   return {
     commissions: Math.round(commissions),
     milestones,
-    total: Math.round(commissions) + milestones,
+    total: totalRubles,
     level: paidReferrals <= 50 ? 1 : 2,
     commissionPercent: paidReferrals <= 50 ? 20 : 30,
     isVIP: paidReferrals >= 200

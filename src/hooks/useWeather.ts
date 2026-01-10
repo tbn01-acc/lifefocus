@@ -6,6 +6,40 @@ interface WeatherData {
   isDay: boolean;
 }
 
+interface CachedLocation {
+  lat: number;
+  lon: number;
+  timestamp: number;
+}
+
+const LOCATION_CACHE_KEY = 'user_location_cache';
+const LOCATION_CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+function getCachedLocation(): CachedLocation | null {
+  try {
+    const cached = localStorage.getItem(LOCATION_CACHE_KEY);
+    if (cached) {
+      const parsed = JSON.parse(cached) as CachedLocation;
+      // Check if cache is still valid
+      if (Date.now() - parsed.timestamp < LOCATION_CACHE_DURATION) {
+        return parsed;
+      }
+    }
+  } catch {
+    // Ignore cache errors
+  }
+  return null;
+}
+
+function setCachedLocation(lat: number, lon: number) {
+  try {
+    const data: CachedLocation = { lat, lon, timestamp: Date.now() };
+    localStorage.setItem(LOCATION_CACHE_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore cache errors
+  }
+}
+
 export function useWeather() {
   const [weather, setWeather] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,11 +65,21 @@ export function useWeather() {
       }
     };
 
-    // Try to get user's location
+    // Check for cached location first
+    const cachedLocation = getCachedLocation();
+    if (cachedLocation) {
+      fetchWeather(cachedLocation.lat, cachedLocation.lon);
+      return;
+    }
+
+    // Try to get user's location (only if not cached)
     if (navigator.geolocation) {
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          fetchWeather(position.coords.latitude, position.coords.longitude);
+          const { latitude, longitude } = position.coords;
+          // Cache the location
+          setCachedLocation(latitude, longitude);
+          fetchWeather(latitude, longitude);
         },
         () => {
           // Default to Moscow if location denied

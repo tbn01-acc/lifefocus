@@ -146,33 +146,34 @@ export default function PartnerProgram() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
           >
-            <Card className="mb-6">
+            <Card className="mb-6 overflow-hidden">
               <CardHeader className="pb-2">
                 <CardTitle className="text-base flex items-center gap-2">
                   <Gift className="w-4 h-4 text-purple-500" />
-                  {isRussian ? 'Ваша реферальная ссылка' : 'Your Referral Link'}
+                  {isRussian ? 'Ваша ссылка' : 'Your Link'}
                 </CardTitle>
               </CardHeader>
-              <CardContent>
-                <div className="flex gap-4">
-                  <div className="bg-white p-2 rounded-lg shrink-0">
-                    <QRCodeSVG value={referralLink} size={80} />
+              <CardContent className="space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white p-1.5 rounded-lg shrink-0">
+                    <QRCodeSVG value={referralLink} size={64} />
                   </div>
-                  <div className="flex-1 space-y-3">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 bg-muted rounded-lg px-3 py-2 text-xs font-mono truncate">
-                        {referralLink}
+                  <div className="flex-1 min-w-0 space-y-2">
+                    <div className="flex items-center gap-1.5">
+                      <div className="flex-1 bg-muted rounded-lg px-2 py-1.5 text-[11px] font-mono truncate min-w-0">
+                        {referralCode ? `...?ref=${referralCode}` : '...'}
                       </div>
-                      <Button variant="outline" size="icon" onClick={handleCopy}>
-                        {copied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                      <Button variant="outline" size="icon" className="h-8 w-8 shrink-0" onClick={handleCopy}>
+                        {copied ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
                       </Button>
                     </div>
                     <Button 
-                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600"
+                      size="sm"
+                      className="w-full bg-gradient-to-r from-purple-500 to-pink-500 hover:from-purple-600 hover:to-pink-600 text-sm"
                       onClick={() => setShowInviteModal(true)}
                     >
-                      <Share2 className="w-4 h-4 mr-2" />
-                      {isRussian ? 'Пригласить друзей' : 'Invite Friends'}
+                      <Share2 className="w-3.5 h-3.5 mr-1.5" />
+                      {isRussian ? 'Поделиться' : 'Share'}
                     </Button>
                   </div>
                 </div>

@@ -7,11 +7,12 @@ import { useWeather, getWeatherIcon } from '@/hooks/useWeather';
 import { useStars } from '@/hooks/useStars';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { ReferralModal } from '@/components/ReferralModal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
+import { UserAvatarWithFrame } from '@/components/rewards/UserAvatarWithFrame';
+import { UserBadges } from '@/components/rewards/UserBadges';
 
 export function AppHeader() {
   const navigate = useNavigate();
@@ -22,25 +23,27 @@ export function AppHeader() {
   const [referralModalOpen, setReferralModalOpen] = useState(false);
 
   const userName = profile?.display_name || user?.email?.split('@')[0] || t('guest');
-  const userInitials = userName.slice(0, 2).toUpperCase();
+
+  // Get active frame and badges from profile
+  const activeFrame = (profile as any)?.active_frame || null;
+  const activeBadges = (profile as any)?.active_badges || [];
 
   return (
     <>
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-2">
-            {/* Left: Avatar */}
-            <button 
-              onClick={() => navigate('/profile')} 
-              className="shrink-0 focus:outline-none focus:ring-2 focus:ring-primary rounded-full"
-            >
-              <Avatar className="w-10 h-10 border-2 border-primary/20 hover:border-primary/50 transition-colors">
-                <AvatarImage src={profile?.avatar_url || undefined} />
-                <AvatarFallback className="bg-primary/10 text-primary font-medium text-sm">
-                  {userInitials}
-                </AvatarFallback>
-              </Avatar>
-            </button>
+            {/* Left: Avatar with frame and badges */}
+            <div className="flex items-center gap-2 shrink-0">
+              <UserAvatarWithFrame
+                avatarUrl={profile?.avatar_url}
+                displayName={userName}
+                frameId={activeFrame}
+                size="md"
+                onClick={() => navigate('/profile')}
+              />
+              <UserBadges badgeIds={activeBadges} maxDisplay={2} size="sm" />
+            </div>
 
             {/* Center: Weather + Stars */}
             <div className="flex items-center gap-3">
