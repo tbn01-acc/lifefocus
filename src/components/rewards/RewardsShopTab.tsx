@@ -39,13 +39,19 @@ import frameGold from '@/assets/rewards/frame-gold.png';
 import frameFire from '@/assets/rewards/frame-fire.png';
 import frameNeon from '@/assets/rewards/frame-neon.png';
 import frameDiamond from '@/assets/rewards/frame-diamond.png';
+import framePlatinum from '@/assets/rewards/frame-platinum.png';
+import frameRainbow from '@/assets/rewards/frame-rainbow.png';
 import avatarPro from '@/assets/rewards/avatar-pro.png';
 import avatarRobot from '@/assets/rewards/avatar-robot.png';
 import avatarOwl from '@/assets/rewards/avatar-owl.png';
 import avatarNinja from '@/assets/rewards/avatar-ninja.png';
+import avatarAstronaut from '@/assets/rewards/avatar-astronaut.png';
+import avatarWizard from '@/assets/rewards/avatar-wizard.png';
 import iconLightning from '@/assets/rewards/icon-lightning.png';
 import iconHeart from '@/assets/rewards/icon-heart.png';
 import iconRocket from '@/assets/rewards/icon-rocket.png';
+import iconStar from '@/assets/rewards/icon-star.png';
+import iconShield from '@/assets/rewards/icon-shield.png';
 
 // HD image mapping by reward_value id
 const REWARD_IMAGES: Record<string, string> = {
@@ -63,24 +69,36 @@ const REWARD_IMAGES: Record<string, string> = {
   'frame_fire': frameFire,
   'frame_neon': frameNeon,
   'frame_diamond': frameDiamond,
+  'frame_platinum': framePlatinum,
+  'frame_rainbow': frameRainbow,
   'gold': frameGold,
   'neon': frameNeon,
+  'platinum': framePlatinum,
+  'rainbow': frameRainbow,
   // Avatars
   'avatar_pro': avatarPro,
   'avatar_robot': avatarRobot,
   'avatar_owl': avatarOwl,
   'avatar_ninja': avatarNinja,
+  'avatar_astronaut': avatarAstronaut,
+  'avatar_wizard': avatarWizard,
   'pro': avatarPro,
   'robot': avatarRobot,
   'owl': avatarOwl,
   'ninja': avatarNinja,
+  'astronaut': avatarAstronaut,
+  'wizard': avatarWizard,
   // Icons
   'icon_lightning': iconLightning,
   'icon_heart': iconHeart,
   'icon_rocket': iconRocket,
+  'icon_star': iconStar,
+  'icon_shield': iconShield,
   'lightning': iconLightning,
   'heart': iconHeart,
   'rocket': iconRocket,
+  'star_icon': iconStar,
+  'shield': iconShield,
 };
 
 // Category filter config
