@@ -16,5 +16,5 @@ jobs:
 
       - name: Push to Project B
         run: |
-          git remote add destination https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/tbn01-acc/habbitracker-cff940fb
+          git remote add destination https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/tbn01-acc/habbitracker-cff940fb.git
           git push destination main --force
