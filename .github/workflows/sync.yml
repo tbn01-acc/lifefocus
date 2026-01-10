@@ -1,0 +1,20 @@
+name: Sync to Project B
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.SYNC_TOKEN }}
+
+      - name: Push to Project B
+        run: |
+          git remote add destination https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/tbn01-acc/habbitracker-cff940fb
+          git push destination main --force
