@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { X, Plus, Bell, BellOff, Repeat, ListTodo, Paperclip } from 'lucide-react';
+import { X, Plus, Bell, BellOff, Repeat, ListTodo, Paperclip, Lock, Crown } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Task, TaskCategory, TaskTag, TaskStatus, TaskRecurrence, TaskReminder, SubTask, TaskAttachment, TASK_ICONS, TASK_COLORS } from '@/types/task';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -12,6 +13,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { getNotificationPermissionStatus } from '@/hooks/useTaskReminders';
 import { useAuth } from '@/hooks/useAuth';
+import { useUsageLimits } from '@/hooks/useUsageLimits';
 
 interface TaskDialogProps {
   open: boolean;
@@ -27,6 +29,8 @@ interface TaskDialogProps {
 
 export function TaskDialog({ open, onClose, onSave, task, categories, tags, onAddCategory, onAddTag, onRequestNotificationPermission }: TaskDialogProps) {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { freeFeatureRestrictions, hasProAccess } = useUsageLimits();
   const [name, setName] = useState('');
   const [icon, setIcon] = useState(TASK_ICONS[0]);
   const [color, setColor] = useState(TASK_COLORS[0]);
@@ -48,7 +52,31 @@ export function TaskDialog({ open, onClose, onSave, task, categories, tags, onAd
   const [showNewTag, setShowNewTag] = useState(false);
   const [showSubtasks, setShowSubtasks] = useState(false);
   const [showAttachments, setShowAttachments] = useState(false);
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
+  const isRussian = language === 'ru';
+
+  // PRO feature blocker component
+  const ProFeatureBlock = ({ feature }: { feature: string }) => (
+    <div className="mt-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+      <div className="flex items-center gap-2 text-sm">
+        <Lock className="w-4 h-4 text-primary" />
+        <span className="text-muted-foreground">
+          {isRussian 
+            ? `${feature} доступны только в PRO` 
+            : `${feature} available in PRO only`}
+        </span>
+      </div>
+      <Button
+        variant="outline"
+        size="sm"
+        className="mt-2 w-full gap-2 border-primary/30 text-primary hover:bg-primary/10"
+        onClick={() => navigate('/upgrade')}
+      >
+        <Crown className="w-4 h-4" />
+        {isRussian ? 'Перейти на PRO' : 'Upgrade to PRO'}
+      </Button>
+    </div>
+  );
 
   useEffect(() => {
     if (task) {
@@ -271,23 +299,30 @@ export function TaskDialog({ open, onClose, onSave, task, categories, tags, onAd
               <label className="block text-sm font-medium text-foreground mb-2">
                 <Repeat className="w-4 h-4 inline mr-1" />
                 {t('recurrence')}
+                {!freeFeatureRestrictions.recurrenceEnabled && (
+                  <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">PRO</span>
+                )}
               </label>
-              <div className="flex gap-2 flex-wrap">
-                {recurrenceOptions.map((r) => (
-                  <button
-                    key={r.value}
-                    onClick={() => setRecurrence(r.value)}
-                    className={cn(
-                      "py-2 px-3 rounded-xl text-xs font-medium transition-all",
-                      recurrence === r.value
-                        ? "bg-task text-white"
-                        : "bg-muted text-muted-foreground hover:bg-muted/80"
-                    )}
-                  >
-                    {r.label}
-                  </button>
-                ))}
-              </div>
+              {freeFeatureRestrictions.recurrenceEnabled ? (
+                <div className="flex gap-2 flex-wrap">
+                  {recurrenceOptions.map((r) => (
+                    <button
+                      key={r.value}
+                      onClick={() => setRecurrence(r.value)}
+                      className={cn(
+                        "py-2 px-3 rounded-xl text-xs font-medium transition-all",
+                        recurrence === r.value
+                          ? "bg-task text-white"
+                          : "bg-muted text-muted-foreground hover:bg-muted/80"
+                      )}
+                    >
+                      {r.label}
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <ProFeatureBlock feature={isRussian ? 'Повторяющиеся задачи' : 'Recurring tasks'} />
+              )}
             </div>
 
             {/* Reminder */}
@@ -319,19 +354,27 @@ export function TaskDialog({ open, onClose, onSave, task, categories, tags, onAd
             <div className="mb-4">
               <button
                 type="button"
-                onClick={() => setShowSubtasks(!showSubtasks)}
+                onClick={() => freeFeatureRestrictions.subtasksEnabled && setShowSubtasks(!showSubtasks)}
                 className={cn(
                   "flex items-center gap-2 text-sm font-medium transition-colors",
+                  !freeFeatureRestrictions.subtasksEnabled && "opacity-60 cursor-not-allowed",
                   showSubtasks ? "text-task" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <ListTodo className="w-4 h-4" />
                 {t('subtasks')} {subtasks.length > 0 && `(${subtasks.length})`}
+                {!freeFeatureRestrictions.subtasksEnabled && (
+                  <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">PRO</span>
+                )}
               </button>
-              {showSubtasks && (
-                <div className="mt-2 pl-2 border-l-2 border-task/30">
-                  <SubtaskList subtasks={subtasks} onChange={setSubtasks} />
-                </div>
+              {freeFeatureRestrictions.subtasksEnabled ? (
+                showSubtasks && (
+                  <div className="mt-2 pl-2 border-l-2 border-task/30">
+                    <SubtaskList subtasks={subtasks} onChange={setSubtasks} />
+                  </div>
+                )
+              ) : (
+                <ProFeatureBlock feature={isRussian ? 'Подзадачи' : 'Subtasks'} />
               )}
             </div>
 
@@ -339,23 +382,31 @@ export function TaskDialog({ open, onClose, onSave, task, categories, tags, onAd
             <div className="mb-4">
               <button
                 type="button"
-                onClick={() => setShowAttachments(!showAttachments)}
+                onClick={() => freeFeatureRestrictions.attachmentsEnabled && setShowAttachments(!showAttachments)}
                 className={cn(
                   "flex items-center gap-2 text-sm font-medium transition-colors",
+                  !freeFeatureRestrictions.attachmentsEnabled && "opacity-60 cursor-not-allowed",
                   showAttachments ? "text-task" : "text-muted-foreground hover:text-foreground"
                 )}
               >
                 <Paperclip className="w-4 h-4" />
                 {t('attachments')} {attachments.length > 0 && `(${attachments.length})`}
+                {!freeFeatureRestrictions.attachmentsEnabled && (
+                  <span className="ml-1 text-xs px-1.5 py-0.5 rounded bg-primary/10 text-primary">PRO</span>
+                )}
               </button>
-              {showAttachments && (
-                <div className="mt-2 pl-2 border-l-2 border-task/30">
-                  <TaskAttachments 
-                    attachments={attachments} 
-                    notes={notes}
-                    onChange={handleAttachmentsChange}
-                  />
-                </div>
+              {freeFeatureRestrictions.attachmentsEnabled ? (
+                showAttachments && (
+                  <div className="mt-2 pl-2 border-l-2 border-task/30">
+                    <TaskAttachments 
+                      attachments={attachments} 
+                      notes={notes}
+                      onChange={handleAttachmentsChange}
+                    />
+                  </div>
+                )
+              ) : (
+                <ProFeatureBlock feature={isRussian ? 'Вложения' : 'Attachments'} />
               )}
             </div>
 

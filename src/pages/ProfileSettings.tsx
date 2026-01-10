@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Edit2, Tags, ArrowLeft, Cloud, Settings, Sliders, Volume2, Sparkles, Shield } from 'lucide-react';
+import { LogOut, Edit2, Tags, ArrowLeft, Cloud, Settings, Sliders, Volume2, Sparkles, Shield, HardDrive } from 'lucide-react';
 import { SyncHistoryPanel } from '@/components/SyncHistory';
 import { TrialStatusCard } from '@/components/profile/TrialStatusCard';
 import { ProfileEditDialog } from '@/components/profile/ProfileEditDialog';
@@ -9,6 +9,7 @@ import { CommonTagsManager } from '@/components/profile/CommonTagsManager';
 import { SettingsSection } from '@/components/profile/SettingsSection';
 import { ThemeSwitcher } from '@/components/profile/ThemeSwitcher';
 import { ProfilePreferencesSection } from '@/components/profile/ProfilePreferencesSection';
+import { BackupSection } from '@/components/profile/BackupSection';
 import { AppHeader } from '@/components/AppHeader';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
@@ -16,6 +17,7 @@ import { useSupabaseSync } from '@/hooks/useSupabaseSync';
 import { useSubscription } from '@/hooks/useSubscription';
 import { useCelebrationSettings } from '@/hooks/useCelebrationSettings';
 import { useLegalDocuments } from '@/hooks/useLegalDocuments';
+import { usePageCaching } from '@/hooks/usePageCaching';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
@@ -270,6 +272,24 @@ export default function ProfileSettings() {
             <h2 className="text-lg font-semibold text-foreground">{t('commonTags')}</h2>
           </div>
           <CommonTagsManager />
+        </motion.div>
+
+        {/* Backup */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.28 }}
+          className="mt-8"
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+              <HardDrive className="w-4 h-4 text-blue-500" />
+            </div>
+            <h2 className="text-lg font-semibold text-foreground">
+              {isRussian ? 'Резервное копирование' : 'Backup'}
+            </h2>
+          </div>
+          <BackupSection />
         </motion.div>
 
         {/* Settings */}
