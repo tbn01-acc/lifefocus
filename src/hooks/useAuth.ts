@@ -9,6 +9,7 @@ interface Profile {
   avatar_url: string | null;
   referral_code: string | null;
   referred_by: string | null;
+  created_at: string;
 }
 
 export function useAuth() {
