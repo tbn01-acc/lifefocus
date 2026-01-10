@@ -93,9 +93,10 @@ export function useHabits() {
     saveHabits(habits.filter(h => h.id !== id));
   }, [habits, saveHabits]);
 
-  const toggleHabitCompletion = useCallback((id: string, date: string) => {
+  // Toggle habit completion - returns habitId and wasCompleted for star awarding
+  const toggleHabitCompletion = useCallback((id: string, date: string): { habitId: string; completed: boolean } | null => {
     const habit = habits.find(h => h.id === id);
-    if (!habit) return;
+    if (!habit) return null;
 
     const isCompleted = habit.completedDates.includes(date);
     let newCompletedDates: string[];
@@ -108,6 +109,9 @@ export function useHabits() {
 
     const streak = calculateStreak(newCompletedDates, habit.targetDays);
     updateHabit(id, { completedDates: newCompletedDates, streak });
+    
+    // Return info about the toggle - !isCompleted means it was just completed
+    return { habitId: id, completed: !isCompleted };
   }, [habits, updateHabit]);
 
   // Category management

@@ -1,13 +1,15 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, Trophy } from 'lucide-react';
+import { Gift, Trophy, Star, Flame } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useWeather, getWeatherIcon } from '@/hooks/useWeather';
+import { useStars } from '@/hooks/useStars';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { ReferralModal } from '@/components/ReferralModal';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 
@@ -15,6 +17,7 @@ export function AppHeader() {
   const navigate = useNavigate();
   const { profile, user } = useAuth();
   const { weather, loading: weatherLoading } = useWeather();
+  const { userStars } = useStars();
   const { t } = useTranslation();
   const [referralModalOpen, setReferralModalOpen] = useState(false);
 
@@ -39,13 +42,36 @@ export function AppHeader() {
               </Avatar>
             </button>
 
-            {/* Center: Weather */}
-            {!weatherLoading && weather && (
-              <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                <span className="text-base">{getWeatherIcon(weather.weatherCode, weather.isDay)}</span>
-                <span className="font-medium">{weather.temperature}°C</span>
-              </div>
-            )}
+            {/* Center: Weather + Stars */}
+            <div className="flex items-center gap-3">
+              {!weatherLoading && weather && (
+                <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                  <span className="text-base">{getWeatherIcon(weather.weatherCode, weather.isDay)}</span>
+                  <span className="font-medium">{weather.temperature}°C</span>
+                </div>
+              )}
+              
+              {/* Stars & Streak Display */}
+              {userStars && (
+                <motion.div 
+                  className="flex items-center gap-2 cursor-pointer"
+                  onClick={() => navigate('/star-history')}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Badge variant="secondary" className="gap-1 px-2 py-1">
+                    <Star className="h-3.5 w-3.5 text-yellow-500 fill-yellow-500" />
+                    <span className="font-semibold text-sm">{userStars.total_stars}</span>
+                  </Badge>
+                  {userStars.current_streak_days > 0 && (
+                    <Badge variant="outline" className="gap-1 px-2 py-1 border-orange-500/50">
+                      <Flame className="h-3.5 w-3.5 text-orange-500" />
+                      <span className="font-semibold text-sm">{userStars.current_streak_days}</span>
+                    </Badge>
+                  )}
+                </motion.div>
+              )}
+            </div>
 
             {/* Right: Rating + Theme + Invite */}
             <div className="flex items-center gap-1 sm:gap-2">

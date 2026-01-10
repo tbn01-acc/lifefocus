@@ -26,6 +26,7 @@ import Admin from "./pages/Admin";
 import TagPage from "./pages/TagPage";
 import Rating from "./pages/Rating";
 import RewardsShop from "./pages/RewardsShop";
+import StarHistory from "./pages/StarHistory";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -83,6 +84,7 @@ const AppContent = () => {
         <Route path="/tag/:tagId" element={<TagPage />} />
         <Route path="/rating" element={<Rating />} />
         <Route path="/rewards" element={<RewardsShop />} />
+        <Route path="/star-history" element={<StarHistory />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNavigation 

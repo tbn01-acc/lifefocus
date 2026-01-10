@@ -7,6 +7,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { AppHeader } from '@/components/AppHeader';
 import { AchievementPublishDialog } from '@/components/AchievementPublishDialog';
 import { PublicProfileEditDialog } from '@/components/profile/PublicProfileEditDialog';
+import { ContactsGatedDialog } from '@/components/profile/ContactsGatedDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -16,7 +17,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Trophy, Star, Flame, ThumbsUp, ThumbsDown, MessageCircle, Send, Crown, Medal, Award, User, ExternalLink, Plus, Settings } from 'lucide-react';
+import { Trophy, Star, Flame, ThumbsUp, ThumbsDown, MessageCircle, Send, Crown, Medal, Award, User, Plus, Settings, Phone } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -48,6 +49,8 @@ export default function Rating() {
   const [commentsLoading, setCommentsLoading] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [showProfileEditDialog, setShowProfileEditDialog] = useState(false);
+  const [showContactsDialog, setShowContactsDialog] = useState(false);
+  const [contactsProfile, setContactsProfile] = useState<PublicProfile | null>(null);
 
   const handleUserClick = async (userId: string) => {
     setProfileLoading(true);
@@ -73,6 +76,12 @@ export default function Rating() {
       const updatedComments = await fetchComments(selectedPost);
       setComments(updatedComments);
     }
+  };
+
+  const handleGetContacts = (profile: PublicProfile) => {
+    setContactsProfile(profile);
+    setShowContactsDialog(true);
+    setSelectedProfile(null);
   };
 
   const getRankIcon = (rank: number) => {
@@ -137,26 +146,26 @@ export default function Rating() {
             ) : (
               <div className="space-y-2">
                 <AnimatePresence>
-                  {leaderboard.map((user, index) => (
+                  {leaderboard.map((leaderboardUser, index) => (
                     <motion.div
-                      key={user.user_id}
+                      key={leaderboardUser.user_id}
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: index * 0.02 }}
                     >
                       <Card 
                         className={`cursor-pointer hover:bg-accent/50 transition-colors ${
-                          user.is_current_user ? 'ring-2 ring-primary' : ''
+                          leaderboardUser.is_current_user ? 'ring-2 ring-primary' : ''
                         }`}
-                        onClick={() => handleUserClick(user.user_id)}
+                        onClick={() => handleUserClick(leaderboardUser.user_id)}
                       >
                         <CardContent className="flex items-center gap-4 p-4">
                           <div className="w-8 flex justify-center">
-                            {getRankIcon(user.rank)}
+                            {getRankIcon(leaderboardUser.rank)}
                           </div>
                           
                           <Avatar>
-                            <AvatarImage src={user.avatar_url || undefined} />
+                            <AvatarImage src={leaderboardUser.avatar_url || undefined} />
                             <AvatarFallback>
                               <User className="h-4 w-4" />
                             </AvatarFallback>
@@ -164,8 +173,8 @@ export default function Rating() {
                           
                           <div className="flex-1 min-w-0">
                             <p className="font-medium truncate">
-                              {user.display_name}
-                              {user.is_current_user && (
+                              {leaderboardUser.display_name}
+                              {leaderboardUser.is_current_user && (
                                 <Badge variant="outline" className="ml-2 text-xs">
                                   {isRussian ? 'Вы' : 'You'}
                                 </Badge>
@@ -174,14 +183,14 @@ export default function Rating() {
                             <div className="flex items-center gap-3 text-sm text-muted-foreground">
                               <span className="flex items-center gap-1">
                                 <Flame className="h-3 w-3 text-orange-500" />
-                                {user.current_streak_days}d
+                                {leaderboardUser.current_streak_days}d
                               </span>
                             </div>
                           </div>
                           
                           <div className="flex items-center gap-1 text-lg font-semibold">
                             <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                            {user.total_stars}
+                            {leaderboardUser.total_stars}
                           </div>
                         </CardContent>
                       </Card>
@@ -397,18 +406,19 @@ export default function Rating() {
                   </AvatarFallback>
                 </Avatar>
                 
-                <div>
+                <div className="flex-1">
                   <h3 className="text-lg font-semibold">{selectedProfile.display_name}</h3>
-                  {selectedProfile.telegram_username && (
-                    <a 
-                      href={`https://t.me/${selectedProfile.telegram_username}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-sm text-primary flex items-center gap-1"
+                  {/* Show "Get Contacts" button instead of direct contact info */}
+                  {(selectedProfile.telegram_username) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="mt-2 gap-2"
+                      onClick={() => handleGetContacts(selectedProfile)}
                     >
-                      @{selectedProfile.telegram_username}
-                      <ExternalLink className="h-3 w-3" />
-                    </a>
+                      <Phone className="h-4 w-4" />
+                      {isRussian ? 'Получить контакты' : 'Get Contacts'}
+                    </Button>
                   )}
                 </div>
               </div>
@@ -446,6 +456,14 @@ export default function Rating() {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Contacts Gated Dialog */}
+      <ContactsGatedDialog
+        open={showContactsDialog}
+        onOpenChange={setShowContactsDialog}
+        telegramUsername={contactsProfile?.telegram_username || null}
+        displayName={contactsProfile?.display_name || null}
+      />
 
       {/* Comments Dialog */}
       <Dialog open={!!selectedPost} onOpenChange={() => setSelectedPost(null)}>
@@ -489,17 +507,23 @@ export default function Rating() {
             )}
           </ScrollArea>
           
-          <div className="flex gap-2 pt-4 border-t">
-            <Textarea
-              placeholder={isRussian ? 'Написать комментарий...' : 'Write a comment...'}
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              className="min-h-[40px] resize-none"
-            />
-            <Button size="icon" onClick={handleAddComment} disabled={!newComment.trim()}>
-              <Send className="h-4 w-4" />
-            </Button>
-          </div>
+          {user ? (
+            <div className="flex gap-2 pt-4 border-t">
+              <Textarea
+                placeholder={isRussian ? 'Написать комментарий...' : 'Write a comment...'}
+                value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                className="min-h-[40px] resize-none"
+              />
+              <Button size="icon" onClick={handleAddComment} disabled={!newComment.trim()}>
+                <Send className="h-4 w-4" />
+              </Button>
+            </div>
+          ) : (
+            <p className="text-center text-sm text-muted-foreground py-4">
+              {isRussian ? 'Войдите, чтобы оставить комментарий' : 'Sign in to comment'}
+            </p>
+          )}
         </DialogContent>
       </Dialog>
 
