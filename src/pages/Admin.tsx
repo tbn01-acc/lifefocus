@@ -48,7 +48,7 @@ interface UserWithRole {
   id: string;
   email: string;
   display_name: string | null;
-  role: 'admin' | 'moderator' | 'user' | null;
+  role: 'admin' | 'moderator' | 'user' | 'team' | null;
   created_at: string;
 }
 
@@ -218,14 +218,35 @@ export default function Admin() {
 
         if (error) throw error;
       } else {
+        // First delete existing role
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', selectedUser.id);
+
+        // Then insert new role
         const { error } = await supabase
           .from('user_roles')
-          .upsert({
+          .insert({
             user_id: selectedUser.id,
-            role: roleToAssign as 'admin' | 'moderator' | 'user',
-          }, { onConflict: 'user_id,role' });
+            role: roleToAssign as 'admin' | 'moderator' | 'user' | 'team',
+          });
 
         if (error) throw error;
+
+        // If role is 'team', also grant PRO subscription
+        if (roleToAssign === 'team') {
+          await supabase
+            .from('subscriptions')
+            .upsert({
+              user_id: selectedUser.id,
+              plan: 'pro',
+              period: 'lifetime',
+              started_at: new Date().toISOString(),
+              expires_at: null,
+              bonus_days: 0,
+            }, { onConflict: 'user_id' });
+        }
       }
 
       setUsers(users.map(u => 
@@ -272,6 +293,7 @@ export default function Admin() {
     switch (role) {
       case 'admin': return 'bg-red-500/10 text-red-500 border-red-500/30';
       case 'moderator': return 'bg-blue-500/10 text-blue-500 border-blue-500/30';
+      case 'team': return 'bg-purple-500/10 text-purple-500 border-purple-500/30';
       case 'user': return 'bg-green-500/10 text-green-500 border-green-500/30';
       default: return 'bg-muted text-muted-foreground';
     }
@@ -526,6 +548,7 @@ export default function Admin() {
                               <SelectContent>
                                 <SelectItem value="admin">Admin</SelectItem>
                                 <SelectItem value="moderator">Moderator</SelectItem>
+                                <SelectItem value="team">Team (PRO)</SelectItem>
                                 <SelectItem value="user">User</SelectItem>
                                 <SelectItem value="remove" className="text-destructive">
                                   {isRussian ? 'Удалить роль' : 'Remove role'}

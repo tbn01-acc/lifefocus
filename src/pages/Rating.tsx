@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useLeaderboard, PublicProfile } from '@/hooks/useLeaderboard';
+import { useLeaderboardAggregates, LeaderboardPeriod, LeaderboardType } from '@/hooks/useLeaderboardAggregates';
 import { useAchievementsFeed } from '@/hooks/useAchievementsFeed';
 import { useStars } from '@/hooks/useStars';
 import { useAuth } from '@/hooks/useAuth';
@@ -13,6 +15,7 @@ import { ContactsGatedDialog } from '@/components/profile/ContactsGatedDialog';
 import { RewardsShopTab } from '@/components/rewards/RewardsShopTab';
 import { UserAvatarWithFrame } from '@/components/rewards/UserAvatarWithFrame';
 import { UserBadges } from '@/components/rewards/UserBadges';
+import { TopThreePodium } from '@/components/rating/TopThreePodium';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -22,16 +25,26 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Textarea } from '@/components/ui/textarea';
-import { Trophy, Star, Flame, ThumbsUp, ThumbsDown, MessageCircle, Send, Crown, Medal, Award, User, Plus, Settings, Phone, ShoppingBag } from 'lucide-react';
+import { Trophy, Star, Flame, ThumbsUp, ThumbsDown, MessageCircle, Send, User, Plus, Settings, Phone, ShoppingBag, Heart, Zap, Calendar, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
 
 export default function Rating() {
+  const navigate = useNavigate();
   const { language } = useTranslation();
   const isRussian = language === 'ru';
   const { user, profile } = useAuth();
-  const { leaderboard, currentUserRank, loading: leaderboardLoading, getPublicProfile } = useLeaderboard();
+  const { leaderboard: baseLeaderboard, currentUserRank: baseUserRank, loading: baseLoading, getPublicProfile } = useLeaderboard();
+  const { 
+    leaderboard: aggregateLeaderboard, 
+    currentUserRank: aggregateUserRank, 
+    loading: aggregateLoading, 
+    period, 
+    setPeriod, 
+    type, 
+    setType 
+  } = useLeaderboardAggregates();
   const { 
     posts, 
     loading: feedLoading, 
@@ -47,6 +60,7 @@ export default function Rating() {
   const { rewards, purchasedRewards, loading: rewardsLoading, userStars: shopStars, purchaseReward, useReward, getUnusedRewards } = useRewardsShop();
 
   const [activeTab, setActiveTab] = useState<'leaderboard' | 'feed' | 'rewards'>('leaderboard');
+  const [leaderboardType, setLeaderboardType] = useState<LeaderboardType>('stars');
   const [selectedProfile, setSelectedProfile] = useState<PublicProfile | null>(null);
   const [profileLoading, setProfileLoading] = useState(false);
   const [selectedPost, setSelectedPost] = useState<string | null>(null);
@@ -59,6 +73,31 @@ export default function Rating() {
   const [contactsProfile, setContactsProfile] = useState<PublicProfile | null>(null);
   const [userRewards, setUserRewards] = useState<Map<string, UserRewardItems>>(new Map());
 
+  // Use appropriate leaderboard based on type/period
+  const leaderboard = leaderboardType === 'stars' && period === 'all' 
+    ? baseLeaderboard.map(u => ({
+        rank: u.rank,
+        user_id: u.user_id,
+        display_name: u.display_name,
+        avatar_url: u.avatar_url,
+        value: u.total_stars,
+        is_current_user: u.is_current_user,
+      }))
+    : aggregateLeaderboard;
+  
+  const currentUserRank = leaderboardType === 'stars' && period === 'all' 
+    ? baseUserRank ? {
+        rank: baseUserRank.rank,
+        user_id: baseUserRank.user_id,
+        display_name: baseUserRank.display_name,
+        avatar_url: baseUserRank.avatar_url,
+        value: baseUserRank.total_stars,
+        is_current_user: true,
+      } : null
+    : aggregateUserRank;
+  
+  const loading = leaderboardType === 'stars' && period === 'all' ? baseLoading : aggregateLoading;
+
   // Fetch reward items for leaderboard users
   useEffect(() => {
     if (leaderboard.length > 0) {
@@ -66,6 +105,11 @@ export default function Rating() {
       fetchUserRewardItemsBatch(userIds).then(setUserRewards);
     }
   }, [leaderboard]);
+
+  // Update aggregate hook when type changes
+  useEffect(() => {
+    setType(leaderboardType);
+  }, [leaderboardType, setType]);
 
   const handleUserClick = async (userId: string) => {
     setProfileLoading(true);
@@ -99,19 +143,30 @@ export default function Rating() {
     setSelectedProfile(null);
   };
 
-  const getRankIcon = (rank: number) => {
-    if (rank === 1) return <Crown className="h-5 w-5 text-yellow-500" />;
-    if (rank === 2) return <Medal className="h-5 w-5 text-gray-400" />;
-    if (rank === 3) return <Award className="h-5 w-5 text-amber-600" />;
-    return <span className="text-sm font-medium text-muted-foreground">#{rank}</span>;
+  const getValueIcon = () => {
+    switch (leaderboardType) {
+      case 'likes': return <Heart className="h-4 w-4 text-pink-500 fill-pink-500" />;
+      case 'activity': return <Zap className="h-4 w-4 text-blue-500" />;
+      default: return <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />;
+    }
   };
+
+  const periodLabels: Record<LeaderboardPeriod, string> = {
+    today: isRussian ? 'Сегодня' : 'Today',
+    month: isRussian ? 'Месяц' : 'Month',
+    year: isRussian ? 'Год' : 'Year',
+    all: isRussian ? 'Всё время' : 'All time',
+  };
+
+  const topThree = leaderboard.slice(0, 3);
+  const restOfLeaderboard = leaderboard.slice(3);
 
   return (
     <div className="min-h-screen bg-background pb-20">
       <AppHeader />
       
       <main className="container max-w-2xl mx-auto px-4 py-6">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
             <Trophy className="h-7 w-7 text-primary" />
             <h1 className="text-2xl font-bold">
@@ -120,13 +175,12 @@ export default function Rating() {
           </div>
           
           <div className="flex items-center gap-2">
-            {/* Stars History Link */}
             {userStars && (
               <motion.div
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 className="cursor-pointer"
-                onClick={() => window.location.href = '/star-history'}
+                onClick={() => navigate('/star-history')}
               >
                 <Badge variant="secondary" className="text-lg px-3 py-1 gap-1">
                   <Star className="h-4 w-4 text-yellow-500 fill-yellow-500" />
@@ -147,8 +201,35 @@ export default function Rating() {
           </div>
         </div>
 
+        {/* Quick Stats Buttons - Compact */}
+        <div className="grid grid-cols-3 gap-2 mb-4">
+          <Button 
+            variant="outline" 
+            className="h-8 text-xs px-2 flex items-center gap-1"
+            onClick={() => navigate('/star-history')}
+          >
+            <Star className="h-3 w-3 text-yellow-500" />
+            <span className="truncate">{userStars?.total_stars || 0}</span>
+          </Button>
+          <Button 
+            variant="outline" 
+            className="h-8 text-xs px-2 flex items-center gap-1"
+          >
+            <Trophy className="h-3 w-3 text-primary" />
+            <span className="truncate">#{currentUserRank?.rank || '—'}</span>
+          </Button>
+          <Button 
+            variant="default" 
+            className="h-8 text-xs px-2 flex items-center gap-1"
+            onClick={() => navigate('/achievements?tab=program')}
+          >
+            <TrendingUp className="h-3 w-3" />
+            <span className="truncate">{isRussian ? 'Заработать' : 'Earn'}</span>
+          </Button>
+        </div>
+
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)}>
-          <TabsList className="grid w-full grid-cols-3 mb-6">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
             <TabsTrigger value="leaderboard" className="flex items-center gap-2">
               <Trophy className="h-4 w-4" />
               {isRussian ? 'ТОП-100' : 'TOP-100'}
@@ -164,7 +245,56 @@ export default function Rating() {
           </TabsList>
 
           <TabsContent value="leaderboard">
-            {leaderboardLoading ? (
+            {/* Type and Period Selectors */}
+            <div className="flex flex-col gap-2 mb-4">
+              {/* Leaderboard Type */}
+              <div className="flex gap-1">
+                <Button
+                  variant={leaderboardType === 'stars' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-7 text-xs"
+                  onClick={() => setLeaderboardType('stars')}
+                >
+                  <Star className="h-3 w-3 mr-1" />
+                  {isRussian ? 'Звёзды' : 'Stars'}
+                </Button>
+                <Button
+                  variant={leaderboardType === 'likes' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-7 text-xs"
+                  onClick={() => setLeaderboardType('likes')}
+                >
+                  <Heart className="h-3 w-3 mr-1" />
+                  {isRussian ? 'Лайки' : 'Likes'}
+                </Button>
+                <Button
+                  variant={leaderboardType === 'activity' ? 'default' : 'outline'}
+                  size="sm"
+                  className="flex-1 h-7 text-xs"
+                  onClick={() => setLeaderboardType('activity')}
+                >
+                  <Zap className="h-3 w-3 mr-1" />
+                  {isRussian ? 'Активность' : 'Activity'}
+                </Button>
+              </div>
+
+              {/* Period Selector */}
+              <div className="flex gap-1">
+                {(['today', 'month', 'year', 'all'] as LeaderboardPeriod[]).map((p) => (
+                  <Button
+                    key={p}
+                    variant={period === p ? 'secondary' : 'ghost'}
+                    size="sm"
+                    className="flex-1 h-6 text-xs"
+                    onClick={() => setPeriod(p)}
+                  >
+                    {periodLabels[p]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {loading ? (
               <div className="space-y-3">
                 {[...Array(10)].map((_, i) => (
                   <Skeleton key={i} className="h-16 w-full" />
@@ -172,8 +302,19 @@ export default function Rating() {
               </div>
             ) : (
               <div className="space-y-2">
+                {/* Top 3 Podium */}
+                {topThree.length > 0 && (
+                  <TopThreePodium
+                    users={topThree}
+                    userRewards={userRewards}
+                    onUserClick={handleUserClick}
+                    valueIcon={getValueIcon()}
+                  />
+                )}
+
+                {/* Rest of leaderboard */}
                 <AnimatePresence>
-                  {leaderboard.map((leaderboardUser, index) => (
+                  {restOfLeaderboard.map((leaderboardUser, index) => (
                     <motion.div
                       key={leaderboardUser.user_id}
                       initial={{ opacity: 0, y: 20 }}
@@ -186,21 +327,23 @@ export default function Rating() {
                         }`}
                         onClick={() => handleUserClick(leaderboardUser.user_id)}
                       >
-                        <CardContent className="flex items-center gap-4 p-4">
-                          <div className="w-8 flex justify-center">
-                            {getRankIcon(leaderboardUser.rank)}
+                        <CardContent className="flex items-center gap-4 p-3">
+                          <div className="w-6 flex justify-center">
+                            <span className="text-xs font-medium text-muted-foreground">
+                              #{leaderboardUser.rank}
+                            </span>
                           </div>
                           
                           <UserAvatarWithFrame
                             avatarUrl={leaderboardUser.avatar_url}
                             displayName={leaderboardUser.display_name}
                             frameId={userRewards.get(leaderboardUser.user_id)?.activeFrame}
-                            size="md"
+                            size="sm"
                           />
                           
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
-                              <p className="font-medium truncate">
+                              <p className="font-medium truncate text-sm">
                                 {leaderboardUser.display_name}
                               </p>
                               {leaderboardUser.is_current_user && (
@@ -208,22 +351,12 @@ export default function Rating() {
                                   {isRussian ? 'Вы' : 'You'}
                                 </Badge>
                               )}
-                              <UserBadges 
-                                badgeIds={userRewards.get(leaderboardUser.user_id)?.activeBadges || []}
-                                maxDisplay={2}
-                              />
-                            </div>
-                            <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                              <span className="flex items-center gap-1">
-                                <Flame className="h-3 w-3 text-orange-500" />
-                                {leaderboardUser.current_streak_days}d
-                              </span>
                             </div>
                           </div>
                           
-                          <div className="flex items-center gap-1 text-lg font-semibold">
-                            <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                            {leaderboardUser.total_stars}
+                          <div className="flex items-center gap-1 text-base font-semibold">
+                            {getValueIcon()}
+                            {leaderboardUser.value}
                           </div>
                         </CardContent>
                       </Card>
@@ -238,12 +371,12 @@ export default function Rating() {
                       {isRussian ? 'Ваша позиция' : 'Your position'}
                     </p>
                     <Card className="ring-2 ring-primary">
-                      <CardContent className="flex items-center gap-4 p-4">
-                        <div className="w-8 flex justify-center">
-                          <span className="text-sm font-medium">#{currentUserRank.rank}</span>
+                      <CardContent className="flex items-center gap-4 p-3">
+                        <div className="w-6 flex justify-center">
+                          <span className="text-xs font-medium">#{currentUserRank.rank}</span>
                         </div>
                         
-                        <Avatar>
+                        <Avatar className="h-8 w-8">
                           <AvatarImage src={currentUserRank.avatar_url || undefined} />
                           <AvatarFallback>
                             <User className="h-4 w-4" />
@@ -251,16 +384,12 @@ export default function Rating() {
                         </Avatar>
                         
                         <div className="flex-1">
-                          <p className="font-medium">{currentUserRank.display_name}</p>
-                          <div className="flex items-center gap-1 text-sm text-muted-foreground">
-                            <Flame className="h-3 w-3 text-orange-500" />
-                            {currentUserRank.current_streak_days}d
-                          </div>
+                          <p className="font-medium text-sm">{currentUserRank.display_name}</p>
                         </div>
                         
-                        <div className="flex items-center gap-1 text-lg font-semibold">
-                          <Star className="h-5 w-5 text-yellow-500 fill-yellow-500" />
-                          {currentUserRank.total_stars}
+                        <div className="flex items-center gap-1 text-base font-semibold">
+                          {getValueIcon()}
+                          {currentUserRank.value}
                         </div>
                       </CardContent>
                     </Card>
@@ -459,7 +588,6 @@ export default function Rating() {
                 
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold">{selectedProfile.display_name}</h3>
-                  {/* Show "Get Contacts" button instead of direct contact info */}
                   {(selectedProfile.telegram_username) && (
                     <Button
                       variant="outline"
@@ -598,9 +726,7 @@ export default function Rating() {
             telegram_username: (profile as any).telegram_username || '',
             public_email: (profile as any).public_email || ''
           }}
-          onUpdate={() => {
-            // Refetch profile data
-          }}
+          onUpdate={() => {}}
         />
       )}
     </div>
