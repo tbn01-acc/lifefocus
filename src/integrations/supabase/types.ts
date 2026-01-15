@@ -25,9 +25,11 @@ export type Database = {
           image_url: string
           is_visible: boolean
           likes_count: number
+          post_type: string
           task_id: string | null
           updated_at: string
           user_id: string
+          votes_count: number
         }
         Insert: {
           comments_count?: number
@@ -39,9 +41,11 @@ export type Database = {
           image_url: string
           is_visible?: boolean
           likes_count?: number
+          post_type?: string
           task_id?: string | null
           updated_at?: string
           user_id: string
+          votes_count?: number
         }
         Update: {
           comments_count?: number
@@ -53,9 +57,47 @@ export type Database = {
           image_url?: string
           is_visible?: boolean
           likes_count?: number
+          post_type?: string
           task_id?: string | null
           updated_at?: string
           user_id?: string
+          votes_count?: number
+        }
+        Relationships: []
+      }
+      cloud_user_settings: {
+        Row: {
+          celebration_settings: Json | null
+          dashboard_layout: Json | null
+          general_settings: Json | null
+          id: string
+          notification_settings: Json | null
+          theme_settings: Json | null
+          updated_at: string
+          user_id: string
+          widget_settings: Json | null
+        }
+        Insert: {
+          celebration_settings?: Json | null
+          dashboard_layout?: Json | null
+          general_settings?: Json | null
+          id?: string
+          notification_settings?: Json | null
+          theme_settings?: Json | null
+          updated_at?: string
+          user_id: string
+          widget_settings?: Json | null
+        }
+        Update: {
+          celebration_settings?: Json | null
+          dashboard_layout?: Json | null
+          general_settings?: Json | null
+          id?: string
+          notification_settings?: Json | null
+          theme_settings?: Json | null
+          updated_at?: string
+          user_id?: string
+          widget_settings?: Json | null
         }
         Relationships: []
       }
@@ -109,6 +151,7 @@ export type Database = {
       }
       habits: {
         Row: {
+          archived_at: string | null
           category_id: string | null
           color: string | null
           completed_dates: string[]
@@ -116,6 +159,8 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          postpone_count: number | null
+          postponed_until: string | null
           streak: number
           tags: string[] | null
           target_days: number[]
@@ -123,6 +168,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           category_id?: string | null
           color?: string | null
           completed_dates?: string[]
@@ -130,6 +176,8 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          postpone_count?: number | null
+          postponed_until?: string | null
           streak?: number
           tags?: string[] | null
           target_days?: number[]
@@ -137,6 +185,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           category_id?: string | null
           color?: string | null
           completed_dates?: string[]
@@ -144,9 +193,79 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          postpone_count?: number | null
+          postponed_until?: string | null
           streak?: number
           tags?: string[] | null
           target_days?: number[]
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      idea_votes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "idea_votes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "achievement_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leaderboard_aggregates: {
+        Row: {
+          habits_completed: number
+          id: string
+          period_key: string
+          period_type: string
+          tasks_completed: number
+          total_activity_score: number
+          total_likes: number
+          total_stars: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          habits_completed?: number
+          id?: string
+          period_key: string
+          period_type: string
+          tasks_completed?: number
+          total_activity_score?: number
+          total_likes?: number
+          total_stars?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          habits_completed?: number
+          id?: string
+          period_key?: string
+          period_type?: string
+          tasks_completed?: number
+          total_activity_score?: number
+          total_likes?: number
+          total_stars?: number
           updated_at?: string
           user_id?: string
         }
@@ -179,6 +298,51 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           version?: number
+        }
+        Relationships: []
+      }
+      notification_settings: {
+        Row: {
+          created_at: string
+          habit_notification_enabled: boolean
+          habit_notification_time: string
+          id: string
+          overdue_notification_enabled: boolean | null
+          push_token: string | null
+          task_notification_days_before: number
+          task_notification_enabled: boolean
+          task_notification_time: string
+          updated_at: string
+          user_id: string
+          weather_notification_enabled: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          habit_notification_enabled?: boolean
+          habit_notification_time?: string
+          id?: string
+          overdue_notification_enabled?: boolean | null
+          push_token?: string | null
+          task_notification_days_before?: number
+          task_notification_enabled?: boolean
+          task_notification_time?: string
+          updated_at?: string
+          user_id: string
+          weather_notification_enabled?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          habit_notification_enabled?: boolean
+          habit_notification_time?: string
+          id?: string
+          overdue_notification_enabled?: boolean | null
+          push_token?: string | null
+          task_notification_days_before?: number
+          task_notification_enabled?: boolean
+          task_notification_time?: string
+          updated_at?: string
+          user_id?: string
+          weather_notification_enabled?: boolean | null
         }
         Relationships: []
       }
@@ -834,6 +998,7 @@ export type Database = {
       }
       tasks: {
         Row: {
+          archived_at: string | null
           attachments: Json | null
           category_id: string | null
           completed: boolean
@@ -844,6 +1009,8 @@ export type Database = {
           icon: string | null
           id: string
           name: string
+          postpone_count: number | null
+          postponed_until: string | null
           priority: string
           recurrence: string | null
           status: string
@@ -853,6 +1020,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          archived_at?: string | null
           attachments?: Json | null
           category_id?: string | null
           completed?: boolean
@@ -863,6 +1031,8 @@ export type Database = {
           icon?: string | null
           id?: string
           name: string
+          postpone_count?: number | null
+          postponed_until?: string | null
           priority?: string
           recurrence?: string | null
           status?: string
@@ -872,6 +1042,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          archived_at?: string | null
           attachments?: Json | null
           category_id?: string | null
           completed?: boolean
@@ -882,6 +1053,8 @@ export type Database = {
           icon?: string | null
           id?: string
           name?: string
+          postpone_count?: number | null
+          postponed_until?: string | null
           priority?: string
           recurrence?: string | null
           status?: string
@@ -971,6 +1144,42 @@ export type Database = {
           recurrence?: string | null
           tags?: string[] | null
           type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_daily_activity: {
+        Row: {
+          activity_date: string
+          created_at: string
+          habits_completed: number
+          id: string
+          likes_received: number
+          stars_earned: number
+          tasks_completed: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          activity_date: string
+          created_at?: string
+          habits_completed?: number
+          id?: string
+          likes_received?: number
+          stars_earned?: number
+          tasks_completed?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          activity_date?: string
+          created_at?: string
+          habits_completed?: number
+          id?: string
+          likes_received?: number
+          stars_earned?: number
+          tasks_completed?: number
           updated_at?: string
           user_id?: string
         }
@@ -1239,7 +1448,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "moderator" | "user"
+      app_role: "admin" | "moderator" | "user" | "team"
       subscription_period:
         | "monthly"
         | "quarterly"
@@ -1375,7 +1584,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "moderator", "user"],
+      app_role: ["admin", "moderator", "user", "team"],
       subscription_period: [
         "monthly",
         "quarterly",
