@@ -9,6 +9,9 @@ interface Profile {
   avatar_url: string | null;
   referral_code: string | null;
   referred_by: string | null;
+  bio: string | null;
+  telegram_username: string | null;
+  public_email: string | null;
   created_at: string;
 }
 

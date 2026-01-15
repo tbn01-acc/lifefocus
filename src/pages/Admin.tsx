@@ -218,35 +218,14 @@ export default function Admin() {
 
         if (error) throw error;
       } else {
-        // First delete existing role
-        await supabase
-          .from('user_roles')
-          .delete()
-          .eq('user_id', selectedUser.id);
-
-        // Then insert new role
         const { error } = await supabase
           .from('user_roles')
-          .insert({
+          .upsert({
             user_id: selectedUser.id,
             role: roleToAssign as 'admin' | 'moderator' | 'user' | 'team',
-          });
+          }, { onConflict: 'user_id,role' });
 
         if (error) throw error;
-
-        // If role is 'team', also grant PRO subscription
-        if (roleToAssign === 'team') {
-          await supabase
-            .from('subscriptions')
-            .upsert({
-              user_id: selectedUser.id,
-              plan: 'pro',
-              period: 'lifetime',
-              started_at: new Date().toISOString(),
-              expires_at: null,
-              bonus_days: 0,
-            }, { onConflict: 'user_id' });
-        }
       }
 
       setUsers(users.map(u => 
@@ -293,7 +272,7 @@ export default function Admin() {
     switch (role) {
       case 'admin': return 'bg-red-500/10 text-red-500 border-red-500/30';
       case 'moderator': return 'bg-blue-500/10 text-blue-500 border-blue-500/30';
-      case 'team': return 'bg-purple-500/10 text-purple-500 border-purple-500/30';
+      case 'team': return 'bg-amber-500/10 text-amber-500 border-amber-500/30';
       case 'user': return 'bg-green-500/10 text-green-500 border-green-500/30';
       default: return 'bg-muted text-muted-foreground';
     }

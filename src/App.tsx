@@ -29,6 +29,7 @@ import Rating from "./pages/Rating";
 import RewardsShop from "./pages/RewardsShop";
 import StarHistory from "./pages/StarHistory";
 import Archive from "./pages/Archive";
+import Focus from "./pages/Focus";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -89,6 +90,7 @@ const AppContent = () => {
         <Route path="/rewards" element={<RewardsShop />} />
         <Route path="/star-history" element={<StarHistory />} />
         <Route path="/archive" element={<Archive />} />
+        <Route path="/focus" element={<Focus />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
       <BottomNavigation 

@@ -25,18 +25,35 @@ export function useSubscription() {
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [referralStats, setReferralStats] = useState<ReferralStats>({ totalReferrals: 0, paidReferrals: 0 });
   const [loading, setLoading] = useState(true);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user) {
       setSubscription(null);
       setReferralStats({ totalReferrals: 0, paidReferrals: 0 });
+      setUserRole(null);
       setLoading(false);
       return;
     }
 
     fetchSubscription();
     fetchReferralStats();
+    fetchUserRole();
   }, [user]);
+
+  const fetchUserRole = async () => {
+    if (!user) return;
+
+    const { data, error } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+
+    if (!error && data) {
+      setUserRole(data.role);
+    }
+  };
 
   const fetchSubscription = async () => {
     if (!user) return;
@@ -115,7 +132,13 @@ export function useSubscription() {
     setReferralStats({ totalReferrals, paidReferrals });
   };
 
+  // Team role gets PRO access automatically
+  const isTeamMember = userRole === 'team' || userRole === 'admin' || userRole === 'moderator';
+
   const isProActive = () => {
+    // Team members get PRO access
+    if (isTeamMember) return true;
+    
     if (!subscription) return false;
     if (subscription.plan !== 'pro') return false;
     if (!subscription.expires_at) return subscription.plan === 'pro'; // Lifetime
@@ -128,6 +151,7 @@ export function useSubscription() {
   };
 
   const isInTrial = () => {
+    if (isTeamMember) return false; // Team doesn't need trial
     if (!subscription) return false;
     if (!subscription.is_trial) return false;
     if (!subscription.trial_ends_at) return false;
@@ -144,6 +168,8 @@ export function useSubscription() {
     subscription,
     referralStats,
     loading,
+    userRole,
+    isTeamMember,
     isProActive: isProActive(),
     isInTrial: isInTrial(),
     trialDaysLeft: trialDaysLeft(),

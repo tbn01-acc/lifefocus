@@ -13,6 +13,7 @@ import { useAuth } from '@/hooks/useAuth';
 import { useSubscription } from '@/hooks/useSubscription';
 import { usePromoCodes } from '@/hooks/usePromoCodes';
 import { useReferralProgram } from '@/hooks/useReferralProgram';
+import { DevModeToggle } from '@/components/DevModeToggle';
 import { toast } from 'sonner';
 
 type PlanPeriod = 'monthly' | 'quarterly' | 'semiannual' | 'annual' | 'biennial' | 'lifetime';
@@ -467,6 +468,9 @@ export default function Upgrade() {
             </p>
           </CardContent>
         </Card>
+
+        {/* Dev Mode Toggle - only for test account */}
+        <DevModeToggle />
       </div>
     </div>
   );

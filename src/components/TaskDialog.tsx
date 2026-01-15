@@ -418,20 +418,19 @@ export function TaskDialog({ open, onClose, onSave, task, categories, tags, onAd
               <div className="flex flex-wrap gap-2">
                 {categories.map((cat) => {
                   const isSelected = categoryId === cat.id;
-                  const bgColor = cat.color + '25';
                   return (
                     <button
                       key={cat.id}
                       onClick={() => setCategoryId(isSelected ? undefined : cat.id)}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
+                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2",
                         isSelected
                           ? "ring-2 ring-offset-1 ring-offset-card shadow-sm"
                           : "opacity-80 hover:opacity-100"
                       )}
                       style={{ 
-                        backgroundColor: isSelected ? cat.color : bgColor,
-                        color: isSelected ? '#fff' : cat.color,
+                        backgroundColor: 'transparent',
+                        color: cat.color,
                         borderColor: cat.color
                       }}
                     >
@@ -471,20 +470,19 @@ export function TaskDialog({ open, onClose, onSave, task, categories, tags, onAd
               <div className="flex flex-wrap gap-2">
                 {tags.map((tag) => {
                   const isSelected = tagIds.includes(tag.id);
-                  const bgColor = tag.color + '25';
                   return (
                     <button
                       key={tag.id}
                       onClick={() => toggleTag(tag.id)}
                       className={cn(
-                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border",
+                        "px-3 py-1.5 rounded-full text-sm font-medium transition-all border-2",
                         isSelected
                           ? "ring-2 ring-offset-1 ring-offset-card shadow-sm"
                           : "opacity-80 hover:opacity-100"
                       )}
                       style={{ 
-                        backgroundColor: isSelected ? tag.color : bgColor,
-                        color: isSelected ? '#fff' : tag.color,
+                        backgroundColor: 'transparent',
+                        color: tag.color,
                         borderColor: tag.color
                       }}
                     >

@@ -25,7 +25,7 @@ jobs:
           
           # 3. Добавление целевого репозитория
           # Используем ваш секрет SYNC_TOKEN для доступа
-          git remote add target https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/tbn01-acc/lifefocus.git
+          git remote add target https://x-access-token:${{ secrets.SYNC_TOKEN }}@github.com/tbn01-acc/habbitracker.git
           
           # 4. Принудительный импорт (Force Push)
           # Это удалит всё старое в целевом репо и запишет текущий код
