@@ -56,7 +56,7 @@ export function AppHeader() {
             </div>
 
             {/* Right: Notifications + News + Focus + Rating + Theme + Invite - reduced gap by 12.5% */}
-            <div className="flex items-center gap-0.5 sm:gap-1.5">
+            <div className="flex items-center gap-px sm:gap-1">{/* Reduced spacing by 12.5% */}
               <Tooltip>
                 <TooltipTrigger asChild>
                   <Button
