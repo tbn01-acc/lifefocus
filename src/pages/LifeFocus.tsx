@@ -11,7 +11,7 @@ import { useSpheres } from '@/hooks/useSpheres';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { LifeIndexData, SPHERES, getSphereName } from '@/types/sphere';
 import { Skeleton } from '@/components/ui/skeleton';
-import { PageHeader } from '@/components/PageHeader';
+import { AppHeader } from '@/components/AppHeader';
 
 export default function LifeFocus() {
   const navigate = useNavigate();
@@ -59,11 +59,9 @@ export default function LifeFocus() {
   if (loading && !data) {
     return (
       <div className="min-h-screen bg-background pb-24">
-        <PageHeader 
-          title={labels.title[language]} 
-          showBackButton 
-        />
+        <AppHeader />
         <div className="container max-w-md mx-auto px-4 py-6 space-y-6">
+          <h1 className="text-2xl font-bold">{labels.title[language]}</h1>
           <Skeleton className="h-80 w-full rounded-xl" />
           <Skeleton className="h-24 w-full rounded-xl" />
           <Skeleton className="h-32 w-full rounded-xl" />
@@ -74,10 +72,15 @@ export default function LifeFocus() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <PageHeader 
-        title={labels.title[language]}
-        showBackButton
-        rightAction={
+      <AppHeader />
+
+      <div className="container max-w-md mx-auto px-4 py-6 space-y-6">
+        {/* Header with title and refresh */}
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl font-bold">{labels.title[language]}</h1>
+            <p className="text-sm text-muted-foreground">{labels.subtitle[language]}</p>
+          </div>
           <Button 
             variant="ghost" 
             size="icon"
@@ -86,10 +89,7 @@ export default function LifeFocus() {
           >
             <RefreshCw className={`w-5 h-5 ${loading ? 'animate-spin' : ''}`} />
           </Button>
-        }
-      />
-
-      <div className="container max-w-md mx-auto px-4 py-6 space-y-6">
+        </div>
         {/* Balance Flower with Gauges */}
         <Card className="p-6">
           <p className="text-sm text-muted-foreground text-center mb-4">

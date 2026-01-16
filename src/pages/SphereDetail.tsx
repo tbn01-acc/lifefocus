@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { PageHeader } from '@/components/PageHeader';
+import { AppHeader } from '@/components/AppHeader';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/hooks/useAuth';
 import { useSpheres } from '@/hooks/useSpheres';
@@ -200,11 +200,9 @@ export default function SphereDetail() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background pb-24">
-        <PageHeader 
-          title={getSphereName(sphere, language)} 
-          showBackButton 
-        />
+        <AppHeader />
         <div className="container max-w-md mx-auto px-4 py-6 space-y-4">
+          <h1 className="text-2xl font-bold">{getSphereName(sphere, language)}</h1>
           <Skeleton className="h-32 w-full rounded-xl" />
           <Skeleton className="h-48 w-full rounded-xl" />
           <Skeleton className="h-48 w-full rounded-xl" />
@@ -215,10 +213,7 @@ export default function SphereDetail() {
 
   return (
     <div className="min-h-screen bg-background pb-24">
-      <PageHeader 
-        title={`${sphere.icon} ${getSphereName(sphere, language)}`}
-        showBackButton
-      />
+      <AppHeader />
 
       <div className="container max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Header Stats */}

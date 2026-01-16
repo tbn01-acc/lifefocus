@@ -8,6 +8,7 @@ import { useFinance } from "@/hooks/useFinance";
 import { useTranslation } from "@/contexts/LanguageContext";
 import { ProgressBar } from "@/components/dashboard/ProgressBar";
 import { TodoSection } from "@/components/dashboard/TodoSection";
+import { ActivityRings } from "@/components/dashboard/ActivityRings";
 import { FinanceWidget } from "@/components/dashboard/FinanceWidget";
 import { DayQualityRing } from "@/components/dashboard/DayQualityRing";
 import { TopWidgetsSection } from "@/components/dashboard/TopWidgetsSection";
@@ -223,8 +224,7 @@ export default function Dashboard() {
               </button>
             )}
           </div>
-          <DayQualityRing 
-            value={dayQuality} 
+          <ActivityRings 
             habitsProgress={habitsProgress}
             tasksProgress={tasksProgress}
             financeProgress={financeProgress}
