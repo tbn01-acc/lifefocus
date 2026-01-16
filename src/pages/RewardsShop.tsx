@@ -3,6 +3,7 @@ import { useTranslation } from '@/contexts/LanguageContext';
 import { useRewardsShop } from '@/hooks/useRewardsShop';
 import { useStars } from '@/hooks/useStars';
 import { AppHeader } from '@/components/AppHeader';
+import { BackButton } from '@/components/BackButton';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +45,7 @@ export default function RewardsShop() {
       <main className="container max-w-2xl mx-auto px-4 py-6">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
+            <BackButton />
             <ShoppingBag className="h-7 w-7 text-primary" />
             <h1 className="text-2xl font-bold">
               {isRussian ? 'Магазин наград' : 'Rewards Shop'}

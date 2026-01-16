@@ -1,6 +1,7 @@
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Award, ArrowLeft, Trophy, Lock, Zap, Target, CheckCircle2, Star, TrendingUp, Crown, ShoppingBag, Sparkles, Medal } from 'lucide-react';
+import { Award, Trophy, Lock, Zap, Target, CheckCircle2, Star, TrendingUp, Crown, ShoppingBag, Sparkles, Medal } from 'lucide-react';
+import { BackButton } from '@/components/BackButton';
 import { Achievements as AchievementsComponent } from '@/components/Achievements';
 import { AchievementsPanel } from '@/components/AchievementsPanel';
 import { RewardsShopTab } from '@/components/rewards/RewardsShopTab';
@@ -60,9 +61,7 @@ export default function AchievementsPage() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <BackButton />
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-yellow-500 flex items-center justify-center">
               <Trophy className="w-5 h-5 text-white" />

@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Users, ArrowLeft, Copy, Check, Gift, Crown,
+  Users, Copy, Check, Gift, Crown,
   Wallet, TrendingUp, Clock,
   DollarSign, Zap, BarChart3, Share2, Calculator,
   Star, Award, Target, X
 } from 'lucide-react';
+import { BackButton } from '@/components/BackButton';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
 import { AppHeader } from '@/components/AppHeader';
@@ -81,9 +82,7 @@ export default function PartnerProgram() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <BackButton />
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center">
               <Users className="w-5 h-5 text-white" />

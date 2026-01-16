@@ -1,7 +1,8 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Edit2, Tags, ArrowLeft, Cloud, Settings, Sliders, Volume2, Sparkles, Shield, HardDrive, CloudSun, Bell, User, Users } from 'lucide-react';
+import { LogOut, Edit2, Tags, Cloud, Settings, Sliders, Volume2, Sparkles, Shield, HardDrive, CloudSun, Bell, User, Users, ArrowLeft } from 'lucide-react';
+import { BackButton } from '@/components/BackButton';
 import { SyncHistoryPanel } from '@/components/SyncHistory';
 import { TrialStatusCard } from '@/components/profile/TrialStatusCard';
 import { PublicProfileEditDialog } from '@/components/profile/PublicProfileEditDialog';
@@ -93,9 +94,7 @@ export default function ProfileSettings() {
       <div className="max-w-4xl mx-auto px-4 py-6">
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate('/profile')}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
+          <BackButton />
           <div className="flex items-center gap-2">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 flex items-center justify-center">
               <Settings className="w-5 h-5 text-white" />
