@@ -13,69 +13,74 @@ export function EnergyGauge({ value, type, label }: EnergyGaugeProps) {
   
   const defaultLabels = {
     personal: {
-      ru: 'Внутренняя энергия',
-      en: 'Inner Energy',
-      es: 'Energía Interior',
+      ru: 'Личное',
+      en: 'Personal',
+      es: 'Personal',
     },
     social: {
-      ru: 'Внешний успех',
-      en: 'External Success',
-      es: 'Éxito Externo',
+      ru: 'Социальное',
+      en: 'Social',
+      es: 'Social',
     },
   };
 
   const displayLabel = label || defaultLabels[type][language];
   
-  // Colors based on type
+  // More contrasting colors
   const colors = type === 'personal' 
     ? {
-        gradient: 'from-orange-400 via-rose-400 to-purple-400',
-        bg: 'bg-orange-100 dark:bg-orange-950/30',
+        fill: 'hsl(280, 70%, 55%)', // Purple
+        bg: 'hsl(280, 30%, 20%)',
       }
     : {
-        gradient: 'from-blue-500 via-teal-400 to-emerald-400',
-        bg: 'bg-blue-100 dark:bg-blue-950/30',
+        fill: 'hsl(160, 70%, 45%)', // Teal
+        bg: 'hsl(160, 30%, 20%)',
       };
 
-  const height = 140;
-  const fillHeight = (value / 100) * height;
+  const height = 160;
+  const width = 12; // Half the previous width
+  const fillHeight = (value / 100) * (height - 8);
 
   return (
     <div className="flex flex-col items-center gap-2">
-      <span className="text-xs font-medium text-muted-foreground text-center max-w-16">
+      <span className="text-[10px] font-medium text-muted-foreground text-center max-w-14 leading-tight">
         {displayLabel}
       </span>
       
       <div 
-        className={`relative w-6 rounded-full overflow-hidden ${colors.bg}`}
-        style={{ height }}
+        className="relative rounded-full overflow-hidden"
+        style={{ 
+          height, 
+          width,
+          backgroundColor: colors.bg,
+        }}
       >
         {/* Fill */}
         <motion.div
-          className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t ${colors.gradient} rounded-full`}
+          className="absolute bottom-1 left-1 right-1 rounded-full"
+          style={{ backgroundColor: colors.fill }}
           initial={{ height: 0 }}
           animate={{ height: fillHeight }}
           transition={{ duration: 0.8, ease: 'easeOut' }}
         />
         
-        {/* Markers */}
-        <div className="absolute inset-0 flex flex-col justify-between py-1">
-          {[100, 75, 50, 25, 0].map((mark) => (
-            <div 
-              key={mark} 
-              className="w-full h-px bg-background/30"
-            />
-          ))}
-        </div>
+        {/* Glow effect */}
+        <motion.div
+          className="absolute bottom-1 left-1 right-1 rounded-full opacity-50 blur-sm"
+          style={{ backgroundColor: colors.fill }}
+          initial={{ height: 0 }}
+          animate={{ height: fillHeight }}
+          transition={{ duration: 0.8, ease: 'easeOut' }}
+        />
       </div>
       
       <motion.span 
-        className="text-lg font-bold"
+        className="text-sm font-bold"
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 0.5 }}
       >
-        {value}%
+        {Math.round(value)}%
       </motion.span>
     </div>
   );
