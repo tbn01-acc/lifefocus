@@ -9,9 +9,73 @@ import { EnergyGauge } from '@/components/spheres/EnergyGauge';
 import { MindfulnessMetric } from '@/components/spheres/MindfulnessMetric';
 import { useSpheres } from '@/hooks/useSpheres';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { LifeIndexData, SPHERES, getSphereName } from '@/types/sphere';
+import { LifeIndexData, SPHERES, getSphereName, Sphere } from '@/types/sphere';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppHeader } from '@/components/AppHeader';
+
+// Sphere Card Component
+interface SphereCardProps {
+  sphere: Sphere;
+  indexValue: number;
+  delay: number;
+  language: 'ru' | 'en' | 'es';
+  onClick: () => void;
+}
+
+function SphereCard({ sphere, indexValue, delay, language, onClick }: SphereCardProps) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay }}
+    >
+      <Card 
+        className="p-3 cursor-pointer hover:shadow-md transition-shadow"
+        onClick={onClick}
+      >
+        <div className="flex items-center gap-2 mb-2">
+          <div 
+            className="w-8 h-8 rounded-full flex items-center justify-center text-lg"
+            style={{ backgroundColor: `${sphere.color}20` }}
+          >
+            {sphere.icon}
+          </div>
+          <p className="font-medium text-sm truncate flex-1">
+            {getSphereName(sphere, language)}
+          </p>
+          <span className="text-sm font-bold">
+            {Math.round(indexValue / 10)}/10
+          </span>
+        </div>
+        <div className="flex items-center gap-1">
+          <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+            <motion.div 
+              className="h-full rounded-full"
+              style={{ backgroundColor: sphere.color }}
+              initial={{ width: 0 }}
+              animate={{ width: `${indexValue}%` }}
+              transition={{ duration: 0.5, delay: delay + 0.1 }}
+            />
+          </div>
+          {/* Dot indicators */}
+          <div className="flex gap-0.5 ml-1">
+            {[...Array(5)].map((_, i) => (
+              <div
+                key={i}
+                className="w-1.5 h-1.5 rounded-full"
+                style={{
+                  backgroundColor: i < Math.ceil(indexValue / 20) 
+                    ? sphere.color 
+                    : 'hsl(var(--muted))',
+                }}
+              />
+            ))}
+          </div>
+        </div>
+      </Card>
+    </motion.div>
+  );
+}
 
 export default function LifeFocus() {
   const navigate = useNavigate();
@@ -122,61 +186,50 @@ export default function LifeFocus() {
         {/* Mindfulness Metric */}
         <MindfulnessMetric value={data?.mindfulnessLevel || 0} />
 
-        {/* Sphere List */}
+        {/* Sphere List - Two columns: Personal | Social */}
         <div className="space-y-3">
           <h3 className="font-semibold text-lg">
             {labels.sphereDetails[language]}
           </h3>
           
           <div className="grid grid-cols-2 gap-3">
-            {SPHERES.filter(s => s.group_type !== 'system').map((sphere, index) => {
-              const sphereIndex = data?.sphereIndices.find(s => s.sphereId === sphere.id);
-              const indexValue = sphereIndex?.index || 0;
-              
-              return (
-                <motion.div
-                  key={sphere.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
-                >
-                  <Card 
-                    className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+            {/* Left Column - Personal Spheres */}
+            <div className="space-y-3">
+              {SPHERES.filter(s => s.group_type === 'personal').map((sphere, index) => {
+                const sphereIndex = data?.sphereIndices.find(s => s.sphereId === sphere.id);
+                const indexValue = sphereIndex?.index || 0;
+                
+                return (
+                  <SphereCard 
+                    key={sphere.id}
+                    sphere={sphere}
+                    indexValue={indexValue}
+                    delay={index * 0.05}
+                    language={language}
                     onClick={() => navigate(`/sphere/${sphere.key}`)}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div 
-                        className="w-10 h-10 rounded-full flex items-center justify-center text-xl"
-                        style={{ backgroundColor: `${sphere.color}20` }}
-                      >
-                        {sphere.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium truncate">
-                          {getSphereName(sphere, language)}
-                        </p>
-                        <div className="flex items-center gap-2">
-                          <div 
-                            className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden"
-                          >
-                            <div 
-                              className="h-full rounded-full transition-all duration-500"
-                              style={{ 
-                                width: `${indexValue}%`,
-                                backgroundColor: sphere.color,
-                              }}
-                            />
-                          </div>
-                          <span className="text-sm font-medium text-muted-foreground">
-                            {indexValue}%
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </Card>
-                </motion.div>
-              );
-            })}
+                  />
+                );
+              })}
+            </div>
+            
+            {/* Right Column - Social Spheres */}
+            <div className="space-y-3">
+              {SPHERES.filter(s => s.group_type === 'social').map((sphere, index) => {
+                const sphereIndex = data?.sphereIndices.find(s => s.sphereId === sphere.id);
+                const indexValue = sphereIndex?.index || 0;
+                
+                return (
+                  <SphereCard 
+                    key={sphere.id}
+                    sphere={sphere}
+                    indexValue={indexValue}
+                    delay={index * 0.05 + 0.2}
+                    language={language}
+                    onClick={() => navigate(`/sphere/${sphere.key}`)}
+                  />
+                );
+              })}
+            </div>
           </div>
         </div>
 

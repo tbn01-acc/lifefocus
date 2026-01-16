@@ -80,16 +80,6 @@ export function ActivityRings({
           );
         })}
       </svg>
-      
-      {/* Center icon */}
-      <motion.div 
-        className="absolute flex items-center justify-center"
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ duration: 0.3, delay: 0.4 }}
-      >
-        <span className="text-lg">🌸</span>
-      </motion.div>
     </motion.button>
   );
 }
