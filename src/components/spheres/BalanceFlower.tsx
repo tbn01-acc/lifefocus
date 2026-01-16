@@ -165,7 +165,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
   }, [sphereIndices, personalSpheres, socialSpheres]);
 
   return (
-    <div className="relative w-full max-w-[360px] mx-auto">
+    <div className="relative w-full mx-auto">
       <svg 
         viewBox={`0 0 ${size} ${size}`} 
         className="w-full h-auto"
