@@ -165,7 +165,7 @@ function NotificationItem({
 export default function Notifications() {
   const navigate = useNavigate();
   const { language } = useTranslation();
-  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification } = useNotifications();
+  const { notifications, unreadCount, isLoading, markAsRead, markAllAsRead, deleteNotification, deleteAllNotifications } = useNotifications();
   const isRussian = language === 'ru';
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [filter, setFilter] = useState<FilterType>('all');
@@ -221,6 +221,18 @@ export default function Notifications() {
               >
                 <CheckCheck className="w-4 h-4" />
                 {isRussian ? 'Прочитать все' : 'Mark all read'}
+              </Button>
+            )}
+            
+            {notifications.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={deleteAllNotifications}
+                className="gap-2 text-destructive hover:text-destructive"
+              >
+                <Trash2 className="w-4 h-4" />
+                {isRussian ? 'Очистить' : 'Clear all'}
               </Button>
             )}
           </div>

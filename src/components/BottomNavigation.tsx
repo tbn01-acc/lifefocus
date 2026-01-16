@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Home, Target, CheckSquare, Wallet, Plus, Wrench, Aperture, Trophy } from 'lucide-react';
+import { Home, Target, CheckSquare, Wallet, Plus, Wrench, Aperture, Flag } from 'lucide-react';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { cn } from '@/lib/utils';
 import { GoalDialog } from '@/components/goals/GoalDialog';
@@ -35,7 +35,7 @@ export function BottomNavigation({
     { path: '/tasks', icon: CheckSquare, label: t('tasks'), color: 'hsl(var(--task))' },
     // Plus button goes here (index 3)
     { path: '/finance', icon: Wallet, label: t('finance'), color: 'hsl(var(--finance))' },
-    { path: '/goals', icon: Trophy, label: isRussian ? 'Мои цели' : 'My Goals', color: 'hsl(45, 90%, 50%)' },
+    { path: '/goals', icon: Flag, label: isRussian ? 'Мои цели' : 'My Goals', color: 'hsl(45, 90%, 50%)' },
     { path: '/services', icon: Wrench, label: t('services'), color: 'hsl(var(--service))' },
   ];
 
