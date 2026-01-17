@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   getPersonalSpheres, 
@@ -18,6 +18,8 @@ import {
 import { useTasks } from '@/hooks/useTasks';
 import { useHabits } from '@/hooks/useHabits';
 import { useSubscription } from '@/hooks/useSubscription';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { format, subDays, subMonths } from 'date-fns';
 import { ru, es, enUS } from 'date-fns/locale';
 import { Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
@@ -95,7 +97,7 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
-// Life Index Progress Chart Component
+// Life Index Progress Chart Component with real data
 function LifeIndexProgressChart({
   lifeIndex,
   language,
@@ -104,47 +106,85 @@ function LifeIndexProgressChart({
   language: 'ru' | 'en' | 'es';
 }) {
   const [period, setPeriod] = useState<'month' | 'year'>('month');
+  const [historyData, setHistoryData] = useState<Array<{ date: string; value: number; label: string }>>([]);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   
-  // Generate mock history data (will be replaced with real data when DB table is created)
-  const historyData = useMemo(() => {
-    const data: Array<{ date: string; value: number; label: string }> = [];
-    const now = new Date();
-    const locale = language === 'ru' ? ru : language === 'es' ? es : enUS;
-    
-    if (period === 'month') {
-      // Last 30 days
-      for (let i = 29; i >= 0; i--) {
-        const date = subDays(now, i);
-        // Simulate some variation around current value
-        const variation = Math.sin(i * 0.3) * 15 + Math.random() * 10 - 5;
-        const value = Math.max(0, Math.min(100, lifeIndex + variation - (29 - i) * 0.3));
-        data.push({
-          date: format(date, 'yyyy-MM-dd'),
-          value: Math.round(value),
-          label: format(date, 'd MMM', { locale }),
-        });
+  const locale = language === 'ru' ? ru : language === 'es' ? es : enUS;
+
+  // Fetch real history data
+  useEffect(() => {
+    const fetchData = async () => {
+      if (!user) {
+        // Generate fallback data if no user
+        setHistoryData(generateFallbackData(period, lifeIndex, locale));
+        setLoading(false);
+        return;
       }
-    } else {
-      // Last 12 months
-      for (let i = 11; i >= 0; i--) {
-        const date = subMonths(now, i);
-        const variation = Math.sin(i * 0.5) * 20 + Math.random() * 10 - 5;
-        const value = Math.max(0, Math.min(100, lifeIndex + variation - (11 - i) * 0.8));
-        data.push({
-          date: format(date, 'yyyy-MM'),
-          value: Math.round(value),
-          label: format(date, 'MMM', { locale }),
-        });
+
+      setLoading(true);
+      try {
+        const now = new Date();
+        const startDate = period === 'month' 
+          ? format(subDays(now, 30), 'yyyy-MM-dd')
+          : format(subMonths(now, 12), 'yyyy-MM-dd');
+
+        const { data, error } = await supabase
+          .from('life_index_history')
+          .select('*')
+          .eq('user_id', user.id)
+          .gte('recorded_at', startDate)
+          .order('recorded_at', { ascending: true });
+
+        if (error) {
+          console.error('Error fetching life index history:', error);
+          setHistoryData(generateFallbackData(period, lifeIndex, locale));
+        } else if (data && data.length > 0) {
+          if (period === 'month') {
+            setHistoryData(data.map(record => ({
+              date: record.recorded_at,
+              value: Number(record.life_index),
+              label: format(new Date(record.recorded_at), 'd MMM', { locale }),
+            })));
+          } else {
+            // Aggregate by month for year view
+            const monthlyData = new Map<string, { sum: number; count: number }>();
+            data.forEach(record => {
+              const monthKey = format(new Date(record.recorded_at), 'yyyy-MM');
+              const existing = monthlyData.get(monthKey) || { sum: 0, count: 0 };
+              monthlyData.set(monthKey, {
+                sum: existing.sum + Number(record.life_index),
+                count: existing.count + 1,
+              });
+            });
+
+            setHistoryData(Array.from(monthlyData.entries()).map(([monthKey, { sum, count }]) => ({
+              date: monthKey,
+              value: Math.round(sum / count),
+              label: format(new Date(monthKey + '-01'), 'MMM', { locale }),
+            })));
+          }
+        } else {
+          // No data, use fallback
+          setHistoryData(generateFallbackData(period, lifeIndex, locale));
+        }
+      } catch (err) {
+        console.error('Error fetching life index history:', err);
+        setHistoryData(generateFallbackData(period, lifeIndex, locale));
+      } finally {
+        setLoading(false);
       }
-    }
-    return data;
-  }, [period, lifeIndex, language]);
+    };
+
+    fetchData();
+  }, [period, user, lifeIndex, locale]);
 
   // Calculate trend
   const trend = useMemo(() => {
     if (historyData.length < 2) return 0;
-    const recent = historyData.slice(-5).reduce((sum, d) => sum + d.value, 0) / 5;
-    const older = historyData.slice(0, 5).reduce((sum, d) => sum + d.value, 0) / 5;
+    const recentCount = Math.min(5, Math.floor(historyData.length / 2));
+    const recent = historyData.slice(-recentCount).reduce((sum, d) => sum + d.value, 0) / recentCount;
+    const older = historyData.slice(0, recentCount).reduce((sum, d) => sum + d.value, 0) / recentCount;
     return recent - older;
   }, [historyData]);
 
@@ -189,40 +229,81 @@ function LifeIndexProgressChart({
       </div>
       
       <div className="h-32">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={historyData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
-            <defs>
-              <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
-                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
-              </linearGradient>
-            </defs>
-            <XAxis 
-              dataKey="label" 
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-              tickLine={false}
-              axisLine={false}
-              interval={period === 'month' ? 6 : 1}
-            />
-            <YAxis 
-              domain={[0, 100]}
-              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
-              tickLine={false}
-              axisLine={false}
-              tickCount={3}
-            />
-            <Area
-              type="monotone"
-              dataKey="value"
-              stroke="hsl(var(--primary))"
-              strokeWidth={2}
-              fill="url(#progressGradient)"
-            />
-          </AreaChart>
-        </ResponsiveContainer>
+        {loading ? (
+          <div className="flex items-center justify-center h-full">
+            <div className="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height="100%">
+            <AreaChart data={historyData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+              <defs>
+                <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+                </linearGradient>
+              </defs>
+              <XAxis 
+                dataKey="label" 
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tickLine={false}
+                axisLine={false}
+                interval={period === 'month' ? 6 : 1}
+              />
+              <YAxis 
+                domain={[0, 100]}
+                tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+                tickLine={false}
+                axisLine={false}
+                tickCount={3}
+              />
+              <Area
+                type="monotone"
+                dataKey="value"
+                stroke="hsl(var(--primary))"
+                strokeWidth={2}
+                fill="url(#progressGradient)"
+              />
+            </AreaChart>
+          </ResponsiveContainer>
+        )}
       </div>
     </div>
   );
+}
+
+// Fallback data generator when no real data exists
+function generateFallbackData(
+  period: 'month' | 'year', 
+  lifeIndex: number, 
+  locale: typeof ru | typeof es | typeof enUS
+): Array<{ date: string; value: number; label: string }> {
+  const data: Array<{ date: string; value: number; label: string }> = [];
+  const now = new Date();
+  
+  if (period === 'month') {
+    for (let i = 29; i >= 0; i--) {
+      const date = subDays(now, i);
+      const variation = Math.sin(i * 0.3) * 15 + Math.random() * 10 - 5;
+      const value = Math.max(0, Math.min(100, lifeIndex + variation - (29 - i) * 0.3));
+      data.push({
+        date: format(date, 'yyyy-MM-dd'),
+        value: Math.round(value),
+        label: format(date, 'd MMM', { locale }),
+      });
+    }
+  } else {
+    for (let i = 11; i >= 0; i--) {
+      const date = subMonths(now, i);
+      const variation = Math.sin(i * 0.5) * 20 + Math.random() * 10 - 5;
+      const value = Math.max(0, Math.min(100, lifeIndex + variation - (11 - i) * 0.8));
+      data.push({
+        date: format(date, 'yyyy-MM'),
+        value: Math.round(value),
+        label: format(date, 'MMM', { locale }),
+      });
+    }
+  }
+  return data;
 }
 
 // Balance Scales Widget Component with swing animation
@@ -431,29 +512,30 @@ function SpiderChart({
   const maxRadius = 180;
   const levels = 5;
 
-  // Reorder spheres: Personal on left (top-left to bottom-left), Social on right (top-right to bottom-right)
+  // Evenly distribute 8 spheres (45° each), Personal on left, Social on right
   const personalSpheres = getPersonalSpheres();
   const socialSpheres = getSocialSpheres();
   
-  // Order: Personal spheres in left quadrants (starting from top-left going down)
-  // Social spheres in right quadrants (starting from top-right going down)
+  // Order matching flower: Personal in left hemisphere, Social in right hemisphere
   const orderedSpheres = [
-    personalSpheres[0], // Top-left quadrant
-    personalSpheres[1], // Upper-left
-    personalSpheres[2], // Lower-left
-    personalSpheres[3], // Bottom-left quadrant
-    socialSpheres[3],   // Bottom-right quadrant
-    socialSpheres[2],   // Lower-right
-    socialSpheres[1],   // Upper-right
-    socialSpheres[0],   // Top-right quadrant
+    personalSpheres[0], // Body - 112.5°
+    personalSpheres[1], // Mind - 157.5°
+    personalSpheres[2], // Spirit - 202.5°
+    personalSpheres[3], // Rest - 247.5°
+    socialSpheres[0],   // Work - 292.5°
+    socialSpheres[1],   // Money - 337.5°
+    socialSpheres[2],   // Family - 22.5°
+    socialSpheres[3],   // Social - 67.5°
   ].filter(Boolean);
 
-  // Calculate points for radar chart
+  // Calculate points for radar chart - using same angles as flower
+  const baseAngles = [112.5, 157.5, 202.5, 247.5, 292.5, 337.5, 22.5, 67.5];
+  
   const points = useMemo(() => {
     return orderedSpheres.map((sphere, i) => {
       const sphereIndex = sphereIndices.find(s => s.sphereId === sphere.id);
       const indexValue = sphereIndex?.index || 0;
-      const angle = (i * 360 / orderedSpheres.length) - 90; // Start from top
+      const angle = baseAngles[i];
       const angleRad = (angle * Math.PI) / 180;
       const radius = (indexValue / 100) * maxRadius;
       
@@ -513,7 +595,7 @@ function SpiderChart({
 
         {/* Axis lines */}
         {orderedSpheres.map((sphere, i) => {
-          const angle = (i * 360 / orderedSpheres.length) - 90;
+          const angle = baseAngles[i];
           const angleRad = (angle * Math.PI) / 180;
           return (
             <line
@@ -660,18 +742,18 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
   const personalSpheres = getPersonalSpheres();
   const socialSpheres = getSocialSpheres();
   
-  // Reorder: Personal on left hemisphere (top-left to bottom-left), Social on right (top-right to bottom-right)
-  // Angles: Personal spheres at 135°, 157.5°, 202.5°, 225° (left side)
-  // Social spheres at 315°, 337.5°, 22.5°, 45° (right side)
+  // Evenly distribute 8 petals (45° each), with 2 per quadrant
+  // Personal spheres in left hemisphere (90° to 270°), Social in right (270° to 90°)
+  // Each petal is 45°, with equal spacing
   const orderedSpheres = [
-    { sphere: personalSpheres[0], baseAngle: 135 },   // Body - upper left
-    { sphere: personalSpheres[1], baseAngle: 157.5 }, // Mind - left
-    { sphere: personalSpheres[2], baseAngle: 202.5 }, // Spirit - left
-    { sphere: personalSpheres[3], baseAngle: 225 },   // Rest - lower left
-    { sphere: socialSpheres[0], baseAngle: 315 },     // Work - lower right
-    { sphere: socialSpheres[1], baseAngle: 337.5 },   // Money - right
-    { sphere: socialSpheres[2], baseAngle: 22.5 },    // Family - right
-    { sphere: socialSpheres[3], baseAngle: 45 },      // Social - upper right
+    { sphere: personalSpheres[0], baseAngle: 112.5 },  // Body - upper left quadrant
+    { sphere: personalSpheres[1], baseAngle: 157.5 },  // Mind - upper left quadrant
+    { sphere: personalSpheres[2], baseAngle: 202.5 },  // Spirit - lower left quadrant
+    { sphere: personalSpheres[3], baseAngle: 247.5 },  // Rest - lower left quadrant
+    { sphere: socialSpheres[0], baseAngle: 292.5 },    // Work - lower right quadrant
+    { sphere: socialSpheres[1], baseAngle: 337.5 },    // Money - lower right quadrant
+    { sphere: socialSpheres[2], baseAngle: 22.5 },     // Family - upper right quadrant
+    { sphere: socialSpheres[3], baseAngle: 67.5 },     // Social - upper right quadrant
   ].filter(item => item.sphere);
 
   // Calculate averages for balance scales
@@ -735,33 +817,32 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     return { taskCount, lastActivity };
   };
 
-  // Create rounded trapezoid petal path - parallel edges, very rounded outer corners
+  // Create petal path with straight edges inscribed in circle and rounded corners
   const createPetalPath = (
     angle: number,
     radius: number
   ): string => {
-    const angleRad = (angle * Math.PI) / 180;
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
     
-    // Petal angular width (22.5 degrees for 8 petals with minimal gaps)
-    const halfAngle = 10; // degrees - wider for less gaps
-    const innerHalfAngle = 5; // narrower at base
+    // Each petal spans 45°, but we leave small gaps (2° on each side)
+    const petalSpan = 20; // Half of 40° (leaving 5° gap total between petals)
+    const innerPetalSpan = 10; // Narrower at the base
     
     // Radii
     const innerR = centerRadius + 12;
     const outerR = radius;
     
-    // Corner radius for rounding
-    const cornerRadius = 18;
+    // Corner rounding radius
+    const outerCornerRadius = 12;
+    const innerCornerRadius = 6;
     
-    // Calculate corner points
-    const angle1 = angle - halfAngle;
-    const angle2 = angle + halfAngle;
-    const innerAngle1 = angle - innerHalfAngle;
-    const innerAngle2 = angle + innerHalfAngle;
+    // Calculate the 4 corner points of the petal (trapezoid shape)
+    const angle1 = angle - petalSpan;
+    const angle2 = angle + petalSpan;
+    const innerAngle1 = angle - innerPetalSpan;
+    const innerAngle2 = angle + innerPetalSpan;
     
-    const toRad = (deg: number) => (deg * Math.PI) / 180;
-    
-    // Outer corners (need rounding)
+    // Outer edge points (on the circle at outerR)
     const outerLeft = {
       x: center + outerR * Math.cos(toRad(angle1)),
       y: center + outerR * Math.sin(toRad(angle1))
@@ -771,7 +852,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       y: center + outerR * Math.sin(toRad(angle2))
     };
     
-    // Inner corners (slight rounding)
+    // Inner edge points (on the circle at innerR)
     const innerLeft = {
       x: center + innerR * Math.cos(toRad(innerAngle1)),
       y: center + innerR * Math.sin(toRad(innerAngle1))
@@ -781,26 +862,43 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       y: center + innerR * Math.sin(toRad(innerAngle2))
     };
     
-    // Outer arc control point (further out for rounded appearance)
-    const outerMidR = outerR + cornerRadius;
-    const outerMid = {
-      x: center + outerMidR * Math.cos(angleRad),
-      y: center + outerMidR * Math.sin(angleRad)
+    // Calculate points slightly inward from corners for rounded corners
+    const cornerOffset = outerCornerRadius * 0.7;
+    const innerCornerOffset = innerCornerRadius * 0.7;
+    
+    // Points for left edge (just before/after outer left corner)
+    const leftEdgeStart = {
+      x: innerLeft.x + (outerLeft.x - innerLeft.x) * (innerCornerOffset / (outerR - innerR)),
+      y: innerLeft.y + (outerLeft.y - innerLeft.y) * (innerCornerOffset / (outerR - innerR))
+    };
+    const leftEdgeEnd = {
+      x: innerLeft.x + (outerLeft.x - innerLeft.x) * (1 - cornerOffset / (outerR - innerR)),
+      y: innerLeft.y + (outerLeft.y - innerLeft.y) * (1 - cornerOffset / (outerR - innerR))
     };
     
-    // Inner arc control (closer to center)
-    const innerMidR = innerR - 5;
-    const innerMid = {
-      x: center + innerMidR * Math.cos(angleRad),
-      y: center + innerMidR * Math.sin(angleRad)
+    // Points for right edge
+    const rightEdgeStart = {
+      x: innerRight.x + (outerRight.x - innerRight.x) * (1 - cornerOffset / (outerR - innerR)),
+      y: innerRight.y + (outerRight.y - innerRight.y) * (1 - cornerOffset / (outerR - innerR))
     };
+    const rightEdgeEnd = {
+      x: innerRight.x + (outerRight.x - innerRight.x) * (innerCornerOffset / (outerR - innerR)),
+      y: innerRight.y + (outerRight.y - innerRight.y) * (innerCornerOffset / (outerR - innerR))
+    };
+    
+    // Arc along outer edge (inscribed in circle)
+    const outerArcSweep = 1; // clockwise
     
     return `
-      M ${innerLeft.x} ${innerLeft.y}
-      L ${outerLeft.x} ${outerLeft.y}
-      Q ${outerMid.x} ${outerMid.y} ${outerRight.x} ${outerRight.y}
-      L ${innerRight.x} ${innerRight.y}
-      Q ${innerMid.x} ${innerMid.y} ${innerLeft.x} ${innerLeft.y}
+      M ${leftEdgeStart.x} ${leftEdgeStart.y}
+      L ${leftEdgeEnd.x} ${leftEdgeEnd.y}
+      Q ${outerLeft.x} ${outerLeft.y} ${center + outerR * Math.cos(toRad(angle1 + 3))} ${center + outerR * Math.sin(toRad(angle1 + 3))}
+      A ${outerR} ${outerR} 0 0 ${outerArcSweep} ${center + outerR * Math.cos(toRad(angle2 - 3))} ${center + outerR * Math.sin(toRad(angle2 - 3))}
+      Q ${outerRight.x} ${outerRight.y} ${rightEdgeStart.x} ${rightEdgeStart.y}
+      L ${rightEdgeEnd.x} ${rightEdgeEnd.y}
+      Q ${innerRight.x} ${innerRight.y} ${center + innerR * Math.cos(toRad(innerAngle2 - 2))} ${center + innerR * Math.sin(toRad(innerAngle2 - 2))}
+      A ${innerR} ${innerR} 0 0 0 ${center + innerR * Math.cos(toRad(innerAngle1 + 2))} ${center + innerR * Math.sin(toRad(innerAngle1 + 2))}
+      Q ${innerLeft.x} ${innerLeft.y} ${leftEdgeStart.x} ${leftEdgeStart.y}
       Z
     `;
   };

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, RefreshCw } from 'lucide-react';
@@ -9,9 +9,12 @@ import { BalanceFlower } from '@/components/spheres/BalanceFlower';
 import { MindfulnessMetric } from '@/components/spheres/MindfulnessMetric';
 import { useSpheres } from '@/hooks/useSpheres';
 import { useLanguage } from '@/contexts/LanguageContext';
+import { useAuth } from '@/hooks/useAuth';
+import { supabase } from '@/integrations/supabase/client';
 import { LifeIndexData, SPHERES, getSphereName, Sphere } from '@/types/sphere';
 import { Skeleton } from '@/components/ui/skeleton';
 import { AppHeader } from '@/components/AppHeader';
+import { format } from 'date-fns';
 
 // Sphere Card Component
 interface SphereCardProps {
@@ -80,6 +83,7 @@ function SphereCard({ sphere, indexValue, delay, language, onClick }: SphereCard
 export default function LifeFocus() {
   const navigate = useNavigate();
   const { language } = useLanguage();
+  const { user } = useAuth();
   const { fetchLifeIndexData, loading, spheres } = useSpheres();
   const [data, setData] = useState<LifeIndexData | null>(null);
 
@@ -111,6 +115,42 @@ export default function LifeFocus() {
     },
   };
 
+  // Save life index to history
+  const saveLifeIndexHistory = useCallback(async (lifeData: LifeIndexData) => {
+    if (!user || lifeData.lifeIndex === 0) return;
+
+    try {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      
+      // Build sphere indices object
+      const sphereIndicesObj: Record<string, number> = {};
+      lifeData.sphereIndices.forEach(si => {
+        sphereIndicesObj[si.sphereKey] = si.index;
+      });
+
+      // Upsert to handle one record per day
+      const { error } = await supabase
+        .from('life_index_history')
+        .upsert({
+          user_id: user.id,
+          life_index: lifeData.lifeIndex,
+          personal_energy: lifeData.personalEnergy,
+          external_success: lifeData.externalSuccess,
+          mindfulness_level: lifeData.mindfulnessLevel,
+          sphere_indices: sphereIndicesObj,
+          recorded_at: today,
+        }, {
+          onConflict: 'user_id,recorded_at',
+        });
+
+      if (error) {
+        console.error('Error saving life index history:', error);
+      }
+    } catch (err) {
+      console.error('Error saving life index history:', err);
+    }
+  }, [user]);
+
   useEffect(() => {
     loadData();
   }, []);
@@ -118,6 +158,11 @@ export default function LifeFocus() {
   const loadData = async () => {
     const result = await fetchLifeIndexData();
     setData(result);
+    
+    // Save to history when data is loaded
+    if (result) {
+      saveLifeIndexHistory(result);
+    }
   };
 
   if (loading && !data) {

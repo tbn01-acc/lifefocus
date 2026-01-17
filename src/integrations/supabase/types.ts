@@ -712,6 +712,42 @@ export type Database = {
         }
         Relationships: []
       }
+      life_index_history: {
+        Row: {
+          created_at: string
+          external_success: number | null
+          id: string
+          life_index: number
+          mindfulness_level: number | null
+          personal_energy: number | null
+          recorded_at: string
+          sphere_indices: Json | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          external_success?: number | null
+          id?: string
+          life_index: number
+          mindfulness_level?: number | null
+          personal_energy?: number | null
+          recorded_at?: string
+          sphere_indices?: Json | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          external_success?: number | null
+          id?: string
+          life_index?: number
+          mindfulness_level?: number | null
+          personal_energy?: number | null
+          recorded_at?: string
+          sphere_indices?: Json | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       notification_settings: {
         Row: {
           comments_notifications_enabled: boolean | null
