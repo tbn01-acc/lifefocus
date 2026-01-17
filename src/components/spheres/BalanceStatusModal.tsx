@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/button';
 import { SpreadLevel, shouldAwardStars, markStarsAwarded, getStarsForLevel } from '@/hooks/useBalanceSpread';
 import confetti from 'canvas-confetti';
 import { playSuccessSound } from '@/utils/celebrations';
-import { X, Zap, AlertTriangle, Target, Award, Crown, Share, Star } from 'lucide-react';
+import { X, Zap, AlertTriangle, Target, Award, Crown, Share, Star, Camera } from 'lucide-react';
 import { useStars } from '@/hooks/useStars';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import { AchievementPublishDialog } from '@/components/AchievementPublishDialog';
+import { toPng } from 'html-to-image';
 
 interface BalanceStatusModalProps {
   isOpen: boolean;
@@ -121,6 +122,8 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language, i
   const [showBluePulse, setShowBluePulse] = useState(false);
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [starsAwarded, setStarsAwarded] = useState(false);
+  const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
+  const [isCapturing, setIsCapturing] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   
   const { addStars } = useStars();
@@ -229,8 +232,25 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language, i
 
   const canShare = level === 'stability' || level === 'topFocus';
 
-  const handleShare = () => {
-    setShowPublishDialog(true);
+  const handleShare = async () => {
+    if (!modalRef.current) return;
+    
+    setIsCapturing(true);
+    try {
+      // Capture screenshot of the modal content
+      const dataUrl = await toPng(modalRef.current, {
+        backgroundColor: 'transparent',
+        pixelRatio: 2,
+        quality: 0.95,
+      });
+      setScreenshotUrl(dataUrl);
+      setShowPublishDialog(true);
+    } catch (err) {
+      console.error('Failed to capture screenshot:', err);
+      toast.error(language === 'ru' ? 'Ошибка создания снимка' : 'Failed to capture screenshot');
+    } finally {
+      setIsCapturing(false);
+    }
   };
 
   return (
@@ -319,8 +339,13 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language, i
                 variant="outline"
                 size="sm"
                 className="mt-4 gap-2"
+                disabled={isCapturing}
               >
-                <Share className="w-4 h-4" />
+                {isCapturing ? (
+                  <span className="animate-spin w-4 h-4 border-2 border-current border-t-transparent rounded-full" />
+                ) : (
+                  <Camera className="w-4 h-4" />
+                )}
                 {shareButtonLabels[language]}
               </Button>
             )}
@@ -339,8 +364,12 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language, i
       {/* Publish Dialog for sharing */}
       <AchievementPublishDialog
         open={showPublishDialog}
-        onOpenChange={setShowPublishDialog}
+        onOpenChange={(open) => {
+          setShowPublishDialog(open);
+          if (!open) setScreenshotUrl(null);
+        }}
         itemName={`${content?.title}: ${personalizedMessage}`}
+        preloadedImageUrl={screenshotUrl}
       />
     </>
   );

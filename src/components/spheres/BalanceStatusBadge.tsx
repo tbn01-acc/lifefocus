@@ -7,6 +7,7 @@ interface BalanceStatusBadgeProps {
   level: SpreadLevel;
   language: 'ru' | 'en' | 'es';
   onClick?: () => void;
+  disabled?: boolean;
 }
 
 const statusLabels: Record<SpreadLevel, Record<'ru' | 'en' | 'es', string>> = {
@@ -58,7 +59,7 @@ const levelConfigs: Record<SpreadLevel, {
   },
 };
 
-export function BalanceStatusBadge({ level, language, onClick }: BalanceStatusBadgeProps) {
+export function BalanceStatusBadge({ level, language, onClick, disabled }: BalanceStatusBadgeProps) {
   const config = levelConfigs[level];
   const label = statusLabels[level][language];
 
@@ -69,26 +70,28 @@ export function BalanceStatusBadge({ level, language, onClick }: BalanceStatusBa
       animate={{ 
         scale: 1, 
         opacity: 1,
-        ...(config.animate && {
+        ...(config.animate && !disabled && {
           y: [0, -2, 0],
         }),
       }}
       transition={{
         scale: { duration: 0.3 },
-        y: config.animate ? {
+        y: config.animate && !disabled ? {
           repeat: Infinity,
           duration: 0.5,
           repeatDelay: 0.5,
         } : undefined,
       }}
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
-      onClick={onClick}
+      whileHover={!disabled ? { scale: 1.05 } : undefined}
+      whileTap={!disabled ? { scale: 0.95 } : undefined}
+      onClick={disabled ? undefined : onClick}
+      disabled={disabled}
       className={`
         inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
         ${config.bgClass} ${config.textClass} ${config.glowClass}
-        font-semibold text-sm cursor-pointer
-        transition-all hover:brightness-110
+        font-semibold text-sm 
+        ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:brightness-110'}
+        transition-all
       `}
     >
       {config.icon}

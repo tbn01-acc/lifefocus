@@ -800,7 +800,8 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     isNewLevel, 
     showModal, 
     dismissModal,
-    openModal
+    openModal,
+    notificationsEnabled
   } = useBalanceSpread(sphereIndices);
   
   const personalSpheres = getPersonalSpheres();
@@ -1375,6 +1376,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
             level={spreadState.level} 
             language={language} 
             onClick={openModal}
+            disabled={!notificationsEnabled}
           />
         </div>
       )}

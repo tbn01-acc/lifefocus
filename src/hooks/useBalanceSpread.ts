@@ -10,10 +10,12 @@ interface SpreadState {
   maxValue: number;
   minSphereId: number | null;
   maxSphereId: number | null;
+  allSpheresAboveMinimum: boolean;
 }
 
 const STORAGE_KEY = 'balance_spread_level';
 const STARS_AWARDED_KEY = 'balance_stars_awarded';
+const MINIMUM_SPHERE_VALUE = 25; // Each sphere must be at least 25% filled
 
 export function getSpreadLevel(spread: number): SpreadLevel {
   if (spread <= 5) return 'topFocus';
@@ -21,6 +23,12 @@ export function getSpreadLevel(spread: number): SpreadLevel {
   if (spread < 50) return 'balance';
   if (spread < 75) return 'tilt';
   return 'chaos';
+}
+
+// Check if all spheres meet the minimum threshold (25%)
+export function checkAllSpheresAboveMinimum(sphereIndices: SphereIndex[]): boolean {
+  if (sphereIndices.length === 0) return false;
+  return sphereIndices.every(s => s.index >= MINIMUM_SPHERE_VALUE);
 }
 
 export function calculateSpread(sphereIndices: SphereIndex[]): SpreadState {
@@ -32,6 +40,7 @@ export function calculateSpread(sphereIndices: SphereIndex[]): SpreadState {
       maxValue: 0,
       minSphereId: null,
       maxSphereId: null,
+      allSpheresAboveMinimum: false,
     };
   }
 
@@ -44,6 +53,7 @@ export function calculateSpread(sphereIndices: SphereIndex[]): SpreadState {
   const maxItem = values.reduce((max, curr) => curr.index > max.index ? curr : max, values[0]);
   
   const spread = maxItem.index - minItem.index;
+  const allSpheresAboveMinimum = checkAllSpheresAboveMinimum(sphereIndices);
   
   return {
     level: getSpreadLevel(spread),
@@ -52,6 +62,7 @@ export function calculateSpread(sphereIndices: SphereIndex[]): SpreadState {
     maxValue: maxItem.index,
     minSphereId: minItem.sphereId,
     maxSphereId: maxItem.sphereId,
+    allSpheresAboveMinimum,
   };
 }
 
@@ -89,11 +100,21 @@ export function useBalanceSpread(sphereIndices: SphereIndex[]) {
   const [previousLevel, setPreviousLevel] = useState<SpreadLevel | null>(null);
   const [isNewLevel, setIsNewLevel] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   // Calculate current spread state
   useEffect(() => {
     const state = calculateSpread(sphereIndices);
     setCurrentState(state);
+
+    // Notifications only enabled when ALL spheres are at least 25%
+    const canNotify = state.allSpheresAboveMinimum;
+    setNotificationsEnabled(canNotify);
+
+    if (!canNotify) {
+      // Don't trigger any notifications if condition not met
+      return;
+    }
 
     // Check if level changed from previous
     const storedLevel = localStorage.getItem(STORAGE_KEY);
@@ -118,8 +139,11 @@ export function useBalanceSpread(sphereIndices: SphereIndex[]) {
   }, []);
 
   const openModal = useCallback(() => {
-    setShowModal(true);
-  }, []);
+    // Only open modal if notifications are enabled
+    if (notificationsEnabled) {
+      setShowModal(true);
+    }
+  }, [notificationsEnabled]);
 
   const resetLevelTracking = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
@@ -135,5 +159,6 @@ export function useBalanceSpread(sphereIndices: SphereIndex[]) {
     dismissModal,
     openModal,
     resetLevelTracking,
+    notificationsEnabled,
   };
 }
