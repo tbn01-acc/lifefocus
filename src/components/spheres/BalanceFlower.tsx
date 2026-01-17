@@ -324,15 +324,6 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     
     return { taskCount, lastActivity };
   };
-    
-    let lastActivity: string | null = null;
-    if (lastActivityDate) {
-      const locale = language === 'ru' ? ru : language === 'es' ? es : enUS;
-      lastActivity = format(lastActivityDate, 'dd MMM', { locale });
-    }
-    
-    return { taskCount, lastActivity };
-  };
 
   // Create teardrop/petal path - rounded drop shape
   const createPetalPath = (
@@ -379,11 +370,14 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     const result: Array<{
       sphere: Sphere;
       path: string;
+      maxPath: string; // Path at 100% for background
       index: number;
       angle: number;
       radius: number;
       tipX: number;
       tipY: number;
+      maxTipX: number;
+      maxTipY: number;
       hsl: { h: number; s: number; l: number };
       needsPulse: boolean;
     }> = [];
@@ -405,11 +399,14 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       result.push({
         sphere,
         path: createPetalPath(angle, radius),
+        maxPath: createPetalPath(angle, maxRadius), // 100% size path
         index: indexValue,
         angle,
         radius,
         tipX: center + (radius - 18) * Math.cos(angleRad),
         tipY: center + (radius - 18) * Math.sin(angleRad),
+        maxTipX: center + (maxRadius - 18) * Math.cos(angleRad),
+        maxTipY: center + (maxRadius - 18) * Math.sin(angleRad),
         hsl,
         needsPulse: indexValue < 30,
       });
@@ -426,11 +423,14 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       result.push({
         sphere,
         path: createPetalPath(angle, radius),
+        maxPath: createPetalPath(angle, maxRadius), // 100% size path
         index: indexValue,
         angle,
         radius,
         tipX: center + (radius - 18) * Math.cos(angleRad),
         tipY: center + (radius - 18) * Math.sin(angleRad),
+        maxTipX: center + (maxRadius - 18) * Math.cos(angleRad),
+        maxTipY: center + (maxRadius - 18) * Math.sin(angleRad),
         hsl,
         needsPulse: indexValue < 30,
       });
@@ -592,7 +592,21 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                 </radialGradient>
               </defs>
 
-              {/* Petals */}
+              {/* Background petals (max size, pale) */}
+              {petals.map((petal, i) => (
+                <path
+                  key={`bg-${petal.sphere.id}`}
+                  d={petal.maxPath}
+                  fill={petal.sphere.color}
+                  fillOpacity="0.1"
+                  stroke={petal.sphere.color}
+                  strokeWidth="1"
+                  strokeOpacity="0.2"
+                  strokeDasharray="4 2"
+                />
+              ))}
+
+              {/* Active Petals */}
               {petals.map((petal, i) => (
                 <Tooltip key={petal.sphere.id}>
                   <TooltipTrigger asChild>

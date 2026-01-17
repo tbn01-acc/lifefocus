@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Bell, BellOff, Heart, MessageCircle, UserPlus, Moon, Clock, CheckSquare, Repeat, CloudSun, Target } from 'lucide-react';
+import { Bell, BellOff, Heart, MessageCircle, UserPlus, Moon, Clock, CheckSquare, Repeat, Target } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
@@ -166,19 +166,6 @@ export function NotificationSettingsDialog({ open, onOpenChange }: NotificationS
               />
             </div>
 
-            <div className="flex items-center justify-between">
-              <Label htmlFor="weather" className="flex items-center gap-2 cursor-pointer">
-                <CloudSun className="w-4 h-4 text-sky-500" />
-                Погода
-              </Label>
-              <Switch
-                id="weather"
-                checked={localSettings.weather_notifications_enabled}
-                onCheckedChange={(checked) => 
-                  setLocalSettings(prev => ({ ...prev, weather_notifications_enabled: checked }))
-                }
-              />
-            </div>
           </div>
 
           <Separator />
