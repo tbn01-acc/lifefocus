@@ -18,9 +18,10 @@ import {
 import { useTasks } from '@/hooks/useTasks';
 import { useHabits } from '@/hooks/useHabits';
 import { useSubscription } from '@/hooks/useSubscription';
-import { format } from 'date-fns';
+import { format, subDays, subMonths } from 'date-fns';
 import { ru, es, enUS } from 'date-fns/locale';
-import { Lock } from 'lucide-react';
+import { Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Area, AreaChart } from 'recharts';
 
 interface BalanceFlowerProps {
   sphereIndices: SphereIndex[];
@@ -62,6 +63,14 @@ const colorSchemes: Record<ColorScheme, (hex: string, hsl: { h: number; s: numbe
 
 // Helper to convert hex color to HSL for glow effects
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
+  // Handle HSL format
+  if (hex.startsWith('hsl')) {
+    const match = hex.match(/hsl\((\d+),\s*(\d+)%?,\s*(\d+)%?\)/);
+    if (match) {
+      return { h: parseInt(match[1]), s: parseInt(match[2]), l: parseInt(match[3]) };
+    }
+  }
+  
   const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
   if (!result) return { h: 0, s: 50, l: 50 };
   
@@ -86,7 +95,137 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
 }
 
-// Balance Scales Widget Component
+// Life Index Progress Chart Component
+function LifeIndexProgressChart({
+  lifeIndex,
+  language,
+}: {
+  lifeIndex: number;
+  language: 'ru' | 'en' | 'es';
+}) {
+  const [period, setPeriod] = useState<'month' | 'year'>('month');
+  
+  // Generate mock history data (will be replaced with real data when DB table is created)
+  const historyData = useMemo(() => {
+    const data: Array<{ date: string; value: number; label: string }> = [];
+    const now = new Date();
+    const locale = language === 'ru' ? ru : language === 'es' ? es : enUS;
+    
+    if (period === 'month') {
+      // Last 30 days
+      for (let i = 29; i >= 0; i--) {
+        const date = subDays(now, i);
+        // Simulate some variation around current value
+        const variation = Math.sin(i * 0.3) * 15 + Math.random() * 10 - 5;
+        const value = Math.max(0, Math.min(100, lifeIndex + variation - (29 - i) * 0.3));
+        data.push({
+          date: format(date, 'yyyy-MM-dd'),
+          value: Math.round(value),
+          label: format(date, 'd MMM', { locale }),
+        });
+      }
+    } else {
+      // Last 12 months
+      for (let i = 11; i >= 0; i--) {
+        const date = subMonths(now, i);
+        const variation = Math.sin(i * 0.5) * 20 + Math.random() * 10 - 5;
+        const value = Math.max(0, Math.min(100, lifeIndex + variation - (11 - i) * 0.8));
+        data.push({
+          date: format(date, 'yyyy-MM'),
+          value: Math.round(value),
+          label: format(date, 'MMM', { locale }),
+        });
+      }
+    }
+    return data;
+  }, [period, lifeIndex, language]);
+
+  // Calculate trend
+  const trend = useMemo(() => {
+    if (historyData.length < 2) return 0;
+    const recent = historyData.slice(-5).reduce((sum, d) => sum + d.value, 0) / 5;
+    const older = historyData.slice(0, 5).reduce((sum, d) => sum + d.value, 0) / 5;
+    return recent - older;
+  }, [historyData]);
+
+  const labels = {
+    ru: { month: 'Месяц', year: 'Год', progress: 'Динамика' },
+    en: { month: 'Month', year: 'Year', progress: 'Progress' },
+    es: { month: 'Mes', year: 'Año', progress: 'Progreso' },
+  };
+  const t = labels[language] || labels.en;
+
+  return (
+    <div className="w-full mt-4 p-3 bg-card/50 rounded-xl border border-border/50">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-foreground">{t.progress}</span>
+          {trend > 3 && <TrendingUp className="w-4 h-4 text-green-500" />}
+          {trend < -3 && <TrendingDown className="w-4 h-4 text-red-500" />}
+          {Math.abs(trend) <= 3 && <Minus className="w-4 h-4 text-muted-foreground" />}
+        </div>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setPeriod('month')}
+            className={`text-xs px-3 py-1 rounded-full transition-all ${
+              period === 'month'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            {t.month}
+          </button>
+          <button
+            onClick={() => setPeriod('year')}
+            className={`text-xs px-3 py-1 rounded-full transition-all ${
+              period === 'year'
+                ? 'bg-primary text-primary-foreground'
+                : 'bg-muted text-muted-foreground hover:bg-muted/80'
+            }`}
+          >
+            {t.year}
+          </button>
+        </div>
+      </div>
+      
+      <div className="h-32">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={historyData} margin={{ top: 5, right: 5, left: -25, bottom: 0 }}>
+            <defs>
+              <linearGradient id="progressGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.4} />
+                <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <XAxis 
+              dataKey="label" 
+              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+              tickLine={false}
+              axisLine={false}
+              interval={period === 'month' ? 6 : 1}
+            />
+            <YAxis 
+              domain={[0, 100]}
+              tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }}
+              tickLine={false}
+              axisLine={false}
+              tickCount={3}
+            />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="hsl(var(--primary))"
+              strokeWidth={2}
+              fill="url(#progressGradient)"
+            />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    </div>
+  );
+}
+
+// Balance Scales Widget Component with swing animation
 function BalanceScalesWidget({ 
   personalValue, 
   socialValue, 
@@ -147,20 +286,32 @@ function BalanceScalesWidget({
         {/* Pivot point */}
         <circle cx="140" cy="68" r="5" fill="#606060" stroke="#404040" strokeWidth="1" />
         
-        {/* Indicator needle */}
+        {/* Indicator needle with swing animation */}
         <motion.g
+          initial={{ rotate: 30 }}
           animate={{ rotate: tiltAngle }}
-          transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+          transition={{ 
+            type: 'spring', 
+            stiffness: 40, 
+            damping: 8,
+            mass: 1.5
+          }}
           style={{ transformOrigin: '140px 68px' }}
         >
           <line x1="140" y1="68" x2="140" y2="45" stroke="#303030" strokeWidth="2" />
           <circle cx="140" cy="43" r="3" fill="#404040" />
         </motion.g>
         
-        {/* Balance beam (коромысло) */}
+        {/* Balance beam (коромысло) with swing animation */}
         <motion.g
+          initial={{ rotate: 30 }}
           animate={{ rotate: tiltAngle }}
-          transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+          transition={{ 
+            type: 'spring', 
+            stiffness: 40, 
+            damping: 8,
+            mass: 1.5
+          }}
           style={{ transformOrigin: '140px 68px' }}
         >
           {/* Beam */}
@@ -280,12 +431,29 @@ function SpiderChart({
   const maxRadius = 180;
   const levels = 5;
 
+  // Reorder spheres: Personal on left (top-left to bottom-left), Social on right (top-right to bottom-right)
+  const personalSpheres = getPersonalSpheres();
+  const socialSpheres = getSocialSpheres();
+  
+  // Order: Personal spheres in left quadrants (starting from top-left going down)
+  // Social spheres in right quadrants (starting from top-right going down)
+  const orderedSpheres = [
+    personalSpheres[0], // Top-left quadrant
+    personalSpheres[1], // Upper-left
+    personalSpheres[2], // Lower-left
+    personalSpheres[3], // Bottom-left quadrant
+    socialSpheres[3],   // Bottom-right quadrant
+    socialSpheres[2],   // Lower-right
+    socialSpheres[1],   // Upper-right
+    socialSpheres[0],   // Top-right quadrant
+  ].filter(Boolean);
+
   // Calculate points for radar chart
   const points = useMemo(() => {
-    return allSpheres.map((sphere, i) => {
+    return orderedSpheres.map((sphere, i) => {
       const sphereIndex = sphereIndices.find(s => s.sphereId === sphere.id);
       const indexValue = sphereIndex?.index || 0;
-      const angle = (i * 360 / allSpheres.length) - 90; // Start from top
+      const angle = (i * 360 / orderedSpheres.length) - 90; // Start from top
       const angleRad = (angle * Math.PI) / 180;
       const radius = (indexValue / 100) * maxRadius;
       
@@ -293,14 +461,14 @@ function SpiderChart({
         sphere,
         x: center + radius * Math.cos(angleRad),
         y: center + radius * Math.sin(angleRad),
-        labelX: center + (maxRadius + 45) * Math.cos(angleRad),
-        labelY: center + (maxRadius + 45) * Math.sin(angleRad),
+        labelX: center + (maxRadius + 50) * Math.cos(angleRad),
+        labelY: center + (maxRadius + 50) * Math.sin(angleRad),
         index: indexValue,
         angle,
         hsl: hexToHsl(sphere.color),
       };
     });
-  }, [sphereIndices, allSpheres]);
+  }, [sphereIndices, orderedSpheres]);
 
   // Create polygon path
   const polygonPath = points.map((p, i) => 
@@ -344,8 +512,8 @@ function SpiderChart({
         })}
 
         {/* Axis lines */}
-        {allSpheres.map((sphere, i) => {
-          const angle = (i * 360 / allSpheres.length) - 90;
+        {orderedSpheres.map((sphere, i) => {
+          const angle = (i * 360 / orderedSpheres.length) - 90;
           const angleRad = (angle * Math.PI) / 180;
           return (
             <line
@@ -428,7 +596,7 @@ function SpiderChart({
           );
         })}
 
-        {/* Labels - increased font size */}
+        {/* Labels - font size 16px */}
         {points.map((point) => (
           <text
             key={`label-${point.sphere.id}`}
@@ -436,7 +604,7 @@ function SpiderChart({
             y={point.labelY}
             textAnchor="middle"
             dominantBaseline="middle"
-            fontSize="13"
+            fontSize="16"
             fontWeight="500"
             className="fill-foreground/80 pointer-events-none"
           >
@@ -491,7 +659,20 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
   
   const personalSpheres = getPersonalSpheres();
   const socialSpheres = getSocialSpheres();
-  const allSpheres = [...personalSpheres, ...socialSpheres];
+  
+  // Reorder: Personal on left hemisphere (top-left to bottom-left), Social on right (top-right to bottom-right)
+  // Angles: Personal spheres at 135°, 157.5°, 202.5°, 225° (left side)
+  // Social spheres at 315°, 337.5°, 22.5°, 45° (right side)
+  const orderedSpheres = [
+    { sphere: personalSpheres[0], baseAngle: 135 },   // Body - upper left
+    { sphere: personalSpheres[1], baseAngle: 157.5 }, // Mind - left
+    { sphere: personalSpheres[2], baseAngle: 202.5 }, // Spirit - left
+    { sphere: personalSpheres[3], baseAngle: 225 },   // Rest - lower left
+    { sphere: socialSpheres[0], baseAngle: 315 },     // Work - lower right
+    { sphere: socialSpheres[1], baseAngle: 337.5 },   // Money - right
+    { sphere: socialSpheres[2], baseAngle: 22.5 },    // Family - right
+    { sphere: socialSpheres[3], baseAngle: 45 },      // Social - upper right
+  ].filter(item => item.sphere);
 
   // Calculate averages for balance scales
   const personalAvg = useMemo(() => {
@@ -510,7 +691,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
   const maxRadius = 190;
   const minRadius = 35;
   const centerRadius = 55;
-  const labelRadius = maxRadius + 40; // For external labels
+  const labelRadius = maxRadius + 45; // For external labels
 
   const handlePetalClick = (sphere: Sphere) => {
     navigate(`/sphere/${sphere.key}`);
@@ -554,69 +735,72 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     return { taskCount, lastActivity };
   };
 
-  // Create rounded triangle petal path - with very rounded corners and minimal gaps
+  // Create rounded trapezoid petal path - parallel edges, very rounded outer corners
   const createPetalPath = (
     angle: number,
     radius: number
   ): string => {
     const angleRad = (angle * Math.PI) / 180;
     
-    // Base starts near center - narrow at center
-    const baseR = centerRadius + 10;
-    const baseWidth = 18; // Even wider base for minimal gaps
+    // Petal angular width (22.5 degrees for 8 petals with minimal gaps)
+    const halfAngle = 10; // degrees - wider for less gaps
+    const innerHalfAngle = 5; // narrower at base
     
-    // Tip is wide and rounded
-    const tipWidth = 48 + (radius / maxRadius) * 25; // Wider tips for minimal gaps
+    // Radii
+    const innerR = centerRadius + 12;
+    const outerR = radius;
     
-    // Perpendicular angle for width calculations
-    const perpAngleRad = ((angle + 90) * Math.PI) / 180;
-    const perpAngleRadNeg = ((angle - 90) * Math.PI) / 180;
+    // Corner radius for rounding
+    const cornerRadius = 18;
     
-    // Base points (wider, near center)
-    const base1X = center + baseR * Math.cos(angleRad) + baseWidth * Math.cos(perpAngleRad);
-    const base1Y = center + baseR * Math.sin(angleRad) + baseWidth * Math.sin(perpAngleRad);
-    const base2X = center + baseR * Math.cos(angleRad) + baseWidth * Math.cos(perpAngleRadNeg);
-    const base2Y = center + baseR * Math.sin(angleRad) + baseWidth * Math.sin(perpAngleRadNeg);
+    // Calculate corner points
+    const angle1 = angle - halfAngle;
+    const angle2 = angle + halfAngle;
+    const innerAngle1 = angle - innerHalfAngle;
+    const innerAngle2 = angle + innerHalfAngle;
     
-    // Tip points (wide, at outer edge)
-    const tipCenterX = center + radius * Math.cos(angleRad);
-    const tipCenterY = center + radius * Math.sin(angleRad);
-    const tip1X = tipCenterX + tipWidth * Math.cos(perpAngleRad);
-    const tip1Y = tipCenterY + tipWidth * Math.sin(perpAngleRad);
-    const tip2X = tipCenterX + tipWidth * Math.cos(perpAngleRadNeg);
-    const tip2Y = tipCenterY + tipWidth * Math.sin(perpAngleRadNeg);
+    const toRad = (deg: number) => (deg * Math.PI) / 180;
     
-    // Control points for smooth curved sides (more curvature for very rounded effect)
-    const ctrl1Radius = baseR + (radius - baseR) * 0.35;
-    const ctrl1Width = baseWidth + (tipWidth - baseWidth) * 0.25;
-    const ctrl1X = center + ctrl1Radius * Math.cos(angleRad) + ctrl1Width * Math.cos(perpAngleRad);
-    const ctrl1Y = center + ctrl1Radius * Math.sin(angleRad) + ctrl1Width * Math.sin(perpAngleRad);
-    const ctrl2X = center + ctrl1Radius * Math.cos(angleRad) + ctrl1Width * Math.cos(perpAngleRadNeg);
-    const ctrl2Y = center + ctrl1Radius * Math.sin(angleRad) + ctrl1Width * Math.sin(perpAngleRadNeg);
+    // Outer corners (need rounding)
+    const outerLeft = {
+      x: center + outerR * Math.cos(toRad(angle1)),
+      y: center + outerR * Math.sin(toRad(angle1))
+    };
+    const outerRight = {
+      x: center + outerR * Math.cos(toRad(angle2)),
+      y: center + outerR * Math.sin(toRad(angle2))
+    };
     
-    // Second control points closer to tip
-    const ctrl3Radius = baseR + (radius - baseR) * 0.7;
-    const ctrl3Width = baseWidth + (tipWidth - baseWidth) * 0.75;
-    const ctrl3X = center + ctrl3Radius * Math.cos(angleRad) + ctrl3Width * Math.cos(perpAngleRad);
-    const ctrl3Y = center + ctrl3Radius * Math.sin(angleRad) + ctrl3Width * Math.sin(perpAngleRad);
-    const ctrl4X = center + ctrl3Radius * Math.cos(angleRad) + ctrl3Width * Math.cos(perpAngleRadNeg);
-    const ctrl4Y = center + ctrl3Radius * Math.sin(angleRad) + ctrl3Width * Math.sin(perpAngleRadNeg);
+    // Inner corners (slight rounding)
+    const innerLeft = {
+      x: center + innerR * Math.cos(toRad(innerAngle1)),
+      y: center + innerR * Math.sin(toRad(innerAngle1))
+    };
+    const innerRight = {
+      x: center + innerR * Math.cos(toRad(innerAngle2)),
+      y: center + innerR * Math.sin(toRad(innerAngle2))
+    };
     
-    // Rounded tip arc control point (very pronounced rounding)
-    const tipOuterR = radius + 25;
-    const tipOuterX = center + tipOuterR * Math.cos(angleRad);
-    const tipOuterY = center + tipOuterR * Math.sin(angleRad);
+    // Outer arc control point (further out for rounded appearance)
+    const outerMidR = outerR + cornerRadius;
+    const outerMid = {
+      x: center + outerMidR * Math.cos(angleRad),
+      y: center + outerMidR * Math.sin(angleRad)
+    };
     
-    // Base center for rounded base
-    const baseCenterX = center + baseR * Math.cos(angleRad);
-    const baseCenterY = center + baseR * Math.sin(angleRad);
+    // Inner arc control (closer to center)
+    const innerMidR = innerR - 5;
+    const innerMid = {
+      x: center + innerMidR * Math.cos(angleRad),
+      y: center + innerMidR * Math.sin(angleRad)
+    };
     
     return `
-      M ${base1X} ${base1Y}
-      C ${ctrl1X} ${ctrl1Y} ${ctrl3X} ${ctrl3Y} ${tip1X} ${tip1Y}
-      Q ${tipOuterX} ${tipOuterY} ${tip2X} ${tip2Y}
-      C ${ctrl4X} ${ctrl4Y} ${ctrl2X} ${ctrl2Y} ${base2X} ${base2Y}
-      Q ${baseCenterX} ${baseCenterY} ${base1X} ${base1Y}
+      M ${innerLeft.x} ${innerLeft.y}
+      L ${outerLeft.x} ${outerLeft.y}
+      Q ${outerMid.x} ${outerMid.y} ${outerRight.x} ${outerRight.y}
+      L ${innerRight.x} ${innerRight.y}
+      Q ${innerMid.x} ${innerMid.y} ${innerLeft.x} ${innerLeft.y}
       Z
     `;
   };
@@ -640,15 +824,11 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       colors: ReturnType<typeof colorSchemes['default']>;
     }> = [];
 
-    // Distribute 8 petals evenly around the circle (45 degrees apart)
-    const angleStep = 360 / allSpheres.length; // 45 degrees for 8 spheres
-    
-    allSpheres.forEach((sphere, i) => {
+    orderedSpheres.forEach(({ sphere, baseAngle }) => {
       const sphereIndex = sphereIndices.find(s => s.sphereId === sphere.id);
       const indexValue = sphereIndex?.index || 0;
       const radius = minRadius + ((indexValue / 100) * (maxRadius - minRadius));
-      // Start from top (-90) and go clockwise
-      const angle = -90 + (i * angleStep);
+      const angle = baseAngle;
       const angleRad = (angle * Math.PI) / 180;
       const hsl = hexToHsl(sphere.color);
       const colors = colorSchemes[colorScheme](sphere.color, hsl);
@@ -660,8 +840,8 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
         index: indexValue,
         angle,
         radius,
-        tipX: center + (radius - 20) * Math.cos(angleRad),
-        tipY: center + (radius - 20) * Math.sin(angleRad),
+        tipX: center + (radius - 25) * Math.cos(angleRad),
+        tipY: center + (radius - 25) * Math.sin(angleRad),
         maxTipX: center + (maxRadius - 20) * Math.cos(angleRad),
         maxTipY: center + (maxRadius - 20) * Math.sin(angleRad),
         labelX: center + labelRadius * Math.cos(angleRad),
@@ -673,7 +853,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     });
 
     return result;
-  }, [sphereIndices, allSpheres, colorScheme, labelRadius]);
+  }, [sphereIndices, orderedSpheres, colorScheme, labelRadius]);
 
   const getTooltipContent = (petal: typeof petals[0]) => {
     const stats = getSphereStats(petal.sphere.id);
@@ -786,7 +966,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
         <SpiderChart 
           sphereIndices={sphereIndices}
           lifeIndex={lifeIndex}
-          allSpheres={allSpheres}
+          allSpheres={orderedSpheres.map(o => o.sphere)}
           language={language}
           onPetalClick={handlePetalClick}
           getSphereStats={getSphereStats}
@@ -795,7 +975,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
         <TooltipProvider delayDuration={200}>
           <div className="px-0">
             <svg 
-              viewBox={`-60 -40 ${size + 120} ${size + 60}`} 
+              viewBox={`-70 -50 ${size + 140} ${size + 80}`} 
               className="w-full h-auto"
               style={{ overflow: 'visible' }}
             >
@@ -954,7 +1134,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
               ))}
               </motion.g>
 
-              {/* External sphere labels around the flower */}
+              {/* External sphere labels around the flower - font size 16px */}
               {petals.map((petal) => (
                 <text
                   key={`flower-label-${petal.sphere.id}`}
@@ -962,7 +1142,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                   y={petal.labelY}
                   textAnchor="middle"
                   dominantBaseline="middle"
-                  fontSize="12"
+                  fontSize="16"
                   fontWeight="500"
                   className="fill-foreground/70 pointer-events-none"
                 >
@@ -1045,6 +1225,12 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
         personalValue={personalAvg} 
         socialValue={socialAvg} 
         language={language} 
+      />
+
+      {/* Life Index Progress Chart */}
+      <LifeIndexProgressChart 
+        lifeIndex={lifeIndex}
+        language={language}
       />
     </div>
   );
