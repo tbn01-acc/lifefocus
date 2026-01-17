@@ -65,6 +65,48 @@ export type Database = {
         }
         Relationships: []
       }
+      balance_status_history: {
+        Row: {
+          all_spheres_above_minimum: boolean | null
+          created_at: string
+          id: string
+          level: string
+          max_sphere_id: number | null
+          max_value: number
+          min_sphere_id: number | null
+          min_value: number
+          spread: number
+          stars_awarded: number | null
+          user_id: string
+        }
+        Insert: {
+          all_spheres_above_minimum?: boolean | null
+          created_at?: string
+          id?: string
+          level: string
+          max_sphere_id?: number | null
+          max_value: number
+          min_sphere_id?: number | null
+          min_value: number
+          spread: number
+          stars_awarded?: number | null
+          user_id: string
+        }
+        Update: {
+          all_spheres_above_minimum?: boolean | null
+          created_at?: string
+          id?: string
+          level?: string
+          max_sphere_id?: number | null
+          max_value?: number
+          min_sphere_id?: number | null
+          min_value?: number
+          spread?: number
+          stars_awarded?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       cloud_user_data: {
         Row: {
           checklists: Json | null

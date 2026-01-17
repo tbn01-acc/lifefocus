@@ -16,7 +16,10 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { AppHeader } from '@/components/AppHeader';
 import { format } from 'date-fns';
 
-// Sphere Card Component
+// Constants for progress threshold
+const MINIMUM_THRESHOLD = 25;
+
+// Sphere Card Component with progress animation
 interface SphereCardProps {
   sphere: Sphere;
   indexValue: number;
@@ -26,6 +29,10 @@ interface SphereCardProps {
 }
 
 function SphereCard({ sphere, indexValue, delay, language, onClick }: SphereCardProps) {
+  const isApproachingThreshold = indexValue > 0 && indexValue < MINIMUM_THRESHOLD;
+  const progressToThreshold = Math.min((indexValue / MINIMUM_THRESHOLD) * 100, 100);
+  const isAboveThreshold = indexValue >= MINIMUM_THRESHOLD;
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -33,9 +40,37 @@ function SphereCard({ sphere, indexValue, delay, language, onClick }: SphereCard
       transition={{ delay }}
     >
       <Card 
-        className="p-3 cursor-pointer hover:shadow-md transition-shadow"
+        className={`p-3 cursor-pointer hover:shadow-md transition-shadow relative overflow-hidden ${
+          isApproachingThreshold ? 'ring-2 ring-amber-400/50' : ''
+        } ${isAboveThreshold ? 'ring-1 ring-emerald-400/30' : ''}`}
         onClick={onClick}
       >
+        {/* Threshold progress indicator overlay */}
+        {isApproachingThreshold && (
+          <motion.div
+            className="absolute inset-0 bg-gradient-to-r from-amber-400/10 to-amber-400/5 pointer-events-none"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: [0.3, 0.6, 0.3] }}
+            transition={{ duration: 2, repeat: Infinity, ease: 'easeInOut' }}
+          />
+        )}
+        
+        {/* Completed threshold indicator */}
+        {isAboveThreshold && (
+          <motion.div
+            className="absolute top-1 right-1"
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            transition={{ delay: delay + 0.3, type: 'spring' }}
+          >
+            <div className="w-4 h-4 rounded-full bg-emerald-500 flex items-center justify-center">
+              <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+          </motion.div>
+        )}
+
         <div className="flex items-center gap-2 mb-2">
           <div 
             className="w-8 h-8 rounded-full flex items-center justify-center text-lg"
@@ -46,12 +81,20 @@ function SphereCard({ sphere, indexValue, delay, language, onClick }: SphereCard
           <p className="font-medium text-sm truncate flex-1">
             {getSphereName(sphere, language)}
           </p>
-          <span className="text-sm font-bold">
+          <span className={`text-sm font-bold ${isApproachingThreshold ? 'text-amber-500' : ''}`}>
             {Math.round(indexValue / 10)}/10
           </span>
         </div>
+        
+        {/* Main progress bar */}
         <div className="flex items-center gap-1">
-          <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden">
+          <div className="h-2 flex-1 rounded-full bg-muted overflow-hidden relative">
+            {/* Threshold marker at 25% */}
+            <div 
+              className="absolute top-0 bottom-0 w-0.5 bg-amber-400/70 z-10"
+              style={{ left: '25%' }}
+            />
+            
             <motion.div 
               className="h-full rounded-full"
               style={{ backgroundColor: sphere.color }}
@@ -60,6 +103,7 @@ function SphereCard({ sphere, indexValue, delay, language, onClick }: SphereCard
               transition={{ duration: 0.5, delay: delay + 0.1 }}
             />
           </div>
+          
           {/* Dot indicators */}
           <div className="flex gap-0.5 ml-1">
             {[...Array(5)].map((_, i) => (
@@ -75,6 +119,27 @@ function SphereCard({ sphere, indexValue, delay, language, onClick }: SphereCard
             ))}
           </div>
         </div>
+
+        {/* Progress to 25% threshold text */}
+        {isApproachingThreshold && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            className="mt-2 text-xs text-amber-600 dark:text-amber-400 flex items-center gap-1"
+          >
+            <motion.div
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+              className="w-1.5 h-1.5 rounded-full bg-amber-500"
+            />
+            {language === 'ru' 
+              ? `До активации: ${Math.round(progressToThreshold)}%` 
+              : language === 'es'
+              ? `Para activar: ${Math.round(progressToThreshold)}%`
+              : `To activate: ${Math.round(progressToThreshold)}%`
+            }
+          </motion.div>
+        )}
       </Card>
     </motion.div>
   );

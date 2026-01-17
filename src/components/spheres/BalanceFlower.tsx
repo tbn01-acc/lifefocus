@@ -1402,6 +1402,11 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
           onClose={dismissModal}
           level={spreadState.level}
           spread={spreadState.spread}
+          minValue={spreadState.minValue}
+          maxValue={spreadState.maxValue}
+          minSphereId={spreadState.minSphereId}
+          maxSphereId={spreadState.maxSphereId}
+          allSpheresAboveMinimum={spreadState.allSpheresAboveMinimum}
           language={language}
           isNewLevel={isNewLevel}
         />

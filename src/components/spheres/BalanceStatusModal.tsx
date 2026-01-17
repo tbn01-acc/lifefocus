@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { SpreadLevel, shouldAwardStars, markStarsAwarded, getStarsForLevel } from '@/hooks/useBalanceSpread';
+import { useBalanceStatusHistory } from '@/hooks/useBalanceStatusHistory';
 import confetti from 'canvas-confetti';
 import { playSuccessSound } from '@/utils/celebrations';
 import { X, Zap, AlertTriangle, Target, Award, Crown, Share, Star, Camera } from 'lucide-react';
@@ -17,6 +18,11 @@ interface BalanceStatusModalProps {
   onClose: () => void;
   level: SpreadLevel;
   spread: number;
+  minValue: number;
+  maxValue: number;
+  minSphereId: number | null;
+  maxSphereId: number | null;
+  allSpheresAboveMinimum: boolean;
   language: 'ru' | 'en' | 'es';
   isNewLevel?: boolean;
 }
@@ -116,7 +122,19 @@ const shareButtonLabels = {
   es: 'Enviar a Foco',
 };
 
-export function BalanceStatusModal({ isOpen, onClose, level, spread, language, isNewLevel }: BalanceStatusModalProps) {
+export function BalanceStatusModal({ 
+  isOpen, 
+  onClose, 
+  level, 
+  spread, 
+  minValue,
+  maxValue,
+  minSphereId,
+  maxSphereId,
+  allSpheresAboveMinimum,
+  language, 
+  isNewLevel 
+}: BalanceStatusModalProps) {
   const [showLightning, setShowLightning] = useState(false);
   const [showRedPulse, setShowRedPulse] = useState(false);
   const [showBluePulse, setShowBluePulse] = useState(false);
@@ -124,10 +142,12 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language, i
   const [starsAwarded, setStarsAwarded] = useState(false);
   const [screenshotUrl, setScreenshotUrl] = useState<string | null>(null);
   const [isCapturing, setIsCapturing] = useState(false);
+  const [historySaved, setHistorySaved] = useState(false);
   const modalRef = useRef<HTMLDivElement>(null);
   
   const { addStars } = useStars();
   const { profile } = useAuth();
+  const { saveStatusChange } = useBalanceStatusHistory();
   
   const userName = profile?.display_name || '';
 
@@ -219,7 +239,24 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language, i
         });
       }
     }
-  }, [isOpen, level, isNewLevel, starsAwarded, addStars, language]);
+
+    // Save to history when new level is achieved
+    if (isNewLevel && !historySaved) {
+      const starsForHistory = shouldAwardStars(level) ? getStarsForLevel(level) : 0;
+      saveStatusChange({
+        level,
+        spread,
+        minValue,
+        maxValue,
+        minSphereId,
+        maxSphereId,
+        allSpheresAboveMinimum,
+        starsAwarded: starsForHistory,
+      }).then(() => {
+        setHistorySaved(true);
+      });
+    }
+  }, [isOpen, level, isNewLevel, starsAwarded, addStars, language, historySaved, saveStatusChange, spread, minValue, maxValue, minSphereId, maxSphereId, allSpheresAboveMinimum]);
 
   const content = statusMessages[level]?.[language] || statusMessages[level]?.en;
   const Icon = levelIcons[level];

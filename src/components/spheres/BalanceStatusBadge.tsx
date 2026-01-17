@@ -1,7 +1,13 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { SpreadLevel } from '@/hooks/useBalanceSpread';
-import { Zap, AlertTriangle, Target, Award, Crown } from 'lucide-react';
+import { Zap, AlertTriangle, Target, Award, Crown, Info } from 'lucide-react';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
 
 interface BalanceStatusBadgeProps {
   level: SpreadLevel;
@@ -9,6 +15,12 @@ interface BalanceStatusBadgeProps {
   onClick?: () => void;
   disabled?: boolean;
 }
+
+const tooltipMessages = {
+  ru: 'Уведомления активируются когда все сферы заполнены минимум на 25%',
+  en: 'Notifications activate when all spheres are filled at least 25%',
+  es: 'Las notificaciones se activan cuando todas las esferas están llenas al menos al 25%',
+};
 
 const statusLabels: Record<SpreadLevel, Record<'ru' | 'en' | 'es', string>> = {
   topFocus: { ru: 'Топ Фокус', en: 'Top Focus', es: 'Foco Máximo' },
@@ -63,7 +75,7 @@ export function BalanceStatusBadge({ level, language, onClick, disabled }: Balan
   const config = levelConfigs[level];
   const label = statusLabels[level][language];
 
-  return (
+  const badge = (
     <motion.button
       type="button"
       initial={{ scale: 0.9, opacity: 0 }}
@@ -96,6 +108,27 @@ export function BalanceStatusBadge({ level, language, onClick, disabled }: Balan
     >
       {config.icon}
       <span>{label}</span>
+      {disabled && <Info className="w-3.5 h-3.5 ml-0.5" />}
     </motion.button>
   );
+
+  if (disabled) {
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            {badge}
+          </TooltipTrigger>
+          <TooltipContent 
+            side="top" 
+            className="max-w-[250px] text-center bg-popover border-border shadow-lg"
+          >
+            <p className="text-sm">{tooltipMessages[language]}</p>
+          </TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return badge;
 }
