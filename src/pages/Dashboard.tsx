@@ -228,6 +228,7 @@ export default function Dashboard() {
             habitsProgress={habitsProgress}
             tasksProgress={tasksProgress}
             financeProgress={financeProgress}
+            dayQuality={dayQuality}
           />
         </div>
 
