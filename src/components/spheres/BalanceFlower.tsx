@@ -8,7 +8,7 @@ import {
   SphereIndex,
 } from '@/types/sphere';
 import { useLanguage } from '@/contexts/LanguageContext';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Tooltip,
   TooltipContent,
@@ -24,6 +24,9 @@ import { format, subDays, subMonths } from 'date-fns';
 import { ru, es, enUS } from 'date-fns/locale';
 import { Lock, TrendingUp, TrendingDown, Minus } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, Area, AreaChart } from 'recharts';
+import { useBalanceSpread, SpreadLevel, calculateSpread } from '@/hooks/useBalanceSpread';
+import { BalanceStatusModal } from '@/components/spheres/BalanceStatusModal';
+import { BalanceStatusBadge } from '@/components/spheres/BalanceStatusBadge';
 
 interface BalanceFlowerProps {
   sphereIndices: SphereIndex[];
@@ -306,20 +309,36 @@ function generateFallbackData(
   return data;
 }
 
-// Balance Scales Widget Component with swing animation
+// Balance Scales Widget Component with swing animation and spread-based effects
 function BalanceScalesWidget({ 
   personalValue, 
   socialValue, 
-  language 
+  language,
+  spreadLevel,
 }: { 
   personalValue: number; 
   socialValue: number; 
   language: 'ru' | 'en' | 'es';
+  spreadLevel: SpreadLevel;
 }) {
   const diff = personalValue - socialValue;
   // Calculate tilt angle (max 18 degrees)
   const maxTilt = 18;
   const tiltAngle = Math.abs(diff) < 5 ? 0 : Math.min(Math.abs(diff) / 100 * maxTilt * 2, maxTilt) * (diff > 0 ? -1 : 1);
+  
+  // Determine shake intensity based on spread level
+  const getShakeAnimation = () => {
+    if (spreadLevel === 'chaos') {
+      return { x: [0, -3, 3, -3, 3, 0], transition: { repeat: Infinity, duration: 0.3, repeatDelay: 0.2 } };
+    }
+    if (spreadLevel === 'tilt') {
+      return { x: [0, -1.5, 1.5, 0], transition: { repeat: Infinity, duration: 0.5, repeatDelay: 0.5 } };
+    }
+    return {};
+  };
+
+  // Golden glow for top focus
+  const showGoldenGlow = spreadLevel === 'topFocus';
   
   const labels = {
     ru: { personal: 'Личное', social: 'Социальное' },
@@ -329,8 +348,28 @@ function BalanceScalesWidget({
   const t = labels[language] || labels.en;
 
   return (
-    <div className="w-full max-w-sm mx-auto mt-4">
-      <svg viewBox="0 0 280 140" className="w-full h-auto">
+    <div className="w-full max-w-sm mx-auto mt-4 relative">
+      {/* Golden glow effect for Top Focus */}
+      <AnimatePresence>
+        {showGoldenGlow && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              background: 'radial-gradient(ellipse at center, rgba(251,191,36,0.3) 0%, transparent 70%)',
+              filter: 'blur(10px)',
+            }}
+          />
+        )}
+      </AnimatePresence>
+      
+      <motion.svg 
+        viewBox="0 0 280 140" 
+        className="w-full h-auto relative z-10"
+        animate={getShakeAnimation()}
+      >
         <defs>
           {/* Warm gradient for Personal */}
           <linearGradient id="warmGradient" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -350,7 +389,33 @@ function BalanceScalesWidget({
             <stop offset="50%" stopColor="#707070" />
             <stop offset="100%" stopColor="#505050" />
           </linearGradient>
+          {/* Golden gradient for Top Focus glow */}
+          <radialGradient id="goldenGlow" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stopColor="#fbbf24" stopOpacity="0.6" />
+            <stop offset="100%" stopColor="#f59e0b" stopOpacity="0" />
+          </radialGradient>
         </defs>
+
+        {/* Golden halo for Top Focus state */}
+        {showGoldenGlow && (
+          <motion.ellipse
+            cx="140"
+            cy="85"
+            rx="130"
+            ry="50"
+            fill="url(#goldenGlow)"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ 
+              opacity: [0.4, 0.7, 0.4], 
+              scale: [0.95, 1.05, 0.95] 
+            }}
+            transition={{ 
+              duration: 2, 
+              repeat: Infinity, 
+              ease: "easeInOut" 
+            }}
+          />
+        )}
 
         {/* Stand base */}
         <path 
@@ -486,7 +551,7 @@ function BalanceScalesWidget({
         <text x="230" y="120" textAnchor="middle" fontSize="10" className="fill-muted-foreground">
           {t.social}
         </text>
-      </svg>
+      </motion.svg>
     </div>
   );
 }
@@ -728,6 +793,14 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
   const [viewMode, setViewMode] = useState<'flower' | 'spider'>('flower');
   const [hoveredPetal, setHoveredPetal] = useState<number | null>(null);
   const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
+  
+  // Use balance spread hook for dynamic notifications
+  const { 
+    currentState: spreadState, 
+    isNewLevel, 
+    showModal, 
+    dismissModal 
+  } = useBalanceSpread(sphereIndices);
   
   const personalSpheres = getPersonalSpheres();
   const socialSpheres = getSocialSpheres();
@@ -1294,11 +1367,19 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
         </TooltipProvider>
       )}
 
+      {/* Status Badge above Balance Scales */}
+      {spreadState && (
+        <div className="flex justify-center mb-2">
+          <BalanceStatusBadge level={spreadState.level} language={language} />
+        </div>
+      )}
+
       {/* Balance Scales Widget */}
       <BalanceScalesWidget 
         personalValue={personalAvg} 
         socialValue={socialAvg} 
-        language={language} 
+        language={language}
+        spreadLevel={spreadState?.level || 'stability'}
       />
 
       {/* Life Index Progress Chart */}
@@ -1306,6 +1387,17 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
         lifeIndex={lifeIndex}
         language={language}
       />
+
+      {/* Balance Status Modal */}
+      {spreadState && (
+        <BalanceStatusModal
+          isOpen={showModal}
+          onClose={dismissModal}
+          level={spreadState.level}
+          spread={spreadState.spread}
+          language={language}
+        />
+      )}
     </div>
   );
 }

@@ -642,6 +642,14 @@ export const translations = {
     monthStats: "За месяц",
     quarterStats: "За квартал",
     yearStats: "За год",
+
+    // Balance Spread Status
+    balanceTopFocus: "Топ Фокус",
+    balanceStability: "Устойчивость",
+    balanceBalance: "Равновесие",
+    balanceTilt: "Крен",
+    balanceChaos: "Хаос",
+    balanceGotIt: "Понятно",
   },
   en: {
     // Pomodoro time tracking
@@ -1279,6 +1287,14 @@ export const translations = {
     monthStats: "This Month",
     quarterStats: "This Quarter",
     yearStats: "This Year",
+
+    // Balance Spread Status
+    balanceTopFocus: "Top Focus",
+    balanceStability: "Stability",
+    balanceBalance: "Balance",
+    balanceTilt: "Tilt",
+    balanceChaos: "Chaos",
+    balanceGotIt: "Got it",
   },
   es: {
     // Pomodoro time tracking
@@ -1903,6 +1919,14 @@ export const translations = {
     monthStats: "Este Mes",
     quarterStats: "Este Trimestre",
     yearStats: "Este Año",
+
+    // Balance Spread Status
+    balanceTopFocus: "Foco Máximo",
+    balanceStability: "Estabilidad",
+    balanceBalance: "Equilibrio",
+    balanceTilt: "Inclinación",
+    balanceChaos: "Caos",
+    balanceGotIt: "Entendido",
   },
 } as const;
 
