@@ -18,6 +18,7 @@ export const translations = {
     completedToday: "Сегодня выполнено",
     greatJob: "🎉 Отличная работа!",
     streak: "Серия",
+    todayReps: "Повторы сегодня",
     week: "Неделя",
     habits: "Привычки",
 
@@ -668,6 +669,7 @@ export const translations = {
     completedToday: "Completed today",
     greatJob: "🎉 Great job!",
     streak: "Streak",
+    todayReps: "Today's reps",
     week: "Week",
     habits: "Habits",
 
@@ -1313,6 +1315,7 @@ export const translations = {
     completedToday: "Completado hoy",
     greatJob: "🎉 ¡Excelente trabajo!",
     streak: "Racha",
+    todayReps: "Repeticiones de hoy",
     week: "Semana",
     habits: "Hábitos",
 
