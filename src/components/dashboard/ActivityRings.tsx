@@ -40,14 +40,9 @@ export function ActivityRings({
   const gap = 2;
   const center = size / 2;
   
-  // Gap at 9 o'clock position (180 degrees in standard position, but SVG is rotated -90)
-  // After -90 rotation, 9 o'clock is at the top (0 degrees in rotated space)
+  // Gap at 9 o'clock position (left side)
   // Gap size in degrees
   const gapDegrees = 25;
-  const gapRadians = (gapDegrees * Math.PI) / 180;
-  
-  // Calculate inner area for day quality indicator
-  const innerRadius = (size / 2) - (strokeWidth / 2) - (2 * (strokeWidth + gap)) - 4;
   
   return (
     <motion.button
@@ -63,7 +58,7 @@ export function ActivityRings({
       <svg
         width={size}
         height={size}
-        className="transform -rotate-90"
+        className="transform rotate-180"
       >
         {rings.map((ring, index) => {
           // Calculate radius for each ring (outer to inner)
@@ -76,7 +71,6 @@ export function ActivityRings({
           const progressDash = (ring.progress / 100) * availableCircumference;
           
           // Gap offset - we start the arc after the gap
-          // The gap is centered at 9 o'clock (180 deg), so we start at 180 + gapDegrees/2
           const gapStartOffset = (gapDegrees / 2 / 360) * circumference;
           
           return (
@@ -94,7 +88,7 @@ export function ActivityRings({
                 strokeDashoffset={-gapStartOffset}
               />
               
-              {/* Progress arc */}
+              {/* Progress arc with sequential animation */}
               <motion.circle
                 cx={center}
                 cy={center}
@@ -107,7 +101,7 @@ export function ActivityRings({
                 strokeDashoffset={-gapStartOffset}
                 initial={{ strokeDasharray: `0 ${circumference}` }}
                 animate={{ strokeDasharray: `${progressDash} ${circumference}` }}
-                transition={{ duration: 0.8, ease: 'easeOut', delay: index * 0.1 }}
+                transition={{ duration: 0.8, ease: 'easeOut', delay: 0.3 + index * 0.2 }}
               />
             </g>
           );
@@ -124,7 +118,7 @@ export function ActivityRings({
           style={{ color: getDayQualityColor(dayQuality) }}
           initial={{ opacity: 0, scale: 0.5 }}
           animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: 0.5, duration: 0.3 }}
+          transition={{ delay: 1.0, duration: 0.3 }}
         >
           {Math.round(dayQuality)}
         </motion.span>

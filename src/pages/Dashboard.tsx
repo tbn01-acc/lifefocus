@@ -14,8 +14,6 @@ import { DayQualityRing } from "@/components/dashboard/DayQualityRing";
 import { TopWidgetsSection } from "@/components/dashboard/TopWidgetsSection";
 import { OverdueWidget } from "@/components/dashboard/OverdueWidget";
 import { useOverdueNotifications } from "@/hooks/useOverdueNotifications";
-import { useWeather, getWeatherIcon } from "@/hooks/useWeather";
-import { WeatherModal } from "@/components/WeatherModal";
 
 import { GuestModeBanner } from "@/components/GuestModeBanner";
 import { AppHeader } from "@/components/AppHeader";
@@ -28,7 +26,6 @@ import { startOfDay, parseISO, isBefore, addDays } from "date-fns";
 
 export default function Dashboard() {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
-  const [weatherModalOpen, setWeatherModalOpen] = useState(false);
   const navigate = useNavigate();
   const { habits, toggleHabitCompletion, updateHabit, deleteHabit } = useHabits();
   const { tasks, toggleTaskCompletion, updateTask, deleteTask } = useTasks();
@@ -37,7 +34,6 @@ export default function Dashboard() {
   const { profile, user } = useAuth();
   const { recordDailyLogin } = useStars();
   const dailyLoginRecordedRef = useRef(false);
-  const { weather } = useWeather();
   
   // Initialize trial notifications
   useTrialNotifications();
@@ -205,24 +201,11 @@ export default function Dashboard() {
           onDeleteHabit={handleDeleteHabit}
         />
 
-        {/* Section: Greeting with Weather and Day Quality Ring */}
+        {/* Section: Greeting and Day Quality Ring */}
         <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-4">
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">{getGreeting()}, {userName}!</h1>
-              <p className="text-sm text-muted-foreground capitalize">{formattedDate}</p>
-            </div>
-            
-            {/* Weather icon (1.5x size) */}
-            {weather && (
-              <button
-                onClick={() => setWeatherModalOpen(true)}
-                className="flex items-center gap-1 px-2 py-1 rounded-lg hover:bg-muted/50 transition-colors"
-              >
-                <span className="text-3xl">{getWeatherIcon(weather.weatherCode, weather.isDay)}</span>
-                <span className="text-lg font-medium">{weather.temperature}°</span>
-              </button>
-            )}
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{getGreeting()}, {userName}!</h1>
+            <p className="text-sm text-muted-foreground capitalize">{formattedDate}</p>
           </div>
           <ActivityRings 
             habitsProgress={habitsProgress}
@@ -231,12 +214,6 @@ export default function Dashboard() {
             dayQuality={dayQuality}
           />
         </div>
-
-        {/* Weather Modal */}
-        <WeatherModal 
-          open={weatherModalOpen} 
-          onOpenChange={setWeatherModalOpen} 
-        />
 
         {/* Section: Сделать/Выполнено (Tabbed) */}
         <Tabs defaultValue="todo" className="mb-6">

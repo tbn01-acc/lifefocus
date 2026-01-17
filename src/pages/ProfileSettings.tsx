@@ -1,7 +1,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { LogOut, Edit2, Tags, Cloud, Settings, Sliders, Volume2, Sparkles, Shield, HardDrive, CloudSun, Bell, User, Users, ArrowLeft } from 'lucide-react';
+import { LogOut, Edit2, Tags, Cloud, Settings, Sliders, Volume2, Sparkles, Shield, HardDrive, Bell, User, Users, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { SyncHistoryPanel } from '@/components/SyncHistory';
 import { TrialStatusCard } from '@/components/profile/TrialStatusCard';
@@ -19,7 +19,6 @@ import { useSubscription } from '@/hooks/useSubscription';
 import { useCelebrationSettings } from '@/hooks/useCelebrationSettings';
 import { useLegalDocuments } from '@/hooks/useLegalDocuments';
 import { usePageCaching } from '@/hooks/usePageCaching';
-import { useWeatherNotifications } from '@/hooks/useWeatherNotifications';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
@@ -35,34 +34,8 @@ export default function ProfileSettings() {
   const { subscription, currentPlan, isInTrial, trialDaysLeft, trialBonusMonths } = useSubscription();
   const { soundEnabled, confettiEnabled, setSoundEnabled, setConfettiEnabled } = useCelebrationSettings();
   const { isAdmin } = useLegalDocuments();
-  const { 
-    isEnabled: weatherNotifEnabled, 
-    notificationTime, 
-    permissionGranted,
-    toggleNotifications: toggleWeatherNotif, 
-    updateNotificationTime,
-    sendWeatherNotification
-  } = useWeatherNotifications();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const isRussian = language === 'ru';
-
-  const handleWeatherNotifToggle = async (enabled: boolean) => {
-    const success = await toggleWeatherNotif(enabled);
-    if (success && enabled) {
-      toast.success(isRussian ? 'Уведомления о погоде включены' : 'Weather notifications enabled');
-    } else if (!success && enabled) {
-      toast.error(isRussian ? 'Не удалось получить разрешение' : 'Failed to get permission');
-    }
-  };
-
-  const handleTestWeatherNotif = async () => {
-    const success = await sendWeatherNotification(isRussian);
-    if (success) {
-      toast.success(isRussian ? 'Тестовое уведомление отправлено' : 'Test notification sent');
-    } else {
-      toast.error(isRussian ? 'Ошибка отправки' : 'Failed to send');
-    }
-  };
 
   const handleSignOut = async () => {
     await signOut();
