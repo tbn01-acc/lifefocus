@@ -10,6 +10,7 @@ import { TranslationKey } from '@/i18n/translations';
 import { cn } from '@/lib/utils';
 import { TagSelector } from '@/components/TagSelector';
 import { GoalSelector } from '@/components/goals/GoalSelector';
+import { SphereSelector } from '@/components/spheres/SphereSelector';
 import { useAuth } from '@/hooks/useAuth';
 import { getPeriodDates, getPeriodLabel, PeriodType } from '@/utils/periodUtils';
 import { format, addDays, addWeeks, addMonths, addQuarters, addYears } from 'date-fns';
@@ -44,6 +45,8 @@ export function HabitDialog({ open, onClose, onSave, habit, categories, tags }: 
   const [tagIds, setTagIds] = useState<string[]>([]);
   const [commonTagIds, setCommonTagIds] = useState<string[]>([]);
   const [goalId, setGoalId] = useState<string | null>(null);
+  const [sphereId, setSphereId] = useState<number | null>(null);
+  const [sphereLockedByGoal, setSphereLockedByGoal] = useState(false);
   const [periodType, setPeriodType] = useState<HabitPeriodType>('none');
   const [customStartDate, setCustomStartDate] = useState(format(new Date(), 'yyyy-MM-dd'));
   const [customEndDate, setCustomEndDate] = useState(format(addMonths(new Date(), 1), 'yyyy-MM-dd'));
@@ -61,6 +64,8 @@ export function HabitDialog({ open, onClose, onSave, habit, categories, tags }: 
       setTagIds((habit.tagIds || []).filter(id => localTagIdSet.has(id)));
       setCommonTagIds((habit.tagIds || []).filter(id => !localTagIdSet.has(id)));
       setGoalId((habit as any).goalId || null);
+      setSphereId((habit as any).sphereId ?? null);
+      setSphereLockedByGoal(!!(habit as any).goalId);
       setPeriodType(habit.period?.type || 'none');
       if (habit.period?.startDate) setCustomStartDate(habit.period.startDate);
       if (habit.period?.endDate) setCustomEndDate(habit.period.endDate);
@@ -73,6 +78,8 @@ export function HabitDialog({ open, onClose, onSave, habit, categories, tags }: 
       setTagIds([]);
       setCommonTagIds([]);
       setGoalId(null);
+      setSphereId(null);
+      setSphereLockedByGoal(false);
       setPeriodType('none');
       setCustomStartDate(format(new Date(), 'yyyy-MM-dd'));
       setCustomEndDate(format(addMonths(new Date(), 1), 'yyyy-MM-dd'));
@@ -103,8 +110,19 @@ export function HabitDialog({ open, onClose, onSave, habit, categories, tags }: 
       tagIds: allTagIds,
       period,
       goalId,
+      sphereId,
     } as any);
     onClose();
+  };
+
+  const handleGoalChange = (newGoalId: string | null, goalSphereId?: number | null) => {
+    setGoalId(newGoalId);
+    if (newGoalId && goalSphereId !== undefined) {
+      setSphereId(goalSphereId);
+      setSphereLockedByGoal(true);
+    } else {
+      setSphereLockedByGoal(false);
+    }
   };
 
   const toggleDay = (day: number) => {
@@ -301,9 +319,26 @@ export function HabitDialog({ open, onClose, onSave, habit, categories, tags }: 
                 <div className="space-y-2">
                   <GoalSelector
                     value={goalId}
-                    onChange={setGoalId}
+                    onChange={handleGoalChange}
                     isRussian={isRussian}
                   />
+                </div>
+              )}
+
+              {/* Sphere Selector */}
+              {user && (
+                <div className="space-y-2">
+                  <SphereSelector
+                    value={sphereId}
+                    onChange={setSphereId}
+                    disabled={sphereLockedByGoal}
+                    showWarning={!sphereId && sphereId !== 0}
+                  />
+                  {sphereLockedByGoal && (
+                    <p className="text-xs text-muted-foreground">
+                      {isRussian ? 'Сфера унаследована от цели' : 'Sphere inherited from goal'}
+                    </p>
+                  )}
                 </div>
               )}
 

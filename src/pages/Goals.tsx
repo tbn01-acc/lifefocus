@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
-import { Trophy, Plus, TrendingUp, BarChart3 } from 'lucide-react';
+import { Trophy, Plus, TrendingUp, BarChart3, Target } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 import { AppHeader } from '@/components/AppHeader';
 import { useTranslation } from '@/contexts/LanguageContext';
@@ -9,6 +9,8 @@ import { Button } from '@/components/ui/button';
 import { GoalsList } from '@/components/goals/GoalsList';
 import { GoalDialog } from '@/components/goals/GoalDialog';
 import { useGoals } from '@/hooks/useGoals';
+import { GoalsOverviewProgress } from '@/components/goals/GoalsOverviewProgress';
+import { GoalsOverviewAnalytics } from '@/components/goals/GoalsOverviewAnalytics';
 
 export default function Goals() {
   const { language } = useTranslation();
@@ -40,13 +42,40 @@ export default function Goals() {
           </Button>
         </div>
 
-        <GoalsList 
-          goals={goals}
-          loading={loading}
-          onUpdate={updateGoal}
-          onDelete={deleteGoal}
-          onComplete={completeGoal}
-        />
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-3 mb-4">
+            <TabsTrigger value="goals" className="gap-1">
+              <Target className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRussian ? 'Цели' : 'Goals'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="progress" className="gap-1">
+              <TrendingUp className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRussian ? 'Прогресс' : 'Progress'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="analytics" className="gap-1">
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRussian ? 'Аналитика' : 'Analytics'}</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="goals">
+            <GoalsList 
+              goals={goals}
+              loading={loading}
+              onUpdate={updateGoal}
+              onDelete={deleteGoal}
+              onComplete={completeGoal}
+            />
+          </TabsContent>
+
+          <TabsContent value="progress">
+            <GoalsOverviewProgress goals={goals} isRussian={isRussian} />
+          </TabsContent>
+
+          <TabsContent value="analytics">
+            <GoalsOverviewAnalytics goals={goals} isRussian={isRussian} />
+          </TabsContent>
+        </Tabs>
 
         <GoalDialog
           open={dialogOpen}

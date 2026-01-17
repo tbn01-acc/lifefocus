@@ -799,7 +799,8 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     currentState: spreadState, 
     isNewLevel, 
     showModal, 
-    dismissModal 
+    dismissModal,
+    openModal
   } = useBalanceSpread(sphereIndices);
   
   const personalSpheres = getPersonalSpheres();
@@ -1370,7 +1371,11 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       {/* Status Badge above Balance Scales */}
       {spreadState && (
         <div className="flex justify-center mb-2">
-          <BalanceStatusBadge level={spreadState.level} language={language} />
+          <BalanceStatusBadge 
+            level={spreadState.level} 
+            language={language} 
+            onClick={openModal}
+          />
         </div>
       )}
 
@@ -1396,6 +1401,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
           level={spreadState.level}
           spread={spreadState.spread}
           language={language}
+          isNewLevel={isNewLevel}
         />
       )}
     </div>
