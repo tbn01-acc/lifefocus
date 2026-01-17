@@ -325,43 +325,57 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     return { taskCount, lastActivity };
   };
 
-  // Create teardrop/petal path - rounded drop shape
+  // Create rounded triangle petal path - widening outward like in the reference
   const createPetalPath = (
     angle: number,
     radius: number
   ): string => {
     const angleRad = (angle * Math.PI) / 180;
     
-    // Calculate tip position
-    const tipX = center + radius * Math.cos(angleRad);
-    const tipY = center + radius * Math.sin(angleRad);
+    // Base starts near center - narrow at center
+    const baseR = centerRadius + 8;
+    const baseWidth = 10; // Narrow at base
     
-    // Base radius - where petal starts from center
-    const baseR = centerRadius + 10;
-    const baseX = center + baseR * Math.cos(angleRad);
-    const baseY = center + baseR * Math.sin(angleRad);
+    // Tip is wide and rounded
+    const tipWidth = 28 + (radius / maxRadius) * 18; // Wider at tip
     
-    // Width of the petal at its widest point
-    const petalWidth = 26 + (radius / maxRadius) * 16;
-    const widthAngle = 90;
-    const perpAngleRad = ((angle + widthAngle) * Math.PI) / 180;
-    const perpAngleRadNeg = ((angle - widthAngle) * Math.PI) / 180;
+    // Perpendicular angle for width calculations
+    const perpAngleRad = ((angle + 90) * Math.PI) / 180;
+    const perpAngleRadNeg = ((angle - 90) * Math.PI) / 180;
     
-    // Midpoint of the petal (widest part)
-    const midRadius = baseR + (radius - baseR) * 0.4;
-    const midX = center + midRadius * Math.cos(angleRad);
-    const midY = center + midRadius * Math.sin(angleRad);
+    // Base points (narrow, near center)
+    const base1X = center + baseR * Math.cos(angleRad) + baseWidth * Math.cos(perpAngleRad);
+    const base1Y = center + baseR * Math.sin(angleRad) + baseWidth * Math.sin(perpAngleRad);
+    const base2X = center + baseR * Math.cos(angleRad) + baseWidth * Math.cos(perpAngleRadNeg);
+    const base2Y = center + baseR * Math.sin(angleRad) + baseWidth * Math.sin(perpAngleRadNeg);
     
-    // Side points at the widest part
-    const side1X = midX + petalWidth * Math.cos(perpAngleRad);
-    const side1Y = midY + petalWidth * Math.sin(perpAngleRad);
-    const side2X = midX + petalWidth * Math.cos(perpAngleRadNeg);
-    const side2Y = midY + petalWidth * Math.sin(perpAngleRadNeg);
+    // Tip points (wide, at outer edge)
+    const tipCenterX = center + radius * Math.cos(angleRad);
+    const tipCenterY = center + radius * Math.sin(angleRad);
+    const tip1X = tipCenterX + tipWidth * Math.cos(perpAngleRad);
+    const tip1Y = tipCenterY + tipWidth * Math.sin(perpAngleRad);
+    const tip2X = tipCenterX + tipWidth * Math.cos(perpAngleRadNeg);
+    const tip2Y = tipCenterY + tipWidth * Math.sin(perpAngleRadNeg);
+    
+    // Control points for the curved sides
+    const midRadius = baseR + (radius - baseR) * 0.5;
+    const midWidth = baseWidth + (tipWidth - baseWidth) * 0.5;
+    const ctrl1X = center + midRadius * Math.cos(angleRad) + midWidth * Math.cos(perpAngleRad);
+    const ctrl1Y = center + midRadius * Math.sin(angleRad) + midWidth * Math.sin(perpAngleRad);
+    const ctrl2X = center + midRadius * Math.cos(angleRad) + midWidth * Math.cos(perpAngleRadNeg);
+    const ctrl2Y = center + midRadius * Math.sin(angleRad) + midWidth * Math.sin(perpAngleRadNeg);
+    
+    // Rounded tip arc control point
+    const tipOuterR = radius + 12;
+    const tipOuterX = center + tipOuterR * Math.cos(angleRad);
+    const tipOuterY = center + tipOuterR * Math.sin(angleRad);
     
     return `
-      M ${baseX} ${baseY}
-      Q ${side1X} ${side1Y} ${tipX} ${tipY}
-      Q ${side2X} ${side2Y} ${baseX} ${baseY}
+      M ${base1X} ${base1Y}
+      Q ${ctrl1X} ${ctrl1Y} ${tip1X} ${tip1Y}
+      Q ${tipOuterX} ${tipOuterY} ${tip2X} ${tip2Y}
+      Q ${ctrl2X} ${ctrl2Y} ${base2X} ${base2Y}
+      Q ${center + baseR * Math.cos(angleRad)} ${center + baseR * Math.sin(angleRad)} ${base1X} ${base1Y}
       Z
     `;
   };

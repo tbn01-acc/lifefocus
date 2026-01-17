@@ -19,7 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Trophy, Star, Flame, User, Settings, Phone } from 'lucide-react';
+import { Trophy, Star, Flame, User, Settings, Phone, ArrowLeft } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { UserAvatarWithFrame } from '@/components/rewards/UserAvatarWithFrame';
 import { UserBadges } from '@/components/rewards/UserBadges';
@@ -72,6 +72,9 @@ export default function Rating() {
         {/* Page Title */}
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
             <Trophy className="h-7 w-7 text-yellow-500" />
             <h1 className="text-2xl font-bold">
               {isRussian ? 'Рейтинг' : 'Rating'}

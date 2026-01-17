@@ -141,9 +141,14 @@ export default function LifeFocus() {
       <div className="container max-w-md mx-auto px-4 py-6 space-y-6">
         {/* Header with title and refresh */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold">{labels.title[language]}</h1>
-            <p className="text-sm text-muted-foreground">{labels.subtitle[language]}</p>
+          <div className="flex items-center gap-3">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <div>
+              <h1 className="text-2xl font-bold">{labels.title[language]}</h1>
+              <p className="text-sm text-muted-foreground">{labels.subtitle[language]}</p>
+            </div>
           </div>
           <Button 
             variant="ghost" 
