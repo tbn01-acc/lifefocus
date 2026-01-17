@@ -705,24 +705,14 @@ function SpiderChart({
         />
         <text
           x={center}
-          y={center - 3}
+          y={center}
           textAnchor="middle"
           dominantBaseline="middle"
           fontSize="28"
           fontWeight="bold"
           className="fill-foreground"
         >
-          {Math.round(lifeIndex / 10)}
-        </text>
-        <text
-          x={center}
-          y={center + 16}
-          textAnchor="middle"
-          dominantBaseline="middle"
-          fontSize="10"
-          className="fill-muted-foreground"
-        >
-          {language === 'ru' ? 'из 10' : language === 'es' ? 'de 10' : 'of 10'}
+          {Math.round(lifeIndex)}
         </text>
       </svg>
     </TooltipProvider>
@@ -1167,30 +1157,31 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                 />
               ))}
 
-              {/* Active Petals with rotation animation */}
-              <motion.g
-                initial={{ rotate: -180, opacity: 0 }}
-                animate={{ rotate: 0, opacity: 1 }}
-                transition={{ duration: 1, ease: "easeOut" }}
-                style={{ transformOrigin: `${center}px ${center}px` }}
-              >
-                {petals.map((petal, i) => (
-                  <Tooltip key={petal.sphere.id}>
-                    <TooltipTrigger asChild>
-                      <motion.g
-                        initial={{ scale: 0, opacity: 0 }}
-                        animate={{ 
-                          scale: 1, 
-                          opacity: 1,
-                        }}
-                        transition={{ delay: 0.3 + i * 0.08, duration: 0.5, type: 'spring' }}
-                        onClick={() => handlePetalClick(petal.sphere)}
-                        onMouseEnter={() => setHoveredPetal(i)}
-                        onMouseLeave={() => setHoveredPetal(null)}
-                        className="cursor-pointer"
-                        style={{ transformOrigin: `${center}px ${center}px` }}
-                        whileHover={{ scale: 1.08, filter: 'brightness(1.25)' }}
-                        whileTap={{ scale: 0.98 }}
+              {/* Active Petals with staggered entrance animation */}
+              {petals.map((petal, i) => (
+                <Tooltip key={petal.sphere.id}>
+                  <TooltipTrigger asChild>
+                    <motion.g
+                      initial={{ scale: 0, opacity: 0, rotate: -30 }}
+                      animate={{ 
+                        scale: 1, 
+                        opacity: 1,
+                        rotate: 0,
+                      }}
+                      transition={{ 
+                        delay: 0.1 + i * 0.1, 
+                        duration: 0.6, 
+                        type: 'spring',
+                        stiffness: 120,
+                        damping: 12
+                      }}
+                      onClick={() => handlePetalClick(petal.sphere)}
+                      onMouseEnter={() => setHoveredPetal(i)}
+                      onMouseLeave={() => setHoveredPetal(null)}
+                      className="cursor-pointer"
+                      style={{ transformOrigin: `${center}px ${center}px` }}
+                      whileHover={{ scale: 1.08, filter: 'brightness(1.25)' }}
+                      whileTap={{ scale: 0.98 }}
                       >
                       {/* Petal shape with glow and gradient */}
                       <motion.path
@@ -1222,7 +1213,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                         fontWeight="bold"
                         className="fill-foreground pointer-events-none drop-shadow-md"
                       >
-                        {Math.round(petal.index / 10)}
+                      {Math.round(petal.index / 10)}
                       </text>
                     </motion.g>
                   </TooltipTrigger>
@@ -1231,7 +1222,6 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                   </TooltipContent>
                 </Tooltip>
               ))}
-              </motion.g>
 
               {/* External sphere labels around the flower - font size 16px */}
               {petals.map((petal) => (
@@ -1285,10 +1275,10 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                 filter="url(#centerGlow)"
               />
               
-              {/* Life Index value */}
+              {/* Life Index value - показываем 0-100 */}
               <motion.text
                 x={center}
-                y={center - 5}
+                y={center}
                 textAnchor="middle"
                 dominantBaseline="middle"
                 className="fill-foreground font-bold"
@@ -1297,22 +1287,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ delay: 0.8, type: 'spring' }}
               >
-                {Math.round(lifeIndex / 10)}
-              </motion.text>
-              
-              {/* "of 10" label */}
-              <motion.text
-                x={center}
-                y={center + 18}
-                textAnchor="middle"
-                dominantBaseline="middle"
-                className="fill-muted-foreground"
-                fontSize="11"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.9 }}
-              >
-                {language === 'ru' ? 'из 10' : language === 'es' ? 'de 10' : 'of 10'}
+                {Math.round(lifeIndex)}
               </motion.text>
             </svg>
           </div>
