@@ -17,15 +17,48 @@ import {
 } from '@/components/ui/tooltip';
 import { useTasks } from '@/hooks/useTasks';
 import { useHabits } from '@/hooks/useHabits';
+import { useSubscription } from '@/hooks/useSubscription';
 import { format } from 'date-fns';
 import { ru, es, enUS } from 'date-fns/locale';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
-import { Flower2, Radar } from 'lucide-react';
+import { Lock } from 'lucide-react';
 
 interface BalanceFlowerProps {
   sphereIndices: SphereIndex[];
   lifeIndex: number;
 }
+
+type ColorScheme = 'default' | 'pastel' | 'neon';
+
+// Color scheme configurations
+const colorSchemes: Record<ColorScheme, (hex: string, hsl: { h: number; s: number; l: number }) => { 
+  fill: string; 
+  stroke: string;
+  gradientStart: string;
+  gradientMid: string;
+  gradientEnd: string;
+}> = {
+  default: (hex, hsl) => ({
+    fill: hex,
+    stroke: hex,
+    gradientStart: `hsl(${hsl.h}, ${Math.max(hsl.s - 20, 30)}%, ${Math.min(hsl.l + 20, 85)}%)`,
+    gradientMid: hex,
+    gradientEnd: `hsl(${hsl.h}, ${Math.min(hsl.s + 40, 100)}%, ${Math.max(hsl.l - 15, 30)}%)`,
+  }),
+  pastel: (hex, hsl) => ({
+    fill: `hsl(${hsl.h}, ${Math.max(hsl.s - 30, 25)}%, ${Math.min(hsl.l + 25, 90)}%)`,
+    stroke: `hsl(${hsl.h}, ${Math.max(hsl.s - 20, 35)}%, ${Math.min(hsl.l + 15, 80)}%)`,
+    gradientStart: `hsl(${hsl.h}, ${Math.max(hsl.s - 40, 20)}%, 92%)`,
+    gradientMid: `hsl(${hsl.h}, ${Math.max(hsl.s - 25, 30)}%, ${Math.min(hsl.l + 20, 85)}%)`,
+    gradientEnd: `hsl(${hsl.h}, ${Math.max(hsl.s - 15, 40)}%, ${Math.min(hsl.l + 10, 75)}%)`,
+  }),
+  neon: (hex, hsl) => ({
+    fill: `hsl(${hsl.h}, 100%, 55%)`,
+    stroke: `hsl(${hsl.h}, 100%, 60%)`,
+    gradientStart: `hsl(${hsl.h}, 100%, 70%)`,
+    gradientMid: `hsl(${hsl.h}, 100%, 55%)`,
+    gradientEnd: `hsl(${hsl.h}, 100%, 40%)`,
+  }),
+};
 
 // Helper to convert hex color to HSL for glow effects
 function hexToHsl(hex: string): { h: number; s: number; l: number } {
@@ -51,6 +84,179 @@ function hexToHsl(hex: string): { h: number; s: number; l: number } {
   }
 
   return { h: Math.round(h * 360), s: Math.round(s * 100), l: Math.round(l * 100) };
+}
+
+// Balance Scales Widget Component
+function BalanceScalesWidget({ 
+  personalValue, 
+  socialValue, 
+  language 
+}: { 
+  personalValue: number; 
+  socialValue: number; 
+  language: 'ru' | 'en' | 'es';
+}) {
+  const diff = personalValue - socialValue;
+  // Calculate tilt angle (max 18 degrees)
+  const maxTilt = 18;
+  const tiltAngle = Math.abs(diff) < 5 ? 0 : Math.min(Math.abs(diff) / 100 * maxTilt * 2, maxTilt) * (diff > 0 ? -1 : 1);
+  
+  const labels = {
+    ru: { personal: 'Личное', social: 'Социальное' },
+    en: { personal: 'Personal', social: 'Social' },
+    es: { personal: 'Personal', social: 'Social' },
+  };
+  const t = labels[language] || labels.en;
+
+  return (
+    <div className="w-full max-w-sm mx-auto mt-4">
+      <svg viewBox="0 0 280 140" className="w-full h-auto">
+        <defs>
+          {/* Warm gradient for Personal */}
+          <linearGradient id="warmGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#FFA07A" />
+            <stop offset="50%" stopColor="#FF6B6B" />
+            <stop offset="100%" stopColor="#E55039" />
+          </linearGradient>
+          {/* Cold gradient for Social */}
+          <linearGradient id="coldGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#74B9FF" />
+            <stop offset="50%" stopColor="#0984E3" />
+            <stop offset="100%" stopColor="#0652DD" />
+          </linearGradient>
+          {/* Metal gradient for beam */}
+          <linearGradient id="metalGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stopColor="#A0A0A0" />
+            <stop offset="50%" stopColor="#707070" />
+            <stop offset="100%" stopColor="#505050" />
+          </linearGradient>
+        </defs>
+
+        {/* Stand base */}
+        <path 
+          d="M 120 130 L 160 130 L 155 125 L 125 125 Z" 
+          fill="url(#metalGradient)"
+        />
+        
+        {/* Stand pillar */}
+        <rect x="136" y="70" width="8" height="55" fill="url(#metalGradient)" rx="1" />
+        
+        {/* Fulcrum triangle */}
+        <path d="M 140 70 L 130 80 L 150 80 Z" fill="url(#metalGradient)" />
+        
+        {/* Pivot point */}
+        <circle cx="140" cy="68" r="5" fill="#606060" stroke="#404040" strokeWidth="1" />
+        
+        {/* Indicator needle */}
+        <motion.g
+          animate={{ rotate: tiltAngle }}
+          transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+          style={{ transformOrigin: '140px 68px' }}
+        >
+          <line x1="140" y1="68" x2="140" y2="45" stroke="#303030" strokeWidth="2" />
+          <circle cx="140" cy="43" r="3" fill="#404040" />
+        </motion.g>
+        
+        {/* Balance beam (коромысло) */}
+        <motion.g
+          animate={{ rotate: tiltAngle }}
+          transition={{ type: 'spring', stiffness: 60, damping: 15 }}
+          style={{ transformOrigin: '140px 68px' }}
+        >
+          {/* Beam */}
+          <rect x="30" y="65" width="220" height="6" rx="2" fill="url(#metalGradient)" />
+          
+          {/* Left chain */}
+          <line x1="50" y1="71" x2="50" y2="95" stroke="#707070" strokeWidth="2" />
+          
+          {/* Right chain */}
+          <line x1="230" y1="71" x2="230" y2="95" stroke="#707070" strokeWidth="2" />
+          
+          {/* Left pan */}
+          <ellipse cx="50" cy="98" rx="35" ry="8" fill="#808080" />
+          
+          {/* Right pan */}
+          <ellipse cx="230" cy="98" rx="35" ry="8" fill="#808080" />
+          
+          {/* Left weight (гиря) - classic weight shape */}
+          <g>
+            <path 
+              d="M 35 75 L 35 93 Q 35 98 50 98 Q 65 98 65 93 L 65 75 Q 65 70 50 70 Q 35 70 35 75 Z"
+              fill="url(#warmGradient)"
+              stroke="#C0392B"
+              strokeWidth="1"
+            />
+            {/* Weight fill indicator */}
+            <clipPath id="leftWeightClip">
+              <path d="M 36 75 L 36 93 Q 36 97 50 97 Q 64 97 64 93 L 64 75 Q 64 71 50 71 Q 36 71 36 75 Z" />
+            </clipPath>
+            <rect 
+              x="36" 
+              y={75 + (22 * (1 - personalValue / 100))} 
+              width="28" 
+              height={22 * (personalValue / 100)}
+              fill="rgba(255,255,255,0.3)"
+              clipPath="url(#leftWeightClip)"
+            />
+            {/* Percentage text */}
+            <text 
+              x="50" 
+              y="86" 
+              textAnchor="middle" 
+              fontSize="11" 
+              fontWeight="bold"
+              fill="white"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+            >
+              {Math.round(personalValue)}%
+            </text>
+          </g>
+          
+          {/* Right weight (гиря) */}
+          <g>
+            <path 
+              d="M 215 75 L 215 93 Q 215 98 230 98 Q 245 98 245 93 L 245 75 Q 245 70 230 70 Q 215 70 215 75 Z"
+              fill="url(#coldGradient)"
+              stroke="#2980B9"
+              strokeWidth="1"
+            />
+            {/* Weight fill indicator */}
+            <clipPath id="rightWeightClip">
+              <path d="M 216 75 L 216 93 Q 216 97 230 97 Q 244 97 244 93 L 244 75 Q 244 71 230 71 Q 216 71 216 75 Z" />
+            </clipPath>
+            <rect 
+              x="216" 
+              y={75 + (22 * (1 - socialValue / 100))} 
+              width="28" 
+              height={22 * (socialValue / 100)}
+              fill="rgba(255,255,255,0.3)"
+              clipPath="url(#rightWeightClip)"
+            />
+            {/* Percentage text */}
+            <text 
+              x="230" 
+              y="86" 
+              textAnchor="middle" 
+              fontSize="11" 
+              fontWeight="bold"
+              fill="white"
+              style={{ textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}
+            >
+              {Math.round(socialValue)}%
+            </text>
+          </g>
+        </motion.g>
+        
+        {/* Labels below pans - fixed position */}
+        <text x="50" y="120" textAnchor="middle" fontSize="10" className="fill-muted-foreground">
+          {t.personal}
+        </text>
+        <text x="230" y="120" textAnchor="middle" fontSize="10" className="fill-muted-foreground">
+          {t.social}
+        </text>
+      </svg>
+    </div>
+  );
 }
 
 // Spider/Radar Chart Component
@@ -277,12 +483,25 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
   const { language } = useLanguage();
   const { tasks } = useTasks();
   const { habits } = useHabits();
+  const { isProActive } = useSubscription();
   const [viewMode, setViewMode] = useState<'flower' | 'spider'>('flower');
   const [hoveredPetal, setHoveredPetal] = useState<number | null>(null);
+  const [colorScheme, setColorScheme] = useState<ColorScheme>('default');
   
   const personalSpheres = getPersonalSpheres();
   const socialSpheres = getSocialSpheres();
   const allSpheres = [...personalSpheres, ...socialSpheres];
+
+  // Calculate averages for balance scales
+  const personalAvg = useMemo(() => {
+    const personal = personalSpheres.map(s => sphereIndices.find(si => si.sphereId === s.id)?.index || 0);
+    return personal.reduce((a, b) => a + b, 0) / personal.length;
+  }, [sphereIndices, personalSpheres]);
+
+  const socialAvg = useMemo(() => {
+    const social = socialSpheres.map(s => sphereIndices.find(si => si.sphereId === s.id)?.index || 0);
+    return social.reduce((a, b) => a + b, 0) / social.length;
+  }, [sphereIndices, socialSpheres]);
 
   // SVG dimensions - full width for larger display
   const size = 420;
@@ -293,6 +512,14 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
 
   const handlePetalClick = (sphere: Sphere) => {
     navigate(`/sphere/${sphere.key}`);
+  };
+
+  const handleColorSchemeChange = (scheme: ColorScheme) => {
+    if (!isProActive && scheme !== 'default') {
+      navigate('/upgrade');
+      return;
+    }
+    setColorScheme(scheme);
   };
 
   // Get sphere stats (task count and last activity)
@@ -325,7 +552,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     return { taskCount, lastActivity };
   };
 
-  // Create rounded triangle petal path - widening outward like in the reference
+  // Create rounded triangle petal path - with more rounded corners and smaller gaps
   const createPetalPath = (
     angle: number,
     radius: number
@@ -334,16 +561,16 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     
     // Base starts near center - narrow at center
     const baseR = centerRadius + 8;
-    const baseWidth = 10; // Narrow at base
+    const baseWidth = 14; // Wider base for smaller gaps
     
     // Tip is wide and rounded
-    const tipWidth = 28 + (radius / maxRadius) * 18; // Wider at tip
+    const tipWidth = 38 + (radius / maxRadius) * 20; // Wider tips
     
     // Perpendicular angle for width calculations
     const perpAngleRad = ((angle + 90) * Math.PI) / 180;
     const perpAngleRadNeg = ((angle - 90) * Math.PI) / 180;
     
-    // Base points (narrow, near center)
+    // Base points (wider, near center)
     const base1X = center + baseR * Math.cos(angleRad) + baseWidth * Math.cos(perpAngleRad);
     const base1Y = center + baseR * Math.sin(angleRad) + baseWidth * Math.sin(perpAngleRad);
     const base2X = center + baseR * Math.cos(angleRad) + baseWidth * Math.cos(perpAngleRadNeg);
@@ -357,25 +584,37 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     const tip2X = tipCenterX + tipWidth * Math.cos(perpAngleRadNeg);
     const tip2Y = tipCenterY + tipWidth * Math.sin(perpAngleRadNeg);
     
-    // Control points for the curved sides
-    const midRadius = baseR + (radius - baseR) * 0.5;
-    const midWidth = baseWidth + (tipWidth - baseWidth) * 0.5;
-    const ctrl1X = center + midRadius * Math.cos(angleRad) + midWidth * Math.cos(perpAngleRad);
-    const ctrl1Y = center + midRadius * Math.sin(angleRad) + midWidth * Math.sin(perpAngleRad);
-    const ctrl2X = center + midRadius * Math.cos(angleRad) + midWidth * Math.cos(perpAngleRadNeg);
-    const ctrl2Y = center + midRadius * Math.sin(angleRad) + midWidth * Math.sin(perpAngleRadNeg);
+    // Control points for smooth curved sides (more curvature for rounding)
+    const ctrl1Radius = baseR + (radius - baseR) * 0.4;
+    const ctrl1Width = baseWidth + (tipWidth - baseWidth) * 0.3;
+    const ctrl1X = center + ctrl1Radius * Math.cos(angleRad) + ctrl1Width * Math.cos(perpAngleRad);
+    const ctrl1Y = center + ctrl1Radius * Math.sin(angleRad) + ctrl1Width * Math.sin(perpAngleRad);
+    const ctrl2X = center + ctrl1Radius * Math.cos(angleRad) + ctrl1Width * Math.cos(perpAngleRadNeg);
+    const ctrl2Y = center + ctrl1Radius * Math.sin(angleRad) + ctrl1Width * Math.sin(perpAngleRadNeg);
     
-    // Rounded tip arc control point
-    const tipOuterR = radius + 12;
+    // Second control points closer to tip
+    const ctrl3Radius = baseR + (radius - baseR) * 0.7;
+    const ctrl3Width = baseWidth + (tipWidth - baseWidth) * 0.7;
+    const ctrl3X = center + ctrl3Radius * Math.cos(angleRad) + ctrl3Width * Math.cos(perpAngleRad);
+    const ctrl3Y = center + ctrl3Radius * Math.sin(angleRad) + ctrl3Width * Math.sin(perpAngleRad);
+    const ctrl4X = center + ctrl3Radius * Math.cos(angleRad) + ctrl3Width * Math.cos(perpAngleRadNeg);
+    const ctrl4Y = center + ctrl3Radius * Math.sin(angleRad) + ctrl3Width * Math.sin(perpAngleRadNeg);
+    
+    // Rounded tip arc control point (more pronounced rounding)
+    const tipOuterR = radius + 18;
     const tipOuterX = center + tipOuterR * Math.cos(angleRad);
     const tipOuterY = center + tipOuterR * Math.sin(angleRad);
     
+    // Base center for rounded base
+    const baseCenterX = center + baseR * Math.cos(angleRad);
+    const baseCenterY = center + baseR * Math.sin(angleRad);
+    
     return `
       M ${base1X} ${base1Y}
-      Q ${ctrl1X} ${ctrl1Y} ${tip1X} ${tip1Y}
+      C ${ctrl1X} ${ctrl1Y} ${ctrl3X} ${ctrl3Y} ${tip1X} ${tip1Y}
       Q ${tipOuterX} ${tipOuterY} ${tip2X} ${tip2Y}
-      Q ${ctrl2X} ${ctrl2Y} ${base2X} ${base2Y}
-      Q ${center + baseR * Math.cos(angleRad)} ${center + baseR * Math.sin(angleRad)} ${base1X} ${base1Y}
+      C ${ctrl4X} ${ctrl4Y} ${ctrl2X} ${ctrl2Y} ${base2X} ${base2Y}
+      Q ${baseCenterX} ${baseCenterY} ${base1X} ${base1Y}
       Z
     `;
   };
@@ -384,7 +623,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     const result: Array<{
       sphere: Sphere;
       path: string;
-      maxPath: string; // Path at 100% for background
+      maxPath: string;
       index: number;
       angle: number;
       radius: number;
@@ -394,11 +633,10 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       maxTipY: number;
       hsl: { h: number; s: number; l: number };
       needsPulse: boolean;
+      colors: ReturnType<typeof colorSchemes['default']>;
     }> = [];
 
     // Distribute 8 petals evenly around the circle (45 degrees apart)
-    // Starting from top (-90) and going clockwise
-    const allSpheres = [...personalSpheres, ...socialSpheres];
     const angleStep = 360 / allSpheres.length; // 45 degrees for 8 spheres
     
     allSpheres.forEach((sphere, i) => {
@@ -409,6 +647,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       const angle = -90 + (i * angleStep);
       const angleRad = (angle * Math.PI) / 180;
       const hsl = hexToHsl(sphere.color);
+      const colors = colorSchemes[colorScheme](sphere.color, hsl);
       
       result.push({
         sphere,
@@ -423,11 +662,12 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
         maxTipY: center + (maxRadius - 18) * Math.sin(angleRad),
         hsl,
         needsPulse: indexValue < 30,
+        colors,
       });
     });
 
     return result;
-  }, [sphereIndices, personalSpheres, socialSpheres]);
+  }, [sphereIndices, allSpheres, colorScheme]);
 
   const getTooltipContent = (petal: typeof petals[0]) => {
     const stats = getSphereStats(petal.sphere.id);
@@ -474,26 +714,67 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
     );
   };
 
+  const schemeLabels = {
+    ru: { default: 'Обычная', pastel: 'Пастель', neon: 'Неон' },
+    en: { default: 'Default', pastel: 'Pastel', neon: 'Neon' },
+    es: { default: 'Normal', pastel: 'Pastel', neon: 'Neón' },
+  };
+  const sl = schemeLabels[language] || schemeLabels.en;
+
+  const viewLabels = {
+    ru: { flower: 'Цветок', radar: 'Радар' },
+    en: { flower: 'Flower', radar: 'Radar' },
+    es: { flower: 'Flor', radar: 'Radar' },
+  };
+  const vl = viewLabels[language] || viewLabels.en;
+
   return (
     <div className="relative w-full mx-auto">
-      {/* View Toggle */}
-      <div className="flex justify-center mb-2">
-        <ToggleGroup 
-          type="single" 
-          value={viewMode} 
-          onValueChange={(v) => v && setViewMode(v as 'flower' | 'spider')}
-          className="bg-muted/50 rounded-lg p-1"
+      {/* View Toggle - simple text links */}
+      <div className="flex justify-center gap-6 mb-3">
+        <button
+          onClick={() => setViewMode('flower')}
+          className={`text-sm font-medium transition-all ${
+            viewMode === 'flower' 
+              ? 'text-foreground border-b-2 border-primary pb-0.5' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
         >
-          <ToggleGroupItem value="flower" aria-label="Flower view" className="px-3 py-1.5 text-xs">
-            <Flower2 className="w-4 h-4 mr-1" />
-            {language === 'ru' ? 'Цветок' : language === 'es' ? 'Flor' : 'Flower'}
-          </ToggleGroupItem>
-          <ToggleGroupItem value="spider" aria-label="Spider view" className="px-3 py-1.5 text-xs">
-            <Radar className="w-4 h-4 mr-1" />
-            {language === 'ru' ? 'Радар' : 'Radar'}
-          </ToggleGroupItem>
-        </ToggleGroup>
+          {vl.flower}
+        </button>
+        <button
+          onClick={() => setViewMode('spider')}
+          className={`text-sm font-medium transition-all ${
+            viewMode === 'spider' 
+              ? 'text-foreground border-b-2 border-primary pb-0.5' 
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          {vl.radar}
+        </button>
       </div>
+
+      {/* Color Scheme Selector */}
+      {viewMode === 'flower' && (
+        <div className="flex justify-center gap-2 mb-3">
+          {(['default', 'pastel', 'neon'] as ColorScheme[]).map((scheme) => (
+            <button
+              key={scheme}
+              onClick={() => handleColorSchemeChange(scheme)}
+              className={`text-xs px-3 py-1 rounded-full transition-all flex items-center gap-1 ${
+                colorScheme === scheme 
+                  ? 'bg-primary text-primary-foreground' 
+                  : 'bg-muted text-muted-foreground hover:bg-muted/80'
+              }`}
+            >
+              {sl[scheme]}
+              {!isProActive && scheme !== 'default' && (
+                <Lock className="w-3 h-3" />
+              )}
+            </button>
+          ))}
+        </div>
+      )}
 
       {viewMode === 'spider' ? (
         <SpiderChart 
@@ -524,8 +805,8 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                     width="300%" 
                     height="300%"
                   >
-                    <feGaussianBlur stdDeviation="8" result="blur" />
-                    <feFlood floodColor={petal.sphere.color} floodOpacity="0.7" result="color" />
+                    <feGaussianBlur stdDeviation={colorScheme === 'neon' ? 12 : 8} result="blur" />
+                    <feFlood floodColor={petal.colors.fill} floodOpacity={colorScheme === 'neon' ? 0.9 : 0.7} result="color" />
                     <feComposite in="color" in2="blur" operator="in" result="glow" />
                     <feMerge>
                       <feMergeNode in="glow" />
@@ -535,7 +816,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                   </filter>
                 ))}
                 
-                {/* Radial gradients for 3D volumetric effect - more saturated at edges */}
+                {/* Radial gradients for 3D volumetric effect */}
                 {petals.map((petal, i) => (
                   <radialGradient 
                     key={`grad-${i}`}
@@ -548,28 +829,28 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                   >
                     <stop 
                       offset="0%" 
-                      stopColor={`hsl(${petal.hsl.h}, ${Math.max(petal.hsl.s - 20, 30)}%, ${Math.min(petal.hsl.l + 20, 85)}%)`}
+                      stopColor={petal.colors.gradientStart}
                       stopOpacity="0.6" 
                     />
                     <stop 
                       offset="40%" 
-                      stopColor={petal.sphere.color} 
+                      stopColor={petal.colors.gradientMid} 
                       stopOpacity="0.75" 
                     />
                     <stop 
                       offset="80%" 
-                      stopColor={`hsl(${petal.hsl.h}, ${Math.min(petal.hsl.s + 30, 100)}%, ${Math.max(petal.hsl.l - 10, 35)}%)`}
+                      stopColor={petal.colors.gradientEnd}
                       stopOpacity="0.95" 
                     />
                     <stop 
                       offset="100%" 
-                      stopColor={`hsl(${petal.hsl.h}, ${Math.min(petal.hsl.s + 40, 100)}%, ${Math.max(petal.hsl.l - 15, 30)}%)`}
+                      stopColor={petal.colors.gradientEnd}
                       stopOpacity="1" 
                     />
                   </radialGradient>
                 ))}
                 
-                {/* Center glow */}
+                {/* Center glow with pulse */}
                 <filter id="centerGlow" x="-50%" y="-50%" width="200%" height="200%">
                   <feGaussianBlur stdDeviation="10" result="blur" />
                   <feFlood floodColor="hsl(var(--primary))" floodOpacity="0.5" result="color" />
@@ -592,12 +873,12 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                 <path
                   key={`bg-${petal.sphere.id}`}
                   d={petal.maxPath}
-                  fill={petal.sphere.color}
-                  fillOpacity="0.1"
-                  stroke={petal.sphere.color}
+                  fill={petal.colors.fill}
+                  fillOpacity="0.08"
+                  stroke={petal.colors.stroke}
                   strokeWidth="1"
-                  strokeOpacity="0.2"
-                  strokeDasharray="4 2"
+                  strokeOpacity="0.15"
+                  strokeDasharray="6 3"
                 />
               ))}
 
@@ -630,7 +911,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                       <motion.path
                         d={petal.path}
                         fill={`url(#petalGradient-${i})`}
-                        stroke={petal.sphere.color}
+                        stroke={petal.colors.stroke}
                         strokeWidth="2"
                         strokeOpacity="0.8"
                         filter={`url(#petalGlow-${i})`}
@@ -679,6 +960,28 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
               ))}
               </motion.g>
 
+              {/* Pulsating center ring */}
+              <motion.circle
+                cx={center}
+                cy={center}
+                r={centerRadius + 8}
+                fill="none"
+                stroke="hsl(var(--primary))"
+                strokeWidth="2"
+                strokeOpacity="0.3"
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ 
+                  scale: [1, 1.15, 1], 
+                  opacity: [0.3, 0.6, 0.3] 
+                }}
+                transition={{ 
+                  duration: 2, 
+                  repeat: Infinity, 
+                  ease: "easeInOut",
+                  delay: 1
+                }}
+              />
+
               {/* Center circle with Life Index */}
               <motion.circle
                 cx={center}
@@ -726,6 +1029,13 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
           </div>
         </TooltipProvider>
       )}
+
+      {/* Balance Scales Widget */}
+      <BalanceScalesWidget 
+        personalValue={personalAvg} 
+        socialValue={socialAvg} 
+        language={language} 
+      />
     </div>
   );
 }
