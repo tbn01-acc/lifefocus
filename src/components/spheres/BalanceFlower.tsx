@@ -824,9 +824,10 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
   ): string => {
     const toRad = (deg: number) => (deg * Math.PI) / 180;
     
-    // Each petal spans 45°, but we leave small gaps (2° on each side)
-    const petalSpan = 20; // Half of 40° (leaving 5° gap total between petals)
-    const innerPetalSpan = 10; // Narrower at the base
+    // Each petal spans exactly 45° (360° / 8 spheres = 45° each)
+    // Small gap of 1° on each side for visual separation
+    const petalSpan = 21.5; // Half of 43° (leaving 2° gap total between petals)
+    const innerPetalSpan = 16; // Slightly narrower at the base for better visual
     
     // Radii
     const innerR = centerRadius + 12;
