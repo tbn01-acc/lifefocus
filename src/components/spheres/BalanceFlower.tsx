@@ -396,48 +396,24 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
       needsPulse: boolean;
     }> = [];
 
-    // Left hemisphere (Personal) - warm tones
-    const leftAngles = [135, 165, 195, 225];
+    // Distribute 8 petals evenly around the circle (45 degrees apart)
+    // Starting from top (-90) and going clockwise
+    const allSpheres = [...personalSpheres, ...socialSpheres];
+    const angleStep = 360 / allSpheres.length; // 45 degrees for 8 spheres
     
-    // Right hemisphere (Social) - cool tones
-    const rightAngles = [45, 15, -15, -45];
-
-    personalSpheres.forEach((sphere, i) => {
+    allSpheres.forEach((sphere, i) => {
       const sphereIndex = sphereIndices.find(s => s.sphereId === sphere.id);
       const indexValue = sphereIndex?.index || 0;
       const radius = minRadius + ((indexValue / 100) * (maxRadius - minRadius));
-      const angle = leftAngles[i];
+      // Start from top (-90) and go clockwise
+      const angle = -90 + (i * angleStep);
       const angleRad = (angle * Math.PI) / 180;
       const hsl = hexToHsl(sphere.color);
       
       result.push({
         sphere,
         path: createPetalPath(angle, radius),
-        maxPath: createPetalPath(angle, maxRadius), // 100% size path
-        index: indexValue,
-        angle,
-        radius,
-        tipX: center + (radius - 18) * Math.cos(angleRad),
-        tipY: center + (radius - 18) * Math.sin(angleRad),
-        maxTipX: center + (maxRadius - 18) * Math.cos(angleRad),
-        maxTipY: center + (maxRadius - 18) * Math.sin(angleRad),
-        hsl,
-        needsPulse: indexValue < 30,
-      });
-    });
-
-    socialSpheres.forEach((sphere, i) => {
-      const sphereIndex = sphereIndices.find(s => s.sphereId === sphere.id);
-      const indexValue = sphereIndex?.index || 0;
-      const radius = minRadius + ((indexValue / 100) * (maxRadius - minRadius));
-      const angle = rightAngles[i];
-      const angleRad = (angle * Math.PI) / 180;
-      const hsl = hexToHsl(sphere.color);
-      
-      result.push({
-        sphere,
-        path: createPetalPath(angle, radius),
-        maxPath: createPetalPath(angle, maxRadius), // 100% size path
+        maxPath: createPetalPath(angle, maxRadius),
         index: indexValue,
         angle,
         radius,
@@ -559,33 +535,38 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                   </filter>
                 ))}
                 
-                {/* Gradients for glassmorphism effect */}
+                {/* Radial gradients for 3D volumetric effect - more saturated at edges */}
                 {petals.map((petal, i) => (
-                  <linearGradient 
+                  <radialGradient 
                     key={`grad-${i}`}
                     id={`petalGradient-${i}`}
-                    gradientUnits="userSpaceOnUse"
-                    x1={center}
-                    y1={center}
-                    x2={petal.tipX}
-                    y2={petal.tipY}
+                    cx="0%"
+                    cy="50%"
+                    r="100%"
+                    fx="0%"
+                    fy="50%"
                   >
                     <stop 
                       offset="0%" 
-                      stopColor={petal.sphere.color} 
-                      stopOpacity="0.25" 
+                      stopColor={`hsl(${petal.hsl.h}, ${Math.max(petal.hsl.s - 20, 30)}%, ${Math.min(petal.hsl.l + 20, 85)}%)`}
+                      stopOpacity="0.6" 
                     />
                     <stop 
-                      offset="50%" 
+                      offset="40%" 
                       stopColor={petal.sphere.color} 
-                      stopOpacity="0.5" 
+                      stopOpacity="0.75" 
+                    />
+                    <stop 
+                      offset="80%" 
+                      stopColor={`hsl(${petal.hsl.h}, ${Math.min(petal.hsl.s + 30, 100)}%, ${Math.max(petal.hsl.l - 10, 35)}%)`}
+                      stopOpacity="0.95" 
                     />
                     <stop 
                       offset="100%" 
-                      stopColor={`hsl(${petal.hsl.h}, ${Math.min(petal.hsl.s + 25, 100)}%, ${Math.min(petal.hsl.l + 15, 75)}%)`}
-                      stopOpacity="0.95" 
+                      stopColor={`hsl(${petal.hsl.h}, ${Math.min(petal.hsl.s + 40, 100)}%, ${Math.max(petal.hsl.l - 15, 30)}%)`}
+                      stopOpacity="1" 
                     />
-                  </linearGradient>
+                  </radialGradient>
                 ))}
                 
                 {/* Center glow */}
@@ -620,25 +601,31 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                 />
               ))}
 
-              {/* Active Petals */}
-              {petals.map((petal, i) => (
-                <Tooltip key={petal.sphere.id}>
-                  <TooltipTrigger asChild>
-                    <motion.g
-                      initial={{ scale: 0, opacity: 0 }}
-                      animate={{ 
-                        scale: 1, 
-                        opacity: 1,
-                      }}
-                      transition={{ delay: i * 0.08, duration: 0.5, type: 'spring' }}
-                      onClick={() => handlePetalClick(petal.sphere)}
-                      onMouseEnter={() => setHoveredPetal(i)}
-                      onMouseLeave={() => setHoveredPetal(null)}
-                      className="cursor-pointer"
-                      style={{ transformOrigin: `${center}px ${center}px` }}
-                      whileHover={{ scale: 1.08, filter: 'brightness(1.25)' }}
-                      whileTap={{ scale: 0.98 }}
-                    >
+              {/* Active Petals with rotation animation */}
+              <motion.g
+                initial={{ rotate: -180, opacity: 0 }}
+                animate={{ rotate: 0, opacity: 1 }}
+                transition={{ duration: 1, ease: "easeOut" }}
+                style={{ transformOrigin: `${center}px ${center}px` }}
+              >
+                {petals.map((petal, i) => (
+                  <Tooltip key={petal.sphere.id}>
+                    <TooltipTrigger asChild>
+                      <motion.g
+                        initial={{ scale: 0, opacity: 0 }}
+                        animate={{ 
+                          scale: 1, 
+                          opacity: 1,
+                        }}
+                        transition={{ delay: 0.3 + i * 0.08, duration: 0.5, type: 'spring' }}
+                        onClick={() => handlePetalClick(petal.sphere)}
+                        onMouseEnter={() => setHoveredPetal(i)}
+                        onMouseLeave={() => setHoveredPetal(null)}
+                        className="cursor-pointer"
+                        style={{ transformOrigin: `${center}px ${center}px` }}
+                        whileHover={{ scale: 1.08, filter: 'brightness(1.25)' }}
+                        whileTap={{ scale: 0.98 }}
+                      >
                       {/* Petal shape with glow and gradient */}
                       <motion.path
                         d={petal.path}
@@ -690,6 +677,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) 
                   </TooltipContent>
                 </Tooltip>
               ))}
+              </motion.g>
 
               {/* Center circle with Life Index */}
               <motion.circle
