@@ -13,6 +13,7 @@ interface SpreadState {
 }
 
 const STORAGE_KEY = 'balance_spread_level';
+const STARS_AWARDED_KEY = 'balance_stars_awarded';
 
 export function getSpreadLevel(spread: number): SpreadLevel {
   if (spread <= 5) return 'topFocus';
@@ -54,6 +55,35 @@ export function calculateSpread(sphereIndices: SphereIndex[]): SpreadState {
   };
 }
 
+// Track which star rewards have been awarded
+export function getAwardedStarsLevels(): SpreadLevel[] {
+  const stored = localStorage.getItem(STARS_AWARDED_KEY);
+  if (!stored) return [];
+  try {
+    return JSON.parse(stored) as SpreadLevel[];
+  } catch {
+    return [];
+  }
+}
+
+export function markStarsAwarded(level: SpreadLevel) {
+  const current = getAwardedStarsLevels();
+  if (!current.includes(level)) {
+    localStorage.setItem(STARS_AWARDED_KEY, JSON.stringify([...current, level]));
+  }
+}
+
+export function shouldAwardStars(level: SpreadLevel): boolean {
+  const awarded = getAwardedStarsLevels();
+  return (level === 'stability' || level === 'topFocus') && !awarded.includes(level);
+}
+
+export function getStarsForLevel(level: SpreadLevel): number {
+  if (level === 'topFocus') return 50;
+  if (level === 'stability') return 25;
+  return 0;
+}
+
 export function useBalanceSpread(sphereIndices: SphereIndex[]) {
   const [currentState, setCurrentState] = useState<SpreadState | null>(null);
   const [previousLevel, setPreviousLevel] = useState<SpreadLevel | null>(null);
@@ -87,6 +117,10 @@ export function useBalanceSpread(sphereIndices: SphereIndex[]) {
     setIsNewLevel(false);
   }, []);
 
+  const openModal = useCallback(() => {
+    setShowModal(true);
+  }, []);
+
   const resetLevelTracking = useCallback(() => {
     localStorage.removeItem(STORAGE_KEY);
     setPreviousLevel(null);
@@ -99,6 +133,7 @@ export function useBalanceSpread(sphereIndices: SphereIndex[]) {
     isNewLevel,
     showModal,
     dismissModal,
+    openModal,
     resetLevelTracking,
   };
 }

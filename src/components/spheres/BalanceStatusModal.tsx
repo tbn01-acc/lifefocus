@@ -1,11 +1,15 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { SpreadLevel } from '@/hooks/useBalanceSpread';
+import { SpreadLevel, shouldAwardStars, markStarsAwarded, getStarsForLevel } from '@/hooks/useBalanceSpread';
 import confetti from 'canvas-confetti';
 import { playSuccessSound } from '@/utils/celebrations';
-import { X, Zap, AlertTriangle, Target, Award, Crown } from 'lucide-react';
+import { X, Zap, AlertTriangle, Target, Award, Crown, Share, Star } from 'lucide-react';
+import { useStars } from '@/hooks/useStars';
+import { useAuth } from '@/hooks/useAuth';
+import { toast } from 'sonner';
+import { AchievementPublishDialog } from '@/components/AchievementPublishDialog';
 
 interface BalanceStatusModalProps {
   isOpen: boolean;
@@ -13,6 +17,7 @@ interface BalanceStatusModalProps {
   level: SpreadLevel;
   spread: number;
   language: 'ru' | 'en' | 'es';
+  isNewLevel?: boolean;
 }
 
 const statusMessages = {
@@ -104,10 +109,24 @@ const levelColors: Record<SpreadLevel, string> = {
   chaos: 'from-red-500/20 to-rose-500/20 border-red-400/50',
 };
 
-export function BalanceStatusModal({ isOpen, onClose, level, spread, language }: BalanceStatusModalProps) {
+const shareButtonLabels = {
+  ru: 'Отправить в Фокус',
+  en: 'Send to Focus',
+  es: 'Enviar a Foco',
+};
+
+export function BalanceStatusModal({ isOpen, onClose, level, spread, language, isNewLevel }: BalanceStatusModalProps) {
   const [showLightning, setShowLightning] = useState(false);
   const [showRedPulse, setShowRedPulse] = useState(false);
   const [showBluePulse, setShowBluePulse] = useState(false);
+  const [showPublishDialog, setShowPublishDialog] = useState(false);
+  const [starsAwarded, setStarsAwarded] = useState(false);
+  const modalRef = useRef<HTMLDivElement>(null);
+  
+  const { addStars } = useStars();
+  const { profile } = useAuth();
+  
+  const userName = profile?.display_name || '';
 
   useEffect(() => {
     if (!isOpen) return;
@@ -173,11 +192,46 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language }:
         setTimeout(() => setShowLightning(false), 200);
       }, 400);
     }
-  }, [isOpen, level]);
+
+    // Award stars for stability/topFocus if first time and is a new level change
+    if (isNewLevel && shouldAwardStars(level) && !starsAwarded) {
+      const stars = getStarsForLevel(level);
+      if (stars > 0) {
+        addStars(
+          stars,
+          'balance_achievement',
+          level === 'topFocus' 
+            ? 'Достижение: Мастер фокуса (Spread ≤ 5)' 
+            : 'Достижение: Устойчивость (Spread ≤ 10)'
+        ).then((success) => {
+          if (success) {
+            markStarsAwarded(level);
+            setStarsAwarded(true);
+            toast.success(`+${stars} ⭐`, { 
+              description: level === 'topFocus' 
+                ? (language === 'ru' ? 'За идеальный баланс!' : 'For perfect balance!') 
+                : (language === 'ru' ? 'За отличный баланс!' : 'For great balance!')
+            });
+          }
+        });
+      }
+    }
+  }, [isOpen, level, isNewLevel, starsAwarded, addStars, language]);
 
   const content = statusMessages[level]?.[language] || statusMessages[level]?.en;
   const Icon = levelIcons[level];
   const colorClass = levelColors[level];
+  
+  // Build personalized message
+  const personalizedMessage = userName 
+    ? `${userName}, ${content?.message.charAt(0).toLowerCase()}${content?.message.slice(1)}`
+    : content?.message;
+
+  const canShare = level === 'stability' || level === 'topFocus';
+
+  const handleShare = () => {
+    setShowPublishDialog(true);
+  };
 
   return (
     <>
@@ -219,8 +273,18 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language }:
       </AnimatePresence>
 
       <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-        <DialogContent className={`max-w-sm bg-gradient-to-br ${colorClass} backdrop-blur-xl border-2`}>
+        <DialogContent className={`max-w-sm bg-gradient-to-br ${colorClass} backdrop-blur-xl border-2 relative`}>
+          {/* Close button */}
+          <button
+            onClick={onClose}
+            className="absolute right-3 top-3 p-1.5 rounded-full hover:bg-black/10 transition-colors z-10"
+            aria-label="Close"
+          >
+            <X className="w-5 h-5 text-foreground/70" />
+          </button>
+          
           <motion.div
+            ref={modalRef}
             initial={{ scale: 0.9, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             transition={{ type: 'spring', damping: 15 }}
@@ -240,7 +304,7 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language }:
                 {content?.title}
               </DialogTitle>
               <DialogDescription className="text-base text-foreground/80">
-                {content?.message}
+                {personalizedMessage}
               </DialogDescription>
             </DialogHeader>
 
@@ -248,9 +312,22 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language }:
               Spread: {Math.round(spread)}%
             </div>
 
+            {/* Share button for stability and topFocus */}
+            {canShare && (
+              <Button
+                onClick={handleShare}
+                variant="outline"
+                size="sm"
+                className="mt-4 gap-2"
+              >
+                <Share className="w-4 h-4" />
+                {shareButtonLabels[language]}
+              </Button>
+            )}
+
             <Button
               onClick={onClose}
-              className="mt-6 w-full"
+              className="mt-4 w-full"
               variant="secondary"
             >
               {language === 'ru' ? 'Понятно' : language === 'es' ? 'Entendido' : 'Got it'}
@@ -258,6 +335,13 @@ export function BalanceStatusModal({ isOpen, onClose, level, spread, language }:
           </motion.div>
         </DialogContent>
       </Dialog>
+
+      {/* Publish Dialog for sharing */}
+      <AchievementPublishDialog
+        open={showPublishDialog}
+        onOpenChange={setShowPublishDialog}
+        itemName={`${content?.title}: ${personalizedMessage}`}
+      />
     </>
   );
 }

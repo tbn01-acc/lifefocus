@@ -6,6 +6,7 @@ import { Zap, AlertTriangle, Target, Award, Crown } from 'lucide-react';
 interface BalanceStatusBadgeProps {
   level: SpreadLevel;
   language: 'ru' | 'en' | 'es';
+  onClick?: () => void;
 }
 
 const statusLabels: Record<SpreadLevel, Record<'ru' | 'en' | 'es', string>> = {
@@ -57,12 +58,13 @@ const levelConfigs: Record<SpreadLevel, {
   },
 };
 
-export function BalanceStatusBadge({ level, language }: BalanceStatusBadgeProps) {
+export function BalanceStatusBadge({ level, language, onClick }: BalanceStatusBadgeProps) {
   const config = levelConfigs[level];
   const label = statusLabels[level][language];
 
   return (
-    <motion.div
+    <motion.button
+      type="button"
       initial={{ scale: 0.9, opacity: 0 }}
       animate={{ 
         scale: 1, 
@@ -79,14 +81,18 @@ export function BalanceStatusBadge({ level, language }: BalanceStatusBadgeProps)
           repeatDelay: 0.5,
         } : undefined,
       }}
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+      onClick={onClick}
       className={`
         inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full 
         ${config.bgClass} ${config.textClass} ${config.glowClass}
-        font-semibold text-sm
+        font-semibold text-sm cursor-pointer
+        transition-all hover:brightness-110
       `}
     >
       {config.icon}
       <span>{label}</span>
-    </motion.div>
+    </motion.button>
   );
 }
