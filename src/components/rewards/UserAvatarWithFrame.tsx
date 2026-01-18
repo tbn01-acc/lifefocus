@@ -1,5 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { User } from 'lucide-react';
+import { User, Crown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export interface AvatarFrame {
@@ -39,6 +39,7 @@ interface UserAvatarWithFrameProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   className?: string;
   onClick?: () => void;
+  showProBadge?: boolean;
 }
 
 export function UserAvatarWithFrame({
@@ -48,12 +49,27 @@ export function UserAvatarWithFrame({
   size = 'md',
   className,
   onClick,
+  showProBadge = false,
 }: UserAvatarWithFrameProps) {
   const sizeClasses = {
     sm: 'w-8 h-8',
     md: 'w-10 h-10',
     lg: 'w-12 h-12',
     xl: 'w-16 h-16',
+  };
+
+  const proBadgeSizeClasses = {
+    sm: 'w-3 h-3 -bottom-0.5 -right-0.5',
+    md: 'w-4 h-4 -bottom-0.5 -right-0.5',
+    lg: 'w-5 h-5 -bottom-1 -right-1',
+    xl: 'w-6 h-6 -bottom-1 -right-1',
+  };
+
+  const proIconSizeClasses = {
+    sm: 'w-2 h-2',
+    md: 'w-2.5 h-2.5',
+    lg: 'w-3 h-3',
+    xl: 'w-3.5 h-3.5',
   };
 
   const frame = frameId ? AVATAR_FRAMES[frameId] : null;
@@ -76,11 +92,26 @@ export function UserAvatarWithFrame({
           frame?.animationClass
         )}
       >
-        <AvatarImage src={avatarUrl || undefined} />
+        <AvatarImage 
+          src={avatarUrl || undefined} 
+          className="object-cover"
+        />
         <AvatarFallback>
           {displayName?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
         </AvatarFallback>
       </Avatar>
+      
+      {/* PRO Badge */}
+      {showProBadge && (
+        <div 
+          className={cn(
+            "absolute flex items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-orange-500 shadow-lg border-2 border-background",
+            proBadgeSizeClasses[size]
+          )}
+        >
+          <Crown className={cn("text-white", proIconSizeClasses[size])} />
+        </div>
+      )}
     </div>
   );
 }
