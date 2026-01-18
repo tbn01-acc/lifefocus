@@ -59,10 +59,10 @@ export function UserAvatarWithFrame({
   };
 
   const proBadgeSizeClasses = {
-    sm: 'w-3 h-3 -bottom-0.5 -right-0.5',
-    md: 'w-4 h-4 -bottom-0.5 -right-0.5',
-    lg: 'w-5 h-5 -bottom-1 -right-1',
-    xl: 'w-6 h-6 -bottom-1 -right-1',
+    sm: 'w-3 h-3 -top-0.5 -right-0.5',
+    md: 'w-4 h-4 -top-0.5 -right-0.5',
+    lg: 'w-5 h-5 -top-1 -right-1',
+    xl: 'w-6 h-6 -top-1 -right-1',
   };
 
   const proIconSizeClasses = {
