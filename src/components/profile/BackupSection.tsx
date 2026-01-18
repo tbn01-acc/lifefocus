@@ -14,7 +14,7 @@ export function BackupSection() {
   const { syncAll, isSyncing, lastSyncTime } = useSupabaseSync();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isRussian = language === 'ru';
-  const isPro = typeof isProActive === 'function' ? isProActive() : !!isProActive;
+  const isPro = isProActive;
 
   const formatLastSync = () => {
     if (!lastSyncTime) return isRussian ? 'Никогда' : 'Never';

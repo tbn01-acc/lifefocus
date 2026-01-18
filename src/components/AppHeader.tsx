@@ -25,7 +25,7 @@ export function AppHeader() {
   const [referralModalOpen, setReferralModalOpen] = useState(false);
 
   const userName = profile?.display_name || user?.email?.split('@')[0] || t('guest');
-  const isPro = typeof isProActive === 'function' ? isProActive() : !!isProActive;
+  const isPro = isProActive;
 
   // Get active frame and badges from profile
   const activeFrame = (profile as any)?.active_frame || null;

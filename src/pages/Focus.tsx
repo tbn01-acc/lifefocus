@@ -52,7 +52,7 @@ export default function Focus() {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <Aperture className="h-7 w-7 text-primary" />
+            <Aperture className="h-6 w-6 text-primary" />
             <h1 className="text-2xl font-bold">
               {isRussian ? 'Фокус' : 'Focus'}
             </h1>

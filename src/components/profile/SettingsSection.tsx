@@ -82,8 +82,8 @@ export function SettingsSection() {
               </div>
             </CollapsibleContent>
 
-            {/* PWA Install Button */}
-            {(isInstallable || !isInstalled) && (
+            {/* PWA Install Button - Always show in browser */}
+            {!isInstalled && (
               <Button
                 variant="ghost"
                 className="w-full justify-between p-4 h-auto rounded-none border-b border-border"
@@ -91,19 +91,15 @@ export function SettingsSection() {
                 disabled={!isInstallable}
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center">
-                    <Smartphone className="w-4 h-4 text-primary-foreground" />
-                  </div>
+                  <Smartphone className="w-5 h-5 text-primary" />
                   <div className="text-left">
                     <span className="text-sm font-medium block">
                       {isRussian ? 'Установить приложение' : 'Install App'}
                     </span>
                     <span className="text-xs text-muted-foreground">
-                      {isInstalled 
-                        ? (isRussian ? 'Уже установлено' : 'Already installed')
-                        : isInstallable
-                          ? (isRussian ? 'Добавить на рабочий стол' : 'Add to home screen')
-                          : (isRussian ? 'Недоступно в браузере' : 'Not available in browser')
+                      {isInstallable
+                        ? (isRussian ? 'Добавить на рабочий стол' : 'Add to home screen')
+                        : (isRussian ? 'Откройте в Chrome/Edge для установки' : 'Open in Chrome/Edge to install')
                       }
                     </span>
                   </div>

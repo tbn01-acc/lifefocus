@@ -530,7 +530,7 @@ export const translations = {
     aboutApp: "О приложении",
     termsOfService: "Условия использования",
     privacyPolicy: "Политика конфиденциальности",
-    dataProcessingPolicy: "Политика обработки персональных данных",
+    dataProcessingPolicy: "Обработка персональных данных",
     publicOffer: "Публичная оферта",
     helpAndSupport: "Помощь и поддержка",
     userPermissions: "Управление разрешениями",
