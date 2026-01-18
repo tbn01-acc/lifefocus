@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Gift, Trophy, Newspaper, Flame, Aperture, Bell, MessageSquare } from 'lucide-react';
+import { Gift, Trophy, Newspaper, Flame, Aperture, Bell, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useAuth } from '@/hooks/useAuth';
 import { useStars } from '@/hooks/useStars';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useSubscription } from '@/hooks/useSubscription';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { Button } from '@/components/ui/button';
@@ -19,10 +20,12 @@ export function AppHeader() {
   const { profile, user } = useAuth();
   const { userStars } = useStars();
   const { unreadCount } = useNotifications();
+  const { isProActive } = useSubscription();
   const { t } = useTranslation();
   const [referralModalOpen, setReferralModalOpen] = useState(false);
 
   const userName = profile?.display_name || user?.email?.split('@')[0] || t('guest');
+  const isPro = typeof isProActive === 'function' ? isProActive() : !!isProActive;
 
   // Get active frame and badges from profile
   const activeFrame = (profile as any)?.active_frame || null;
@@ -33,7 +36,7 @@ export function AppHeader() {
       <header className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border/50">
         <div className="max-w-4xl mx-auto px-4 py-3">
           <div className="flex items-center justify-between gap-2">
-            {/* Left: Avatar with frame and badges */}
+            {/* Left: Avatar with frame, PRO badge and user badges */}
             <div className="flex items-center gap-2 shrink-0">
               <UserAvatarWithFrame
                 avatarUrl={profile?.avatar_url}
@@ -41,6 +44,7 @@ export function AppHeader() {
                 frameId={activeFrame}
                 size="md"
                 onClick={() => navigate('/profile')}
+                showProBadge={isPro}
               />
               <UserBadges badgeIds={activeBadges} maxDisplay={2} size="sm" />
             </div>
@@ -55,7 +59,7 @@ export function AppHeader() {
               )}
             </div>
 
-            {/* Right: Notifications + News + Focus + Rating + Theme + Invite */}
+            {/* Right: Notifications + Users Catalog + News + Focus + Rating + Theme + Invite */}
             <div className="flex items-center gap-0 sm:gap-0.5">
               <Tooltip>
                 <TooltipTrigger asChild>
@@ -83,14 +87,14 @@ export function AppHeader() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => navigate('/chats')}
+                    onClick={() => navigate('/users')}
                     className="text-green-500 hover:text-green-600 hover:bg-green-500/10"
                   >
-                    <MessageSquare className="w-5 h-5" />
+                    <Users className="w-5 h-5" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>
-                  Чаты
+                  Каталог пользователей
                 </TooltipContent>
               </Tooltip>
 
