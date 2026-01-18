@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Aperture, Plus, ThumbsUp, ThumbsDown, MessageCircle, Vote, ArrowLeft, MoreVertical, Eye, EyeOff, Trash2 } from 'lucide-react';
+import { Plus, ThumbsUp, ThumbsDown, MessageCircle, Vote, ArrowLeft, MoreVertical, EyeOff, Trash2, Users } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { format } from 'date-fns';
 import { ru } from 'date-fns/locale';
@@ -13,6 +13,10 @@ import { useStars } from '@/hooks/useStars';
 import { AchievementPublishDialog } from '@/components/AchievementPublishDialog';
 import { FeedTabs, FeedType } from '@/components/rating/FeedTabs';
 import { UserAvatarWithFrame } from '@/components/rewards/UserAvatarWithFrame';
+import { UserSubscribeButton } from '@/components/feed/UserSubscribeButton';
+import { PostCommentsSheet } from '@/components/feed/PostCommentsSheet';
+import { MySubscriptionsSheet } from '@/components/feed/MySubscriptionsSheet';
+import { Icon3D } from '@/components/Icon3D';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -46,8 +50,10 @@ export default function Focus() {
   const [showPublishDialog, setShowPublishDialog] = useState(false);
   const [deleteConfirmPost, setDeleteConfirmPost] = useState<string | null>(null);
   const [hideConfirmPost, setHideConfirmPost] = useState<string | null>(null);
+  const [commentsPostId, setCommentsPostId] = useState<string | null>(null);
+  const [showSubscriptions, setShowSubscriptions] = useState(false);
 
-  const { posts, loading, hasMore, loadMore, voteForIdea, hidePost, deletePost } = useFilteredFeed(feedType);
+  const { posts, loading, hasMore, loadMore, voteForIdea, hidePost, deletePost, refetch } = useFilteredFeed(feedType);
 
   const getPostTypeLabel = (postType: string) => {
     switch (postType) {
@@ -88,13 +94,25 @@ export default function Focus() {
             <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
               <ArrowLeft className="w-5 h-5" />
             </Button>
-            <Aperture className="h-6 w-6 text-primary" />
+            <Icon3D name="focus" size="lg" />
             <h1 className="text-2xl font-bold">
               {isRussian ? 'Фокус' : 'Focus'}
             </h1>
           </div>
 
           <div className="flex items-center gap-2">
+            {/* My Subscriptions button */}
+            {user && (
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowSubscriptions(true)}
+                className="relative"
+              >
+                <Users className="h-5 w-5" />
+              </Button>
+            )}
+
             <Badge variant="outline">
               {dailyPostCount}/{dailyLimit}
             </Badge>
@@ -165,6 +183,12 @@ export default function Focus() {
                           })}
                         </p>
                       </div>
+                      
+                      {/* Subscribe button for other users */}
+                      {user && user.id !== post.user_id && (
+                        <UserSubscribeButton userId={post.user_id} size="sm" />
+                      )}
+                      
                       <Badge variant="outline" className="text-xs">
                         {getPostTypeLabel(post.post_type)}
                       </Badge>
@@ -247,6 +271,7 @@ export default function Focus() {
                           variant="ghost"
                           size="sm"
                           className="gap-1"
+                          onClick={() => setCommentsPostId(post.id)}
                         >
                           <MessageCircle className="h-4 w-4" />
                           {post.comments_count}
@@ -261,7 +286,7 @@ export default function Focus() {
             {posts.length === 0 && (
               <Card>
                 <CardContent className="text-center py-12">
-                  <Aperture className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                  <Icon3D name="focus" size="xl" className="mx-auto mb-4" />
                   <p className="text-muted-foreground">
                     {isRussian ? 'Пока нет публикаций' : 'No posts yet'}
                   </p>
@@ -285,6 +310,20 @@ export default function Focus() {
       <AchievementPublishDialog
         open={showPublishDialog}
         onOpenChange={setShowPublishDialog}
+      />
+
+      {/* Comments Sheet */}
+      <PostCommentsSheet
+        open={!!commentsPostId}
+        onOpenChange={(open) => !open && setCommentsPostId(null)}
+        postId={commentsPostId || ''}
+        onCommentAdded={refetch}
+      />
+
+      {/* My Subscriptions Sheet */}
+      <MySubscriptionsSheet
+        open={showSubscriptions}
+        onOpenChange={setShowSubscriptions}
       />
 
       {/* Hide Post Confirmation */}
