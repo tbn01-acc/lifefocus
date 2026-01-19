@@ -11,11 +11,52 @@ interface BackupData {
     transactions: any[];
     categories: any[];
     tags: any[];
-    settings: any;
+    timeEntries: any[];
+    notes: any[];
+    checklists: any[];
+    counters: any[];
+    pomodoroSessions: any[];
+    settings: Record<string, any>;
   };
 }
 
-const BACKUP_VERSION = '1.0.0';
+const BACKUP_VERSION = '2.0.0';
+
+// All storage keys for data
+const DATA_KEYS = [
+  'habitflow_tasks',
+  'habitflow_habits',
+  'habitflow_finance',
+  'habitflow_transactions',
+  'habitflow_time_entries',
+  'habitflow_notes',
+  'habitflow_checklists',
+  'habitflow_counters',
+  'habitflow_pomodoro_sessions',
+  'habitflow_task_categories',
+  'habitflow_habit_categories',
+  'habitflow_task_tags',
+];
+
+// All storage keys for settings
+const SETTINGS_KEYS = [
+  'habitflow_widget_settings',
+  'habitflow_theme_settings',
+  'habitflow_celebration_settings',
+  'habitflow_notification_settings',
+  'habitflow_general_settings',
+  'habitflow_dashboard_layout',
+  'celebration_settings',
+  'widget_settings',
+  'theme',
+  'cachingEnabled',
+  'habitflow_first_day_of_week',
+  'habitflow_language',
+  'habitflow_date_format',
+  'habitflow_time_format',
+  'habitflow_currency',
+  'habitflow_auto_archive',
+];
 
 export function useLocalBackup() {
   const [isCreating, setIsCreating] = useState(false);
@@ -28,41 +69,53 @@ export function useLocalBackup() {
       transactions: [],
       categories: [],
       tags: [],
+      timeEntries: [],
+      notes: [],
+      checklists: [],
+      counters: [],
+      pomodoroSessions: [],
       settings: {}
     };
 
-    // Collect all localStorage data
-    const storageKeys = [
-      'habitflow_tasks',
-      'habitflow_habits',
-      'habitflow_transactions',
-      'habitflow_task_categories',
-      'habitflow_task_tags',
-      'habitflow_habit_categories',
-      'celebration_settings',
-      'widget_settings',
-      'theme',
-      'cachingEnabled'
-    ];
-
-    storageKeys.forEach(key => {
+    // Collect data
+    DATA_KEYS.forEach(key => {
       const value = localStorage.getItem(key);
       if (value) {
         try {
+          const parsed = JSON.parse(value);
           if (key === 'habitflow_tasks') {
-            data.tasks = JSON.parse(value);
+            data.tasks = parsed;
           } else if (key === 'habitflow_habits') {
-            data.habits = JSON.parse(value);
-          } else if (key === 'habitflow_transactions') {
-            data.transactions = JSON.parse(value);
-          } else if (key === 'habitflow_task_categories' || key === 'habitflow_habit_categories') {
-            const parsed = JSON.parse(value);
+            data.habits = parsed;
+          } else if (key === 'habitflow_finance' || key === 'habitflow_transactions') {
+            data.transactions = parsed;
+          } else if (key === 'habitflow_time_entries') {
+            data.timeEntries = parsed;
+          } else if (key === 'habitflow_notes') {
+            data.notes = parsed;
+          } else if (key === 'habitflow_checklists') {
+            data.checklists = parsed;
+          } else if (key === 'habitflow_counters') {
+            data.counters = parsed;
+          } else if (key === 'habitflow_pomodoro_sessions') {
+            data.pomodoroSessions = parsed;
+          } else if (key.includes('categories')) {
             data.categories = [...data.categories, ...parsed];
-          } else if (key === 'habitflow_task_tags') {
-            data.tags = JSON.parse(value);
-          } else {
-            data.settings[key] = JSON.parse(value);
+          } else if (key.includes('tags')) {
+            data.tags = parsed;
           }
+        } catch {
+          // Skip invalid data
+        }
+      }
+    });
+
+    // Collect settings
+    SETTINGS_KEYS.forEach(key => {
+      const value = localStorage.getItem(key);
+      if (value) {
+        try {
+          data.settings[key] = JSON.parse(value);
         } catch {
           data.settings[key] = value;
         }
@@ -115,7 +168,7 @@ export function useLocalBackup() {
         throw new Error('Invalid backup file format');
       }
 
-      // Restore data to localStorage
+      // Restore data
       if (backup.data.tasks?.length) {
         localStorage.setItem('habitflow_tasks', JSON.stringify(backup.data.tasks));
       }
@@ -123,7 +176,22 @@ export function useLocalBackup() {
         localStorage.setItem('habitflow_habits', JSON.stringify(backup.data.habits));
       }
       if (backup.data.transactions?.length) {
-        localStorage.setItem('habitflow_transactions', JSON.stringify(backup.data.transactions));
+        localStorage.setItem('habitflow_finance', JSON.stringify(backup.data.transactions));
+      }
+      if (backup.data.timeEntries?.length) {
+        localStorage.setItem('habitflow_time_entries', JSON.stringify(backup.data.timeEntries));
+      }
+      if (backup.data.notes?.length) {
+        localStorage.setItem('habitflow_notes', JSON.stringify(backup.data.notes));
+      }
+      if (backup.data.checklists?.length) {
+        localStorage.setItem('habitflow_checklists', JSON.stringify(backup.data.checklists));
+      }
+      if (backup.data.counters?.length) {
+        localStorage.setItem('habitflow_counters', JSON.stringify(backup.data.counters));
+      }
+      if (backup.data.pomodoroSessions?.length) {
+        localStorage.setItem('habitflow_pomodoro_sessions', JSON.stringify(backup.data.pomodoroSessions));
       }
       if (backup.data.categories?.length) {
         localStorage.setItem('habitflow_task_categories', JSON.stringify(backup.data.categories));
@@ -132,7 +200,7 @@ export function useLocalBackup() {
         localStorage.setItem('habitflow_task_tags', JSON.stringify(backup.data.tags));
       }
       
-      // Restore settings
+      // Restore ALL settings
       if (backup.data.settings) {
         Object.entries(backup.data.settings).forEach(([key, value]) => {
           if (typeof value === 'string') {
@@ -144,6 +212,9 @@ export function useLocalBackup() {
       }
 
       toast.success('Резервная копия успешно восстановлена. Перезагружаем...');
+      
+      // Trigger data changed event
+      window.dispatchEvent(new Event('habitflow-data-changed'));
       
       // Reload the page to apply changes
       setTimeout(() => {

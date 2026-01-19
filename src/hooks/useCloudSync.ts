@@ -1,7 +1,6 @@
 import { useEffect, useCallback, useState, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useSubscription } from './useSubscription';
 import { useToast } from './use-toast';
 
 // Storage keys
@@ -22,23 +21,87 @@ const NOTIFICATION_SETTINGS_KEY = 'habitflow_notification_settings';
 const GENERAL_SETTINGS_KEY = 'habitflow_general_settings';
 const DASHBOARD_LAYOUT_KEY = 'habitflow_dashboard_layout';
 
+// Additional settings keys
+const ADDITIONAL_SETTINGS_KEYS = [
+  'habitflow_first_day_of_week',
+  'habitflow_language',
+  'habitflow_date_format',
+  'habitflow_time_format',
+  'habitflow_currency',
+  'habitflow_auto_archive',
+  'celebration_settings',
+  'widget_settings',
+  'theme',
+  'cachingEnabled',
+];
+
 interface CloudSyncState {
   isSyncing: boolean;
   lastSyncTime: string | null;
   autoSyncEnabled: boolean;
 }
 
+// Check if user has PRO subscription directly
+async function checkProStatus(userId: string): Promise<boolean> {
+  try {
+    // Check roles first
+    const { data: roleData } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .single();
+    
+    if (roleData?.role === 'admin' || roleData?.role === 'moderator' || roleData?.role === 'team') {
+      return true;
+    }
+    
+    // Check subscription
+    const { data: subData } = await supabase
+      .from('subscriptions')
+      .select('*')
+      .eq('user_id', userId)
+      .single();
+    
+    if (!subData || subData.plan !== 'pro') return false;
+    if (!subData.expires_at) return true; // Lifetime
+    
+    const expiresAt = new Date(subData.expires_at);
+    expiresAt.setDate(expiresAt.getDate() + (subData.bonus_days || 0));
+    
+    return expiresAt > new Date();
+  } catch {
+    return false;
+  }
+}
+
 export function useCloudSync() {
   const { user } = useAuth();
-  const { isProActive } = useSubscription();
   const { toast } = useToast();
   const [state, setState] = useState<CloudSyncState>({
     isSyncing: false,
     lastSyncTime: null,
     autoSyncEnabled: true,
   });
+  const [isProActive, setIsProActive] = useState(false);
   const syncTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const lastSyncedDataRef = useRef<string>('');
+  const proCheckedRef = useRef(false);
+
+  // Check PRO status on mount and user change
+  useEffect(() => {
+    if (!user) {
+      setIsProActive(false);
+      proCheckedRef.current = false;
+      return;
+    }
+
+    if (proCheckedRef.current) return;
+
+    checkProStatus(user.id).then((isPro) => {
+      setIsProActive(isPro);
+      proCheckedRef.current = true;
+    });
+  }, [user]);
 
   // Get all local data
   const getLocalData = useCallback(() => {
@@ -56,7 +119,7 @@ export function useCloudSync() {
 
   // Get all local settings
   const getLocalSettings = useCallback(() => {
-    return {
+    const settings: Record<string, any> = {
       widget_settings: JSON.parse(localStorage.getItem(WIDGET_SETTINGS_KEY) || 'null'),
       theme_settings: JSON.parse(localStorage.getItem(THEME_SETTINGS_KEY) || 'null'),
       celebration_settings: JSON.parse(localStorage.getItem(CELEBRATION_SETTINGS_KEY) || 'null'),
@@ -64,6 +127,28 @@ export function useCloudSync() {
       general_settings: JSON.parse(localStorage.getItem(GENERAL_SETTINGS_KEY) || 'null'),
       dashboard_layout: JSON.parse(localStorage.getItem(DASHBOARD_LAYOUT_KEY) || 'null'),
     };
+
+    // Include additional settings in general_settings
+    const additionalSettings: Record<string, any> = {};
+    ADDITIONAL_SETTINGS_KEYS.forEach(key => {
+      const value = localStorage.getItem(key);
+      if (value) {
+        try {
+          additionalSettings[key] = JSON.parse(value);
+        } catch {
+          additionalSettings[key] = value;
+        }
+      }
+    });
+
+    if (Object.keys(additionalSettings).length > 0) {
+      settings.general_settings = {
+        ...(settings.general_settings || {}),
+        ...additionalSettings
+      };
+    }
+
+    return settings;
   }, []);
 
   // Save settings to cloud
@@ -146,8 +231,25 @@ export function useCloudSync() {
         if (data.theme_settings) localStorage.setItem(THEME_SETTINGS_KEY, JSON.stringify(data.theme_settings));
         if (data.celebration_settings) localStorage.setItem(CELEBRATION_SETTINGS_KEY, JSON.stringify(data.celebration_settings));
         if (data.notification_settings) localStorage.setItem(NOTIFICATION_SETTINGS_KEY, JSON.stringify(data.notification_settings));
-        if (data.general_settings) localStorage.setItem(GENERAL_SETTINGS_KEY, JSON.stringify(data.general_settings));
         if (data.dashboard_layout) localStorage.setItem(DASHBOARD_LAYOUT_KEY, JSON.stringify(data.dashboard_layout));
+        
+        // Restore additional settings from general_settings
+        if (data.general_settings && typeof data.general_settings === 'object') {
+          const generalSettings = data.general_settings as Record<string, any>;
+          localStorage.setItem(GENERAL_SETTINGS_KEY, JSON.stringify(generalSettings));
+          
+          // Also restore individual settings
+          ADDITIONAL_SETTINGS_KEYS.forEach(key => {
+            if (generalSettings[key] !== undefined) {
+              if (typeof generalSettings[key] === 'string') {
+                localStorage.setItem(key, generalSettings[key]);
+              } else {
+                localStorage.setItem(key, JSON.stringify(generalSettings[key]));
+              }
+            }
+          });
+        }
+        
         return true;
       }
       return false;
@@ -346,6 +448,7 @@ export function useCloudSync() {
         NOTES_KEY, CHECKLISTS_KEY, COUNTERS_KEY, POMODORO_KEY,
         WIDGET_SETTINGS_KEY, THEME_SETTINGS_KEY, CELEBRATION_SETTINGS_KEY,
         NOTIFICATION_SETTINGS_KEY, GENERAL_SETTINGS_KEY, DASHBOARD_LAYOUT_KEY,
+        ...ADDITIONAL_SETTINGS_KEYS,
       ];
 
       if (e.key && watchedKeys.includes(e.key)) {
@@ -357,9 +460,9 @@ export function useCloudSync() {
     return () => window.removeEventListener('storage', handleStorageChange);
   }, [user, isProActive, debouncedSync]);
 
-  // Initial sync on login
+  // Initial sync on login - only once
   useEffect(() => {
-    if (user && isProActive) {
+    if (user && isProActive && proCheckedRef.current) {
       syncAll(false);
     }
   }, [user?.id, isProActive]);

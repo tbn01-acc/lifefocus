@@ -6,10 +6,12 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { PomodoroProvider } from "@/contexts/PomodoroContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
 import { BottomNavigation } from "@/components/BottomNavigation";
 import { useReferralActivityTracker } from "@/hooks/useReferralActivityTracker";
 import { useReferralNotifications } from "@/hooks/useReferralNotifications";
 import { useCloudSync } from "@/hooks/useCloudSync";
+import { useAuth } from "@/hooks/useAuth";
 import { CloudRestoreDialog } from "@/components/profile/CloudRestoreDialog";
 import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
@@ -36,7 +38,6 @@ import Archive from "./pages/Archive";
 import Focus from "./pages/Focus";
 import UserProfile from "./pages/UserProfile";
 import Notifications from "./pages/Notifications";
-import GroupChats from "./pages/GroupChats";
 import Goals from "./pages/Goals";
 import GoalDetail from "./pages/GoalDetail";
 import LifeFocus from "./pages/LifeFocus";
@@ -64,6 +65,17 @@ const CloudSyncProvider = ({ children }: { children: React.ReactNode }) => {
   }, [triggerSync]);
 
   return <>{children}</>;
+};
+
+// Subscription wrapper that provides context
+const SubscriptionWrapper = ({ children }: { children: React.ReactNode }) => {
+  const { user, profile } = useAuth();
+  
+  return (
+    <SubscriptionProvider user={user} referralCode={profile?.referral_code || null}>
+      {children}
+    </SubscriptionProvider>
+  );
 };
 
 const AppContent = () => {
@@ -152,7 +164,9 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <AppContent />
+            <SubscriptionWrapper>
+              <AppContent />
+            </SubscriptionWrapper>
           </BrowserRouter>
         </TooltipProvider>
       </PomodoroProvider>
