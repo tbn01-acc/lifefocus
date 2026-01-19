@@ -86,7 +86,7 @@ export function UserAvatarWithFrame({
       <Avatar 
         className={cn(
           sizeClasses[size],
-          "transition-transform",
+          "rounded-xl transition-transform",
           onClick && "hover:scale-105",
           frame?.className,
           frame?.animationClass
@@ -94,14 +94,14 @@ export function UserAvatarWithFrame({
       >
         <AvatarImage 
           src={avatarUrl || undefined} 
-          className="object-cover"
+          className="object-cover rounded-xl"
         />
-        <AvatarFallback>
+        <AvatarFallback className="rounded-xl">
           {displayName?.[0]?.toUpperCase() || <User className="h-4 w-4" />}
         </AvatarFallback>
       </Avatar>
       
-      {/* PRO Badge */}
+      {/* PRO Badge - top right corner */}
       {showProBadge && (
         <div 
           className={cn(

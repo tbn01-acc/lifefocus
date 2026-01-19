@@ -2,9 +2,11 @@ import React from 'react';
 import { icons3D, Icon3DKey } from '@/assets/icons';
 import { cn } from '@/lib/utils';
 
+export type { Icon3DKey };
+
 interface Icon3DProps {
   name: Icon3DKey;
-  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl' | '2xl';
   className?: string;
 }
 
@@ -14,6 +16,7 @@ const sizeClasses = {
   md: 'w-8 h-8',
   lg: 'w-10 h-10',
   xl: 'w-12 h-12',
+  '2xl': 'w-16 h-16',
 };
 
 export function Icon3D({ name, size = 'md', className }: Icon3DProps) {
