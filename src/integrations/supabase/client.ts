@@ -5,9 +5,11 @@ import type { Database } from './types';
 // Use reverse proxy path to hide direct supabase.co requests
 // In production (Vercel), use the app's origin + proxy path
 // In development, Vite proxy handles it, but SDK still needs full URL
+const DIRECT_SUPABASE_URL = "https://jexrtsyokhegjxnvqjur.supabase.co";
+
 const getSupabaseUrl = () => {
   if (typeof window === 'undefined') {
-    return "https://jexrtsyokhegjxnvqjur.supabase.co";
+    return DIRECT_SUPABASE_URL;
   }
   
   const origin = window.location.origin;
@@ -19,7 +21,7 @@ const getSupabaseUrl = () => {
   
   // For Lovable preview, development, Telegram WebApp, and any other context
   // use direct Supabase URL
-  return "https://jexrtsyokhegjxnvqjur.supabase.co";
+  return DIRECT_SUPABASE_URL;
 };
 
 const SUPABASE_URL = getSupabaseUrl();
