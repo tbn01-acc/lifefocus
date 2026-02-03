@@ -12,7 +12,10 @@ import { useReferralActivityTracker } from "@/hooks/useReferralActivityTracker";
 import { useReferralNotifications } from "@/hooks/useReferralNotifications";
 import { useCloudSync } from "@/hooks/useCloudSync";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnifiedAuth } from "@/hooks/useUnifiedAuth"; // Новый хук
 import { CloudRestoreDialog } from "@/components/profile/CloudRestoreDialog";
+
+// Импорт страниц
 import Dashboard from "./pages/Dashboard";
 import Habits from "./pages/Habits";
 import Tasks from "./pages/Tasks";
@@ -48,31 +51,46 @@ import DaySummary from "./pages/DaySummary";
 
 const queryClient = new QueryClient();
 
-// Cloud sync component that runs in background
+// Компонент экрана блокировки для Telegram
+const AccessDeniedOverlay = () => (
+  <div style={{
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    backgroundColor: '#1A1C1E', display: 'flex', alignItems: 'center',
+    justifyContent: 'center', zIndex: 9999, padding: '20px', textAlign: 'center'
+  }}>
+    <div style={{ backgroundColor: '#FFF', padding: '30px', borderRadius: '20px', maxWidth: '400px' }}>
+      <h2 style={{ color: '#E53E3E', marginBottom: '15px' }}>Доступ ограничен</h2>
+      <p style={{ color: '#4A5568', marginBottom: '20px', lineHeight: '1.5' }}>
+        Для использования <b>Top Focus</b> необходимо разрешить отправку сообщений. 
+        Это обязательное условие для синхронизации аккаунта и работы уведомлений.
+      </p>
+      <button 
+        onClick={() => window.location.reload()}
+        style={{
+          backgroundColor: '#0088CC', color: '#FFF', border: 'none',
+          padding: '12px 24px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer'
+        }}
+      >
+        Разрешить и войти
+      </button>
+    </div>
+  </div>
+);
+
 const CloudSyncProvider = ({ children }: { children: React.ReactNode }) => {
   const { triggerSync } = useCloudSync();
 
-  // Listen for localStorage changes and trigger sync
   useEffect(() => {
-    const handleStorageChange = () => {
-      triggerSync();
-    };
-
-    // Custom event for internal changes
+    const handleStorageChange = () => triggerSync();
     window.addEventListener('habitflow-data-changed', handleStorageChange);
-    
-    return () => {
-      window.removeEventListener('habitflow-data-changed', handleStorageChange);
-    };
+    return () => window.removeEventListener('habitflow-data-changed', handleStorageChange);
   }, [triggerSync]);
 
   return <>{children}</>;
 };
 
-// Subscription wrapper that provides context
 const SubscriptionWrapper = ({ children }: { children: React.ReactNode }) => {
   const { user, profile } = useAuth();
-  
   return (
     <SubscriptionProvider user={user} referralCode={profile?.referral_code || null}>
       {children}
@@ -85,42 +103,35 @@ const AppContent = () => {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
 
-  // Track user activity for referral activation
+  // 1. Внедрение универсальной авторизации и защиты
+  const { isAccessDenied, isLoading: isAuthLoading } = useUnifiedAuth();
+
+  // 2. Стандартные трекеры
   useReferralActivityTracker();
   useReferralNotifications();
+
+  // Если идет процесс авторизации в Telegram
+  if (isAuthLoading) {
+    return (
+      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
+        <span>Загрузка профиля...</span>
+      </div>
+    );
+  }
+
+  // Если пользователь в TG отказал в доступе к сообщениям
+  if (isAccessDenied) {
+    return <AccessDeniedOverlay />;
+  }
 
   return (
     <CloudSyncProvider>
       <CloudRestoreDialog />
       <Routes>
         <Route path="/" element={<Dashboard />} />
-        <Route 
-          path="/habits" 
-          element={
-            <Habits 
-              openDialog={habitDialogOpen} 
-              onDialogClose={() => setHabitDialogOpen(false)} 
-            />
-          } 
-        />
-        <Route 
-          path="/tasks" 
-          element={
-            <Tasks 
-              openDialog={taskDialogOpen} 
-              onDialogClose={() => setTaskDialogOpen(false)} 
-            />
-          } 
-        />
-        <Route 
-          path="/finance" 
-          element={
-            <Finance 
-              openDialog={transactionDialogOpen} 
-              onDialogClose={() => setTransactionDialogOpen(false)} 
-            />
-          } 
-        />
+        <Route path="/habits" element={<Habits openDialog={habitDialogOpen} onDialogClose={() => setHabitDialogOpen(false)} />} />
+        <Route path="/tasks" element={<Tasks openDialog={taskDialogOpen} onDialogClose={() => setTaskDialogOpen(false)} />} />
+        <Route path="/finance" element={<Finance openDialog={transactionDialogOpen} onDialogClose={() => setTransactionDialogOpen(false)} />} />
         <Route path="/services" element={<Services />} />
         <Route path="/statistics" element={<Statistics />} />
         <Route path="/profile" element={<Profile />} />
@@ -142,7 +153,6 @@ const AppContent = () => {
         <Route path="/focus" element={<Focus />} />
         <Route path="/user/:userId" element={<UserProfile />} />
         <Route path="/notifications" element={<Notifications />} />
-        {/* Chats routes removed - replaced by User Catalog */}
         <Route path="/goals" element={<Goals />} />
         <Route path="/goals/:id" element={<GoalDetail />} />
         <Route path="/life-focus" element={<LifeFocus />} />
