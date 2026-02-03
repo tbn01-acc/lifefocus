@@ -5,9 +5,17 @@ import { componentTagger } from "lovable-tagger";
 import { VitePWA } from "vite-plugin-pwa";
 
 export default defineConfig(({ mode }) => ({
+  base: "/",
   server: {
     host: "::",
     port: 8080,
+    proxy: {
+      "/_supabase": {
+        target: "https://jexrtsyokhegjxnvqjur.supabase.co",
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/_supabase/, ""),
+      },
+    },
   },
   plugins: [
     react(),
@@ -48,6 +56,17 @@ export default defineConfig(({ mode }) => ({
         globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
         maximumFileSizeToCacheInBytes: 5 * 1024 * 1024, // 5 MiB
         runtimeCaching: [
+          {
+            urlPattern: /^\/_supabase\/.*/i,
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "supabase-proxy-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24, // 24 hours
+              },
+            },
+          },
           {
             urlPattern: /^https:\/\/.*\.supabase\.co\/.*/i,
             handler: "NetworkFirst",
