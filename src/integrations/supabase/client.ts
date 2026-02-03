@@ -12,16 +12,9 @@ const getSupabaseUrl = () => {
   
   const origin = window.location.origin;
   
-  // Only use proxy for deployed Vercel/Lovable apps with valid HTTPS origin
-  if (origin.startsWith('https://')) {
-    // Custom domain
-    if (origin.includes('lifefocus.lovable.app')) {
-      return `${origin}/_supabase`;
-    }
-    // Vercel deployments
-    if (origin.includes('vercel.app')) {
-      return `${origin}/_supabase`;
-    }
+  // Only use proxy for custom domain top-focus.ru
+  if (origin.includes('top-focus.ru')) {
+    return `${origin}/_supabase`;
   }
   
   // For Lovable preview, development, Telegram WebApp, and any other context
