@@ -11,9 +11,9 @@ import { BottomNavigation } from "@/components/BottomNavigation";
 import { useReferralActivityTracker } from "@/hooks/useReferralActivityTracker";
 import { useReferralNotifications } from "@/hooks/useReferralNotifications";
 import { useCloudSync } from "@/hooks/useCloudSync";
-import { useAuth } from "@/hooks/useAuth";
-import { useUnifiedAuth } from "@/hooks/useUnifiedAuth"; // Новый хук
+import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { CloudRestoreDialog } from "@/components/profile/CloudRestoreDialog";
+import { TelegramBlockedScreen } from "@/components/TelegramBlockedScreen";
 
 // Импорт страниц
 import Dashboard from "./pages/Dashboard";
@@ -51,28 +51,12 @@ import DaySummary from "./pages/DaySummary";
 
 const queryClient = new QueryClient();
 
-// Компонент экрана блокировки для Telegram
-const AccessDeniedOverlay = () => (
-  <div style={{
-    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
-    backgroundColor: '#1A1C1E', display: 'flex', alignItems: 'center',
-    justifyContent: 'center', zIndex: 9999, padding: '20px', textAlign: 'center'
-  }}>
-    <div style={{ backgroundColor: '#FFF', padding: '30px', borderRadius: '20px', maxWidth: '400px' }}>
-      <h2 style={{ color: '#E53E3E', marginBottom: '15px' }}>Доступ ограничен</h2>
-      <p style={{ color: '#4A5568', marginBottom: '20px', lineHeight: '1.5' }}>
-        Для использования <b>Top Focus</b> необходимо разрешить отправку сообщений. 
-        Это обязательное условие для синхронизации аккаунта и работы уведомлений.
-      </p>
-      <button 
-        onClick={() => window.location.reload()}
-        style={{
-          backgroundColor: '#0088CC', color: '#FFF', border: 'none',
-          padding: '12px 24px', borderRadius: '12px', fontWeight: 'bold', cursor: 'pointer'
-        }}
-      >
-        Разрешить и войти
-      </button>
+// Компонент загрузки
+const LoadingScreen = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+      <span className="text-muted-foreground">Загрузка профиля...</span>
     </div>
   </div>
 );
@@ -103,25 +87,21 @@ const AppContent = () => {
   const [taskDialogOpen, setTaskDialogOpen] = useState(false);
   const [transactionDialogOpen, setTransactionDialogOpen] = useState(false);
 
-  // 1. Внедрение универсальной авторизации и защиты
-  const { isAccessDenied, isLoading: isAuthLoading } = useUnifiedAuth();
+  // Используем новый AuthProvider
+  const { loading, isBlocked, error, isInTelegram } = useAuth();
 
-  // 2. Стандартные трекеры
+  // Стандартные трекеры
   useReferralActivityTracker();
   useReferralNotifications();
 
-  // Если идет процесс авторизации в Telegram
-  if (isAuthLoading) {
-    return (
-      <div style={{ display: 'flex', height: '100vh', alignItems: 'center', justifyContent: 'center' }}>
-        <span>Загрузка профиля...</span>
-      </div>
-    );
+  // Показываем загрузку
+  if (loading) {
+    return <LoadingScreen />;
   }
 
-  // Если пользователь в TG отказал в доступе к сообщениям
-  if (isAccessDenied) {
-    return <AccessDeniedOverlay />;
+  // Если пользователь в Telegram и отказал в доступе
+  if (isBlocked) {
+    return <TelegramBlockedScreen message={error || undefined} />;
   }
 
   return (
@@ -173,17 +153,19 @@ const AppContent = () => {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <LanguageProvider>
-      <PomodoroProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <SubscriptionWrapper>
-              <AppContent />
-            </SubscriptionWrapper>
-          </BrowserRouter>
-        </TooltipProvider>
-      </PomodoroProvider>
+      <AuthProvider>
+        <PomodoroProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <SubscriptionWrapper>
+                <AppContent />
+              </SubscriptionWrapper>
+            </BrowserRouter>
+          </TooltipProvider>
+        </PomodoroProvider>
+      </AuthProvider>
     </LanguageProvider>
   </QueryClientProvider>
 );

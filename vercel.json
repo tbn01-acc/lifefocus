@@ -3,6 +3,32 @@
     {
       "source": "/_supabase/:path*",
       "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/:path*"
+    },
+    {
+      "source": "/api/db/auth/:path*",
+      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/auth/v1/:path*"
+    },
+    {
+      "source": "/api/db/rest/:path*",
+      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/rest/v1/:path*"
+    },
+    {
+      "source": "/api/db/storage/:path*",
+      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/storage/v1/:path*"
+    },
+    {
+      "source": "/api/db/functions/:path*",
+      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/functions/v1/:path*"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/db/:path*",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS" },
+        { "key": "Access-Control-Allow-Headers", "value": "authorization, x-client-info, apikey, content-type, x-app-source" }
+      ]
     }
   ]
 }

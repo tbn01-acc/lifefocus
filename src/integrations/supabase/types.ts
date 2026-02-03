@@ -2222,6 +2222,14 @@ export type Database = {
         Args: { referrer_user_id: string }
         Returns: Record<string, unknown>
       }
+      find_user_by_telegram: {
+        Args: { tg_id: number }
+        Returns: {
+          avatar_url: string
+          display_name: string
+          user_id: string
+        }[]
+      }
       generate_invite_code: { Args: never; Returns: string }
       has_role: {
         Args: {
@@ -2229,6 +2237,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      link_telegram_account: {
+        Args: { tg_id: number; tg_username?: string }
+        Returns: Json
       }
     }
     Enums: {
