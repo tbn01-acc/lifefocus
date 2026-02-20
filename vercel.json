@@ -1,17 +1,29 @@
 {
   "version": 2,
+  "redirects": [
+    {
+      "source": "/:path(.*)",
+      "has": [{ "type": "host", "value": "www.top-focus.ru" }],
+      "destination": "https://top-focus.ru/:path",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     {
-      "source": "/_supabase/(.*)",
-      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/$1"
+      "source": "/api/db/functions/v1/:path*",
+      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/functions/v1/:path*"
     },
     {
-      "source": "/api/db/(.*)",
-      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/$1"
+      "source": "/api/db/:path*",
+      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/:path*"
     },
     {
-      "source": "/assets/(.*)",
-      "destination": "/assets/$1"
+      "source": "/_supabase/:path*",
+      "destination": "https://jexrtsyokhegjxnvqjur.supabase.co/:path*"
+    },
+    {
+      "source": "/assets/:path*",
+      "destination": "/assets/:path*"
     },
     {
       "source": "/(sw.js|registerSW.js|manifest.webmanifest|pwa-.*.png|vite.svg|favicon.ico)",
