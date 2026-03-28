@@ -37,7 +37,8 @@ export default function Dashboard() {
   const { t, language } = useTranslation();
   const { profile, user } = useAuth();
   const { recordDailyLogin } = useStars();
-  const { isProActive } = useSubscription();
+  const { isProActive, isTeamActive } = useSubscription();
+  const { team } = useTeam();
   const dailyLoginRecordedRef = useRef(false);
   const needsReflection = useReflectionCheck();
   const [reflectionOpen, setReflectionOpen] = useState(false);
