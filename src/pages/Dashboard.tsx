@@ -241,9 +241,14 @@ export default function Dashboard() {
 
         {/* Section: Сделать/Выполнено (Tabbed) */}
         <Tabs defaultValue="todo" className="mb-6">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className={`grid w-full mb-4 ${hasTeam ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="todo">{t("todoTab")}</TabsTrigger>
             <TabsTrigger value="done">{t("doneTab")}</TabsTrigger>
+            {hasTeam && (
+              <TabsTrigger value="team" className="gap-1">
+                <Users className="w-4 h-4" />
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="todo" className="mt-0">
