@@ -790,7 +790,7 @@ function SpiderChart({
   );
 }
 
-export function BalanceFlower({ sphereIndices, lifeIndex }: BalanceFlowerProps) {
+export function BalanceFlower({ sphereIndices, lifeIndex, customSpheres, scaleLabels, navigatePrefix }: BalanceFlowerProps) {
   const navigate = useNavigate();
   const { language } = useLanguage();
   const { tasks } = useTasks();
