@@ -487,7 +487,49 @@ export default function DaySummaryPage() {
 
         {/* Printable content */}
         <div ref={printRef} className="space-y-2 bg-background">
-          {/* Productivity Score - replaced circular indicator with text */}
+          {/* Main Task Status - first block */}
+          {(() => {
+            const mainTask = todayTasks.find(t => (t as any).isMain);
+            if (!mainTask) return null;
+            const isDone = mainTask.completed;
+            return (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+              >
+                <Card className={cn(
+                  "border-2",
+                  isDone ? "border-green-500/40 bg-gradient-to-r from-green-500/15 to-green-500/5" : "border-red-500/40 bg-gradient-to-r from-red-500/15 to-red-500/5"
+                )}>
+                  <CardContent className="p-3 flex items-center gap-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-xl flex items-center justify-center shrink-0",
+                      isDone ? "bg-green-500/20" : "bg-red-500/20"
+                    )}>
+                      {isDone ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-500" />
+                      ) : (
+                        <XCircle className="w-5 h-5 text-red-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className={cn(
+                        "text-[10px] uppercase font-bold tracking-wider mb-0.5",
+                        isDone ? "text-green-500" : "text-red-500"
+                      )}>
+                        {isRussian
+                          ? (isDone ? '✅ Главная задача выполнена' : '❌ Главная задача не выполнена')
+                          : (isDone ? '✅ Main task completed' : '❌ Main task not completed')}
+                      </p>
+                      <p className="font-bold text-foreground truncate text-sm">{mainTask.name}</p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })()}
+
+          {/* Productivity Score */}
           <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-primary/5">
             <CardContent className="p-2">
               <div className="flex items-center justify-between">

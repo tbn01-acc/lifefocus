@@ -57,6 +57,7 @@ import DaySummary from "./pages/DaySummary";
 import TeamPlan from "./pages/TeamPlan";
 import Team from "./pages/Team";
 import TeamPricing from "./pages/TeamPricing";
+import TeamFocus from "./pages/TeamFocus";
 import SuccessDiary from "./pages/SuccessDiary";
 
 /**
@@ -250,6 +251,7 @@ const AppContent = () => {
           <Route path="/team-plan" element={<TeamPlan />} />
           <Route path="/pricing/team" element={<TeamPricing />} />
           <Route path="/success-diary" element={<SuccessDiary />} />
+          <Route path="/team-focus" element={<TeamFocus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNavigation

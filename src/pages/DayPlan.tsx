@@ -614,6 +614,37 @@ export default function DayPlanPage() {
 
         {/* Printable content */}
         <div ref={printRef} className="space-y-4 bg-background">
+          {/* Main Task of the Day - pinned at top */}
+          {(() => {
+            const mainTask = todayTasks.find(t => (t as any).isMain);
+            if (!mainTask) return null;
+            return (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+              >
+                <Card className="border-amber-500/40 bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-orange-500/5 shadow-lg">
+                  <CardContent className="p-4 flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-500 flex items-center justify-center shrink-0 shadow-md">
+                      <Target className="w-5 h-5 text-white" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[10px] uppercase font-bold text-amber-500 tracking-wider mb-0.5">
+                        {isRussian ? '🎯 Главная задача дня' : '🎯 Main Task of the Day'}
+                      </p>
+                      <p className="font-bold text-foreground truncate">{mainTask.name}</p>
+                    </div>
+                    {mainTask.completed ? (
+                      <CheckCircle2 className="w-6 h-6 text-green-500 shrink-0" />
+                    ) : (
+                      <Circle className="w-6 h-6 text-amber-500 shrink-0" />
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })()}
+
           {/* Summary stats */}
           <div className="grid grid-cols-3 gap-3">
             <Card className="border-habit/30 bg-habit/5">
