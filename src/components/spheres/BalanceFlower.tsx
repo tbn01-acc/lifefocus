@@ -32,6 +32,9 @@ import { useDailyBalanceBonus } from '@/hooks/useDailyBalanceBonus';
 interface BalanceFlowerProps {
   sphereIndices: SphereIndex[];
   lifeIndex: number;
+  customSpheres?: Array<{ sphere: Sphere; baseAngle: number }>;
+  scaleLabels?: { left: Record<string, string>; right: Record<string, string> };
+  navigatePrefix?: string;
 }
 
 type ColorScheme = 'default' | 'pastel' | 'neon';
