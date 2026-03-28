@@ -65,6 +65,7 @@ import TeamSprint from "./pages/TeamSprint";
 import TeamPublicProfilePage from "./pages/TeamPublicProfilePage";
 import TeamMember from "./pages/TeamMember";
 import SuccessDiary from "./pages/SuccessDiary";
+import Reflection from "./pages/Reflection";
 
 /**
  * Конфигурация QueryClient с поддержкой Offline Mode
