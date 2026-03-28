@@ -19,9 +19,10 @@ export default function TeamSprint() {
 
   // Use real sprint if available, else demo
   const isDemo = !activeSprint || sprintId === DEMO_DATA.sprint.id;
-  const sprint = isDemo ? DEMO_DATA.sprint : activeSprint;
-  const tasks = isDemo ? DEMO_DATA.tasks : sprintTasks;
-  const members = isDemo ? DEMO_DATA.members : [];
+  const demoSprint = DEMO_DATA.sprint;
+  const sprint = isDemo ? demoSprint : activeSprint;
+  const tasks = isDemo ? DEMO_DATA.tasks : sprintTasks as any[];
+  const demoMembers = isDemo ? DEMO_DATA.members : [];
 
   if (!sprint) {
     return (

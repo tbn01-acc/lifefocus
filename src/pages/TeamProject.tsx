@@ -24,8 +24,9 @@ export default function TeamProject() {
 
   // Get tasks associated with this project (demo — distribute tasks by project)
   const allTasks = DEMO_DATA.tasks;
-  const projectIndex = DEMO_DATA.workspaces.flatMap(w => w.projects).findIndex(p => p.id === projectId);
-  const tasksPerProject = Math.ceil(allTasks.length / DEMO_DATA.workspaces.flatMap(w => w.projects).length);
+  const allProjects = DEMO_DATA.workspaces.flatMap(w => w.projects as any[]);
+  const projectIndex = allProjects.findIndex((p: any) => p.id === projectId);
+  const tasksPerProject = Math.ceil(allTasks.length / allProjects.length);
   const projectTasks = allTasks.slice(projectIndex * tasksPerProject, (projectIndex + 1) * tasksPerProject);
 
   if (!project) {
