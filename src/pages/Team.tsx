@@ -47,6 +47,7 @@ function SkeletonTeam() {
 
 // Demo mode view extracted
 function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
+  const navigate = useNavigate();
   const isTest = experience.mode === 'test';
   const d = experience.data;
 
