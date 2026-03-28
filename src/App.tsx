@@ -65,6 +65,7 @@ import TeamSprint from "./pages/TeamSprint";
 import TeamPublicProfilePage from "./pages/TeamPublicProfilePage";
 import TeamMember from "./pages/TeamMember";
 import SuccessDiary from "./pages/SuccessDiary";
+import Reflection from "./pages/Reflection";
 
 /**
  * Конфигурация QueryClient с поддержкой Offline Mode
@@ -257,6 +258,7 @@ const AppContent = () => {
           <Route path="/team-plan" element={<TeamPlan />} />
           <Route path="/pricing/team" element={<TeamPricing />} />
            <Route path="/success-diary" element={<SuccessDiary />} />
+          <Route path="/reflection" element={<Reflection />} />
           <Route path="/team-focus" element={<TeamFocus />} />
           <Route path="/team/sphere/:sphereKey" element={<TeamSphereDetail />} />
           <Route path="/team/workspace/:workspaceId" element={<TeamWorkspace />} />
