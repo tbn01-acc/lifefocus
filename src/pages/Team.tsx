@@ -246,7 +246,6 @@ export default function TeamPage() {
             </TabsContent>
           </Tabs>
 
-          <EmptyStateDemoBanner onStartDemo={experience.startDemo} onStartTest={experience.startTest} />
           <CreateTeamDialog open={createTeamOpen} onOpenChange={setCreateTeamOpen} onCreateTeam={createTeam} onJoinTeam={joinTeam} />
         </div>
       </div>
