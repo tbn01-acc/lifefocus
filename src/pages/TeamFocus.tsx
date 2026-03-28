@@ -7,26 +7,50 @@ import { Card } from '@/components/ui/card';
 import { useTranslation } from '@/contexts/LanguageContext';
 import { useTeam } from '@/hooks/useTeam';
 import { BalanceFlower } from '@/components/spheres/BalanceFlower';
-import { SphereIndex } from '@/types/sphere';
+import { SphereIndex, Sphere } from '@/types/sphere';
 import { DEMO_DATA } from '@/lib/demo/testData';
 
 // Reordered: Left (Internal) 1-4, Right (External) 5-8
-// BalanceFlower renders petals by index: 0=top-right going clockwise
-// For flower layout: ids 1-4 left half, 5-8 right half
-// Actual petal order in flower (clockwise from top): 5,6,7,8,1,2,3,4
-// So we keep sort_order matching the visual: left=internal, right=external
 export const TEAM_SPHERES = [
-  // Internal (left side of flower) — ids 1-4
-  { id: 1, key: 'satisfaction', name_ru: 'Удовлетворённость', name_en: 'Satisfaction', icon: '😊', color: '#ec4899', group: 'internal' },
-  { id: 2, key: 'engagement', name_ru: 'Вовлечённость', name_en: 'Engagement', icon: '🔥', color: '#ef4444', group: 'internal' },
-  { id: 3, key: 'growth', name_ru: 'Рост', name_en: 'Growth', icon: '📈', color: '#10b981', group: 'internal' },
-  { id: 4, key: 'communication', name_ru: 'Коммуникация', name_en: 'Communication', icon: '💬', color: '#06b6d4', group: 'internal' },
-  // External (right side of flower) — ids 5-8
-  { id: 5, key: 'goals', name_ru: 'Цели', name_en: 'Goals', icon: '🎯', color: '#6366f1', group: 'external' },
-  { id: 6, key: 'quality', name_ru: 'Качество', name_en: 'Quality', icon: '✅', color: '#22c55e', group: 'external' },
-  { id: 7, key: 'velocity', name_ru: 'Скорость', name_en: 'Velocity', icon: '⚡', color: '#f59e0b', group: 'external' },
-  { id: 8, key: 'collaboration', name_ru: 'Сотрудничество', name_en: 'Collaboration', icon: '🤝', color: '#8b5cf6', group: 'external' },
+  { id: 1, key: 'satisfaction', name_ru: 'Удовлетворённость', name_en: 'Satisfaction', icon: '😊', color: 'hsl(330, 80%, 60%)', group: 'internal' },
+  { id: 2, key: 'engagement', name_ru: 'Вовлечённость', name_en: 'Engagement', icon: '🔥', color: 'hsl(0, 84%, 60%)', group: 'internal' },
+  { id: 3, key: 'growth', name_ru: 'Рост', name_en: 'Growth', icon: '📈', color: 'hsl(160, 84%, 39%)', group: 'internal' },
+  { id: 4, key: 'communication', name_ru: 'Коммуникация', name_en: 'Communication', icon: '💬', color: 'hsl(187, 96%, 42%)', group: 'internal' },
+  { id: 5, key: 'goals', name_ru: 'Цели', name_en: 'Goals', icon: '🎯', color: 'hsl(239, 84%, 67%)', group: 'external' },
+  { id: 6, key: 'quality', name_ru: 'Качество', name_en: 'Quality', icon: '✅', color: 'hsl(142, 71%, 45%)', group: 'external' },
+  { id: 7, key: 'velocity', name_ru: 'Скорость', name_en: 'Velocity', icon: '⚡', color: 'hsl(38, 92%, 50%)', group: 'external' },
+  { id: 8, key: 'collaboration', name_ru: 'Сотрудничество', name_en: 'Collaboration', icon: '🤝', color: 'hsl(263, 70%, 50%)', group: 'external' },
 ];
+
+// Convert TEAM_SPHERES to Sphere type for BalanceFlower
+const TEAM_SPHERE_OBJECTS: Sphere[] = TEAM_SPHERES.map(s => ({
+  id: s.id,
+  key: s.key as any,
+  name_ru: s.name_ru,
+  name_en: s.name_en,
+  name_es: s.name_en,
+  group_type: s.group === 'internal' ? 'personal' as const : 'social' as const,
+  color: s.color,
+  icon: s.icon,
+  sort_order: s.id,
+}));
+
+// Custom sphere config for BalanceFlower (left=internal, right=external)
+const TEAM_FLOWER_SPHERES = [
+  { sphere: TEAM_SPHERE_OBJECTS[0], baseAngle: 112.5 },
+  { sphere: TEAM_SPHERE_OBJECTS[1], baseAngle: 157.5 },
+  { sphere: TEAM_SPHERE_OBJECTS[2], baseAngle: 202.5 },
+  { sphere: TEAM_SPHERE_OBJECTS[3], baseAngle: 247.5 },
+  { sphere: TEAM_SPHERE_OBJECTS[4], baseAngle: 292.5 },
+  { sphere: TEAM_SPHERE_OBJECTS[5], baseAngle: 337.5 },
+  { sphere: TEAM_SPHERE_OBJECTS[6], baseAngle: 22.5 },
+  { sphere: TEAM_SPHERE_OBJECTS[7], baseAngle: 67.5 },
+];
+
+const TEAM_SCALE_LABELS = {
+  left: { ru: 'Внутренние', en: 'Internal', es: 'Internal' },
+  right: { ru: 'Внешние', en: 'External', es: 'External' },
+};
 
 // Stable demo indices
 const DEMO_INDICES: Record<string, number> = {
@@ -115,7 +139,13 @@ export default function TeamFocus() {
           <p className="text-sm text-muted-foreground text-center mb-2">
             {isRu ? 'Баланс 8 корпоративных сфер' : 'Balance of 8 corporate spheres'}
           </p>
-          <BalanceFlower sphereIndices={sphereIndices} lifeIndex={teamIndex} />
+          <BalanceFlower 
+            sphereIndices={sphereIndices} 
+            lifeIndex={teamIndex}
+            customSpheres={TEAM_FLOWER_SPHERES}
+            scaleLabels={TEAM_SCALE_LABELS}
+            navigatePrefix="/team/sphere"
+          />
         </Card>
 
         {/* Internal spheres */}
