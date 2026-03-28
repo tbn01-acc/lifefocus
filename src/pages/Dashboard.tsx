@@ -389,7 +389,7 @@ export default function Dashboard() {
               <TeamWorkTab />
             </TabsContent>
           )}
-
+        </Tabs>
 
         <TopWidgetsSection />
       </div>
