@@ -36,9 +36,10 @@ export default function TeamSprint() {
     );
   }
 
-  const totalSP = isDemo ? sprint.totalSP : (tasks as any[]).reduce((s: number, t: any) => s + (t.story_points || t.sp || 0), 0);
-  const completedSP = isDemo ? sprint.completedSP : (tasks as any[]).filter((t: any) => t.status === 'done').reduce((s: number, t: any) => s + (t.story_points || t.sp || 0), 0);
+  const totalSP = isDemo ? demoSprint.totalSP : (tasks as any[]).reduce((s: number, t: any) => s + (t.story_points || t.sp || 0), 0);
+  const completedSP = isDemo ? demoSprint.completedSP : (tasks as any[]).filter((t: any) => t.status === 'done').reduce((s: number, t: any) => s + (t.story_points || t.sp || 0), 0);
   const progress = totalSP > 0 ? Math.round((completedSP / totalSP) * 100) : 0;
+  const sprintDates = isDemo ? { start: demoSprint.startDate, end: demoSprint.endDate } : { start: (sprint as any)?.start_date, end: (sprint as any)?.end_date };
 
   const statusCounts = {
     backlog: (tasks as any[]).filter(t => t.status === 'backlog').length,
