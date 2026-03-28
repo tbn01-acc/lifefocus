@@ -17,7 +17,7 @@ const BLOCKERS_EN = ['Tech issues', 'Unclear specs', 'Distractions', 'Colleagues
 const breathe = {
   animate: {
     scale: [1, 1.02, 1],
-    transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' },
+    transition: { duration: 4, repeat: Infinity, ease: 'easeInOut' as const },
   },
 };
 
