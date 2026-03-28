@@ -31,6 +31,8 @@ import { PartnerFAQ } from '@/components/referral/PartnerFAQ';
 import { InvoiceGenerator } from '@/components/referral/InvoiceGenerator';
 import { AffiliateRulesDocument } from '@/components/referral/AffiliateRulesDocument';
 import { supabase } from '@/integrations/supabase/client';
+import { PartnerRegistrationForm } from '@/components/partner/PartnerRegistrationForm';
+import { LoyaltyProgram } from '@/components/partner/LoyaltyProgram';
 
 export default function PartnerProgram() {
   const { language } = useTranslation();
