@@ -382,11 +382,26 @@ export default function Dashboard() {
             </div>
           </TabsContent>
 
-          {hasTeam && (
-            <TabsContent value="team" className="mt-0">
+          <TabsContent value="team" className="mt-0">
+            {hasTeam ? (
               <TeamWorkTab />
-            </TabsContent>
-          )}
+            ) : (
+              <div className="bg-card p-6 shadow-card border border-border text-center" style={{ borderRadius: 'var(--radius-card)' }}>
+                <Users className="w-10 h-10 mx-auto mb-3 text-muted-foreground/40" />
+                <p className="text-sm font-medium mb-1">
+                  {language === 'ru' ? 'Командная работа' : 'Teamwork'}
+                </p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  {language === 'ru'
+                    ? 'Создайте или присоединитесь к команде'
+                    : 'Create or join a team'}
+                </p>
+                <Button size="sm" variant="outline" onClick={() => navigate('/team')}>
+                  {language === 'ru' ? 'Перейти' : 'Go to Teams'}
+                </Button>
+              </div>
+            )}
+          </TabsContent>
         </Tabs>
 
         <TopWidgetsSection />

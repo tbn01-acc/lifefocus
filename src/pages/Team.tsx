@@ -155,26 +155,97 @@ export default function TeamPage() {
     return <DemoView experience={experience} isRu={isRu} />;
   }
 
-  // No team — empty state
+  // No team — show full interface with limited content and Test tab as default
   if (!team) {
     return (
       <div className="min-h-screen bg-background pb-24">
-        <div className="max-w-md mx-auto px-4 py-12 text-center">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
-              <Users className="w-10 h-10 text-primary" />
-            </div>
-            <h1 className="text-xl font-bold mb-2">{isRu ? 'Командная работа' : 'Teamwork'}</h1>
-            <p className="text-sm text-muted-foreground mb-6">
-              {isRu
-                ? 'Создайте команду или присоединитесь по коду приглашения, чтобы запускать спринты, отслеживать прогресс и зарабатывать XP вместе.'
-                : 'Create a team or join by invite code to launch sprints, track progress and earn XP together.'}
-            </p>
-            <Button onClick={() => setCreateTeamOpen(true)} size="lg" className="w-full">
-              <Users className="w-5 h-5 mr-2" />
-              {isRu ? 'Начать' : 'Get Started'}
+        <div className="max-w-4xl mx-auto px-4 py-4">
+          {/* Header */}
+          <div className="flex items-center gap-3 mb-4">
+            <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
+              <ArrowLeft className="w-5 h-5" />
             </Button>
-          </motion.div>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-lg font-bold">{isRu ? 'Командная работа' : 'Teamwork'}</h1>
+            </div>
+            <Button size="sm" variant="outline" onClick={() => navigate('/team-focus')} className="gap-1">
+              <Compass className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRu ? 'Фокус' : 'Focus'}</span>
+            </Button>
+          </div>
+
+          {/* Main Tabs — default to test */}
+          <Tabs defaultValue="test" className="space-y-4">
+            <TabsList className="w-full grid grid-cols-7 h-9">
+              <TabsTrigger value="overview" className="text-xs gap-1" disabled>
+                <LayoutDashboard className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRu ? 'Обзор' : 'Overview'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="workspaces" className="text-xs gap-1" disabled>
+                <FolderKanban className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRu ? 'Проекты' : 'Projects'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="kanban" className="text-xs gap-1" disabled>
+                <Columns3 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRu ? 'Канбан' : 'Kanban'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="retro" className="text-xs gap-1" disabled>
+                <Trophy className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRu ? 'Ретро' : 'Retro'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="members" className="text-xs gap-1" disabled>
+                <Users className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRu ? 'Состав' : 'Team'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="profile" className="text-xs gap-1" disabled>
+                <Building2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRu ? 'Профиль' : 'Profile'}</span>
+              </TabsTrigger>
+              <TabsTrigger value="test" className="text-xs gap-1">
+                <FlaskConical className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">{isRu ? 'Тест' : 'Test'}</span>
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="test">
+              <div className="text-center py-8">
+                <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                  <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                    <Users className="w-10 h-10 text-primary" />
+                  </div>
+                  <h2 className="text-xl font-bold mb-2">{isRu ? 'Командная работа' : 'Teamwork'}</h2>
+                  <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                    {isRu
+                      ? 'Создайте команду или присоединитесь по коду приглашения, чтобы запускать спринты, отслеживать прогресс и зарабатывать XP вместе.'
+                      : 'Create a team or join by invite code to launch sprints, track progress and earn XP together.'}
+                  </p>
+                  <Button onClick={() => setCreateTeamOpen(true)} size="lg" className="w-full max-w-md mb-4">
+                    <Users className="w-5 h-5 mr-2" />
+                    {isRu ? 'Начать' : 'Get Started'}
+                  </Button>
+                  <div className="bg-card border border-border rounded-xl p-4 max-w-md mx-auto">
+                    <h3 className="text-sm font-semibold mb-2">
+                      {isRu ? 'Посмотрите, что сможет ВАША команда!' : 'See what YOUR team can do!'}
+                    </h3>
+                    <p className="text-xs text-muted-foreground mb-4">
+                      {isRu
+                        ? 'Загляните внутрь готовой команды из 12 специалистов. Канбан-доска, Burndown-чарт, пьедестал почёта и 24 задачи — всё работает.'
+                        : 'Take a look inside a ready-made team of 12 specialists. Kanban board, Burndown chart, Hall of Fame and 24 tasks — everything works.'}
+                    </p>
+                    <div className="flex gap-2 justify-center">
+                      <Button size="sm" variant="outline" onClick={experience.startDemo}>
+                        {isRu ? '👀 Демо' : '👀 Demo'}
+                      </Button>
+                      <Button size="sm" onClick={experience.startTest}>
+                        {isRu ? '🧪 Тест' : '🧪 Test'}
+                      </Button>
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
           <EmptyStateDemoBanner onStartDemo={experience.startDemo} onStartTest={experience.startTest} />
           <CreateTeamDialog open={createTeamOpen} onOpenChange={setCreateTeamOpen} onCreateTeam={createTeam} onJoinTeam={joinTeam} />
         </div>
