@@ -251,6 +251,7 @@ const AppContent = () => {
           <Route path="/team-plan" element={<TeamPlan />} />
           <Route path="/pricing/team" element={<TeamPricing />} />
           <Route path="/success-diary" element={<SuccessDiary />} />
+          <Route path="/team-focus" element={<TeamFocus />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNavigation
