@@ -74,7 +74,7 @@ export default function TeamSprint() {
             </div>
             <Progress value={progress} className="h-2.5 mb-3" />
             <div className="flex gap-4 text-xs text-muted-foreground">
-              <span>📅 {sprint.startDate} — {sprint.endDate}</span>
+              <span>📅 {sprintDates.start} — {sprintDates.end}</span>
             </div>
           </CardContent>
         </Card>
