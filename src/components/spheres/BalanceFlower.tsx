@@ -823,19 +823,23 @@ export function BalanceFlower({ sphereIndices, lifeIndex, customSpheres, scaleLa
   const personalSpheres = getPersonalSpheres();
   const socialSpheres = getSocialSpheres();
   
-  // Evenly distribute 8 petals (45° each), with 2 per quadrant
-  // Personal spheres in left hemisphere (90° to 270°), Social in right (270° to 90°)
-  // Each petal is 45°, with equal spacing
-  const orderedSpheres = [
-    { sphere: personalSpheres[0], baseAngle: 112.5 },  // Body - upper left quadrant
-    { sphere: personalSpheres[1], baseAngle: 157.5 },  // Mind - upper left quadrant
-    { sphere: personalSpheres[2], baseAngle: 202.5 },  // Spirit - lower left quadrant
-    { sphere: personalSpheres[3], baseAngle: 247.5 },  // Rest - lower left quadrant
-    { sphere: socialSpheres[0], baseAngle: 292.5 },    // Work - lower right quadrant
-    { sphere: socialSpheres[1], baseAngle: 337.5 },    // Money - lower right quadrant
-    { sphere: socialSpheres[2], baseAngle: 22.5 },     // Family - upper right quadrant
-    { sphere: socialSpheres[3], baseAngle: 67.5 },     // Social - upper right quadrant
+  const orderedSpheres = customSpheres || [
+    { sphere: personalSpheres[0], baseAngle: 112.5 },
+    { sphere: personalSpheres[1], baseAngle: 157.5 },
+    { sphere: personalSpheres[2], baseAngle: 202.5 },
+    { sphere: personalSpheres[3], baseAngle: 247.5 },
+    { sphere: socialSpheres[0], baseAngle: 292.5 },
+    { sphere: socialSpheres[1], baseAngle: 337.5 },
+    { sphere: socialSpheres[2], baseAngle: 22.5 },
+    { sphere: socialSpheres[3], baseAngle: 67.5 },
   ].filter(item => item.sphere);
+
+  const leftSpheres = customSpheres 
+    ? customSpheres.slice(0, 4).map(c => c.sphere)
+    : personalSpheres;
+  const rightSpheres = customSpheres
+    ? customSpheres.slice(4, 8).map(c => c.sphere)
+    : socialSpheres;
 
   // Calculate averages for balance scales
   const personalAvg = useMemo(() => {
