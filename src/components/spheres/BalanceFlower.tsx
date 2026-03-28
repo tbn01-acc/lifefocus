@@ -1449,6 +1449,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex, customSpheres, scaleLa
         socialValue={socialAvg} 
         language={language}
         spreadLevel={spreadState?.level || 'stability'}
+        customScaleLabels={scaleLabels}
       />
 
       {/* Life Index Progress Chart */}
