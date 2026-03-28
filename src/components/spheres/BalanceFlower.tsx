@@ -345,9 +345,9 @@ function BalanceScalesWidget({
   const showGoldenGlow = spreadLevel === 'topFocus';
   
   const labels = {
-    ru: { personal: 'Личное', social: 'Социальное' },
-    en: { personal: 'Personal', social: 'Social' },
-    es: { personal: 'Personal', social: 'Social' },
+    ru: { personal: customScaleLabels?.left?.ru || 'Личное', social: customScaleLabels?.right?.ru || 'Социальное' },
+    en: { personal: customScaleLabels?.left?.en || 'Personal', social: customScaleLabels?.right?.en || 'Social' },
+    es: { personal: customScaleLabels?.left?.es || 'Personal', social: customScaleLabels?.right?.es || 'Social' },
   };
   const t = labels[language] || labels.en;
 
