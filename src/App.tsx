@@ -57,6 +57,7 @@ import DaySummary from "./pages/DaySummary";
 import TeamPlan from "./pages/TeamPlan";
 import Team from "./pages/Team";
 import TeamPricing from "./pages/TeamPricing";
+import TeamFocus from "./pages/TeamFocus";
 import SuccessDiary from "./pages/SuccessDiary";
 
 /**
