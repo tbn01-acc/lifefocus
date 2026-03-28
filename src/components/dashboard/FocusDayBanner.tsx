@@ -18,13 +18,13 @@ export function FocusDayBanner({ todayTasks }: FocusDayBannerProps) {
   const mainTask = todayTasks.find(t => t.isMain && !t.archivedAt);
   const mainCount = useMemo(() => todayTasks.filter(t => t.isMain && !t.completed && !t.archivedAt).length, [todayTasks]);
 
-  if (!mainTask) return null;
-
-  const { indicatorColor, indicatorBg } = useMemo(() => {
-    if (mainCount <= 1) return { indicatorColor: 'text-emerald-400', indicatorBg: 'bg-emerald-500' };
-    if (mainCount === 2) return { indicatorColor: 'text-amber-400', indicatorBg: 'bg-amber-500' };
-    return { indicatorColor: 'text-red-400', indicatorBg: 'bg-red-500' };
+  const { indicatorBg } = useMemo(() => {
+    if (mainCount <= 1) return { indicatorBg: 'bg-emerald-500' };
+    if (mainCount === 2) return { indicatorBg: 'bg-amber-500' };
+    return { indicatorBg: 'bg-red-500' };
   }, [mainCount]);
+
+  if (!mainTask) return null;
 
   return (
     <motion.button

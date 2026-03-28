@@ -236,7 +236,11 @@ export default function Dashboard() {
         <FocusDayBanner todayTasks={todayTasks} />
 
         {/* Section: Сделать/Выполнено (Tabbed) */}
-        <TeamWorkTabWrapper />
+        <Tabs defaultValue="todo" className="mb-6">
+          <TabsList className="grid w-full grid-cols-2 mb-4">
+            <TabsTrigger value="todo">{t("todoTab")}</TabsTrigger>
+            <TabsTrigger value="done">{t("doneTab")}</TabsTrigger>
+          </TabsList>
 
           <TabsContent value="todo" className="mt-0">
             <div className="space-y-3">
