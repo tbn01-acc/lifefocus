@@ -353,7 +353,39 @@ export default function TeamPage() {
               onUpdate={() => {}}
             />
           </TabsContent>
-        </Tabs>
+
+          <TabsContent value="test">
+            <div className="text-center py-8">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                  <Users className="w-10 h-10 text-primary" />
+                </div>
+                <h2 className="text-xl font-bold mb-2">{isRu ? 'Командная работа' : 'Teamwork'}</h2>
+                <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
+                  {isRu
+                    ? 'Создайте команду или присоединитесь по коду приглашения, чтобы запускать спринты, отслеживать прогресс и зарабатывать XP вместе.'
+                    : 'Create a team or join by invite code to launch sprints, track progress and earn XP together.'}
+                </p>
+                <div className="bg-card border border-border rounded-xl p-4 max-w-md mx-auto">
+                  <h3 className="text-sm font-semibold mb-2">
+                    {isRu ? 'Посмотрите, что сможет ВАША команда!' : 'See what YOUR team can do!'}
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    {isRu
+                      ? 'Загляните внутрь готовой команды из 12 специалистов. Канбан-доска, Burndown-чарт, пьедестал почёта и 24 задачи — всё работает.'
+                      : 'Take a look inside a ready-made team of 12 specialists. Kanban board, Burndown chart, Hall of Fame and 24 tasks — everything works.'}
+                  </p>
+                  <div className="flex gap-2 justify-center">
+                    <Button size="sm" variant="outline" onClick={experience.startDemo}>
+                      {isRu ? '👀 Демо' : '👀 Demo'}
+                    </Button>
+                    <Button size="sm" onClick={experience.startTest}>
+                      {isRu ? '🧪 Тест' : '🧪 Test'}
+                    </Button>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
 
         <CreateSprintDialog
           open={createSprintOpen}
