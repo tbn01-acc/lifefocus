@@ -861,7 +861,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex, customSpheres, scaleLa
   const labelRadius = maxRadius + 45; // For external labels
 
   const handlePetalClick = (sphere: Sphere) => {
-    navigate(`/sphere/${sphere.key}`);
+    navigate(`${navigatePrefix || '/sphere'}/${sphere.key}`);
   };
 
   const handleColorSchemeChange = (scheme: ColorScheme) => {
