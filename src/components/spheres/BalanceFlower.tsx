@@ -1191,6 +1191,7 @@ export function BalanceFlower({ sphereIndices, lifeIndex, customSpheres, scaleLa
           language={language}
           onPetalClick={handlePetalClick}
           getSphereStats={getSphereStats}
+          customOrderedSpheres={customSpheres ? orderedSpheres.map(o => o.sphere) : undefined}
         />
       ) : (
         <TooltipProvider delayDuration={200}>
