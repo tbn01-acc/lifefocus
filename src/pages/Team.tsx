@@ -386,6 +386,8 @@ export default function TeamPage() {
                 </div>
               </motion.div>
             </div>
+          </TabsContent>
+        </Tabs>
 
         <CreateSprintDialog
           open={createSprintOpen}
