@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Target, CheckSquare, Wallet, Sparkles, Calendar, BarChart3, Users } from "lucide-react";
+import { TeamWorkTab } from "@/components/team/TeamWorkTab";
+import { useTeam } from "@/hooks/useTeam";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useHabits, getTodayString } from "@/hooks/useHabits";
