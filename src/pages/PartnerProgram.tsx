@@ -47,9 +47,26 @@ export default function PartnerProgram() {
   const [showActiveList, setShowActiveList] = useState(false);
   const [showPaidList, setShowPaidList] = useState(false);
   const [showRules, setShowRules] = useState(false);
+  const [programSection, setProgramSection] = useState<'referral' | 'loyalty'>('referral');
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registeredType, setRegisteredType] = useState<string | null>(null);
+  const [showRegistration, setShowRegistration] = useState(false);
 
   const referralCode = profile?.referral_code;
   const referralLink = referralCode ? `${APP_URL}/auth?ref=${referralCode}` : '';
+
+  // Check registration status from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('topfocus_partner_registration');
+    if (stored) {
+      const data = JSON.parse(stored);
+      setIsRegistered(true);
+      setRegisteredType(data.type);
+      if (data.type === 'individual') {
+        setProgramSection('loyalty');
+      }
+    }
+  }, []);
 
   const handleCopy = async () => {
     if (!referralLink) return;
@@ -80,24 +97,6 @@ export default function PartnerProgram() {
   }
 
   const progress = getProgressToNextMilestone();
-
-  const [programSection, setProgramSection] = useState<'referral' | 'loyalty'>('referral');
-  const [isRegistered, setIsRegistered] = useState(false);
-  const [registeredType, setRegisteredType] = useState<string | null>(null);
-  const [showRegistration, setShowRegistration] = useState(false);
-
-  // Check registration status from localStorage
-  useEffect(() => {
-    const stored = localStorage.getItem('topfocus_partner_registration');
-    if (stored) {
-      const data = JSON.parse(stored);
-      setIsRegistered(true);
-      setRegisteredType(data.type);
-      if (data.type === 'individual') {
-        setProgramSection('loyalty');
-      }
-    }
-  }, []);
 
   const handleRegister = (type: string) => {
     localStorage.setItem('topfocus_partner_registration', JSON.stringify({ type, date: new Date().toISOString() }));
