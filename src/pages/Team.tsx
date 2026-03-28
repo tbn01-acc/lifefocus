@@ -143,7 +143,7 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
                       </div>
                       <div className="space-y-2">
                         {ws.projects.map((proj: any) => (
-                          <div key={proj.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+                          <div key={proj.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 border border-border/30 cursor-pointer hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/team/project/${proj.id}`); }}>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs font-medium truncate">{proj.name}</span>
