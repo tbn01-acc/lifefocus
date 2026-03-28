@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, Users } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { useTranslation } from '@/contexts/LanguageContext';
@@ -10,21 +10,28 @@ import { BalanceFlower } from '@/components/spheres/BalanceFlower';
 import { SphereIndex } from '@/types/sphere';
 import { DEMO_DATA } from '@/lib/demo/testData';
 
-const TEAM_SPHERES = [
-  { id: 1, key: 'goals', name_ru: 'Цели', name_en: 'Goals', icon: '🎯', color: '#6366f1' },
-  { id: 2, key: 'velocity', name_ru: 'Скорость', name_en: 'Velocity', icon: '⚡', color: '#f59e0b' },
-  { id: 3, key: 'quality', name_ru: 'Качество', name_en: 'Quality', icon: '✅', color: '#22c55e' },
-  { id: 4, key: 'engagement', name_ru: 'Вовлечённость', name_en: 'Engagement', icon: '🔥', color: '#ef4444' },
-  { id: 5, key: 'collaboration', name_ru: 'Сотрудничество', name_en: 'Collaboration', icon: '🤝', color: '#8b5cf6' },
-  { id: 6, key: 'communication', name_ru: 'Коммуникация', name_en: 'Communication', icon: '💬', color: '#06b6d4' },
-  { id: 7, key: 'growth', name_ru: 'Рост', name_en: 'Growth', icon: '📈', color: '#10b981' },
-  { id: 8, key: 'satisfaction', name_ru: 'Удовлетворённость', name_en: 'Satisfaction', icon: '😊', color: '#ec4899' },
+// Reordered: Left (Internal) 1-4, Right (External) 5-8
+// BalanceFlower renders petals by index: 0=top-right going clockwise
+// For flower layout: ids 1-4 left half, 5-8 right half
+// Actual petal order in flower (clockwise from top): 5,6,7,8,1,2,3,4
+// So we keep sort_order matching the visual: left=internal, right=external
+export const TEAM_SPHERES = [
+  // Internal (left side of flower) — ids 1-4
+  { id: 1, key: 'satisfaction', name_ru: 'Удовлетворённость', name_en: 'Satisfaction', icon: '😊', color: '#ec4899', group: 'internal' },
+  { id: 2, key: 'engagement', name_ru: 'Вовлечённость', name_en: 'Engagement', icon: '🔥', color: '#ef4444', group: 'internal' },
+  { id: 3, key: 'growth', name_ru: 'Рост', name_en: 'Growth', icon: '📈', color: '#10b981', group: 'internal' },
+  { id: 4, key: 'communication', name_ru: 'Коммуникация', name_en: 'Communication', icon: '💬', color: '#06b6d4', group: 'internal' },
+  // External (right side of flower) — ids 5-8
+  { id: 5, key: 'goals', name_ru: 'Цели', name_en: 'Goals', icon: '🎯', color: '#6366f1', group: 'external' },
+  { id: 6, key: 'quality', name_ru: 'Качество', name_en: 'Quality', icon: '✅', color: '#22c55e', group: 'external' },
+  { id: 7, key: 'velocity', name_ru: 'Скорость', name_en: 'Velocity', icon: '⚡', color: '#f59e0b', group: 'external' },
+  { id: 8, key: 'collaboration', name_ru: 'Сотрудничество', name_en: 'Collaboration', icon: '🤝', color: '#8b5cf6', group: 'external' },
 ];
 
 // Stable demo indices
 const DEMO_INDICES: Record<string, number> = {
-  goals: 71, velocity: 22, quality: 85, engagement: 100,
-  collaboration: 42, communication: 78, growth: 65, satisfaction: 73,
+  satisfaction: 73, engagement: 100, growth: 65, communication: 78,
+  goals: 71, quality: 85, velocity: 22, collaboration: 42,
 };
 
 export default function TeamFocus() {
@@ -78,6 +85,9 @@ export default function TeamFocus() {
 
   const teamName = isDemo ? DEMO_DATA.teamName : team!.name;
 
+  const internalSpheres = TEAM_SPHERES.filter(s => s.group === 'internal');
+  const externalSpheres = TEAM_SPHERES.filter(s => s.group === 'external');
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <div className="container max-w-md mx-auto px-4 py-6 space-y-6">
@@ -103,32 +113,73 @@ export default function TeamFocus() {
 
         <Card className="p-4">
           <p className="text-sm text-muted-foreground text-center mb-2">
-            {isRu ? 'Баланс 8 сфер команды' : 'Balance of 8 team spheres'}
+            {isRu ? 'Баланс 8 корпоративных сфер' : 'Balance of 8 corporate spheres'}
           </p>
           <BalanceFlower sphereIndices={sphereIndices} lifeIndex={teamIndex} />
         </Card>
 
-        <div className="grid grid-cols-2 gap-3">
-          {TEAM_SPHERES.map((sphere, i) => {
-            const si = sphereIndices.find(s => s.sphereId === sphere.id);
-            const indexValue = si?.index || 0;
-            return (
-              <motion.div key={sphere.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
-                <Card className="p-3">
-                  <div className="flex items-center gap-2 mb-2">
-                    <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${sphere.color}20` }}>
-                      {sphere.icon}
+        {/* Internal spheres */}
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            {isRu ? '🔒 Внутренние' : '🔒 Internal'}
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {internalSpheres.map((sphere, i) => {
+              const si = sphereIndices.find(s => s.sphereId === sphere.id);
+              const indexValue = si?.index || 0;
+              return (
+                <motion.div key={sphere.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}>
+                  <Card
+                    className="p-3 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => navigate(`/team/sphere/${sphere.key}`)}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${sphere.color}20` }}>
+                        {sphere.icon}
+                      </div>
+                      <p className="font-medium text-sm truncate flex-1">{isRu ? sphere.name_ru : sphere.name_en}</p>
+                      <span className="text-sm font-bold">{Math.round(indexValue / 10)}/10</span>
                     </div>
-                    <p className="font-medium text-sm truncate flex-1">{isRu ? sphere.name_ru : sphere.name_en}</p>
-                    <span className="text-sm font-bold">{Math.round(indexValue / 10)}/10</span>
-                  </div>
-                  <div className="h-2 rounded-full bg-muted overflow-hidden">
-                    <motion.div className="h-full rounded-full" style={{ backgroundColor: sphere.color }} initial={{ width: 0 }} animate={{ width: `${indexValue}%` }} transition={{ duration: 0.5, delay: i * 0.05 }} />
-                  </div>
-                </Card>
-              </motion.div>
-            );
-          })}
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <motion.div className="h-full rounded-full" style={{ backgroundColor: sphere.color }} initial={{ width: 0 }} animate={{ width: `${indexValue}%` }} transition={{ duration: 0.5, delay: i * 0.05 }} />
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* External spheres */}
+        <div>
+          <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-2">
+            {isRu ? '🌐 Внешние' : '🌐 External'}
+          </p>
+          <div className="grid grid-cols-2 gap-3">
+            {externalSpheres.map((sphere, i) => {
+              const si = sphereIndices.find(s => s.sphereId === sphere.id);
+              const indexValue = si?.index || 0;
+              return (
+                <motion.div key={sphere.id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: (i + 4) * 0.05 }}>
+                  <Card
+                    className="p-3 cursor-pointer hover:shadow-md transition-shadow"
+                    onClick={() => navigate(`/team/sphere/${sphere.key}`)}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${sphere.color}20` }}>
+                        {sphere.icon}
+                      </div>
+                      <p className="font-medium text-sm truncate flex-1">{isRu ? sphere.name_ru : sphere.name_en}</p>
+                      <span className="text-sm font-bold">{Math.round(indexValue / 10)}/10</span>
+                    </div>
+                    <div className="h-2 rounded-full bg-muted overflow-hidden">
+                      <motion.div className="h-full rounded-full" style={{ backgroundColor: sphere.color }} initial={{ width: 0 }} animate={{ width: `${indexValue}%` }} transition={{ duration: 0.5, delay: (i + 4) * 0.05 }} />
+                    </div>
+                  </Card>
+                </motion.div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

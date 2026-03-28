@@ -58,6 +58,7 @@ import TeamPlan from "./pages/TeamPlan";
 import Team from "./pages/Team";
 import TeamPricing from "./pages/TeamPricing";
 import TeamFocus from "./pages/TeamFocus";
+import TeamSphereDetail from "./pages/TeamSphereDetail";
 import TeamWorkspace from "./pages/TeamWorkspace";
 import TeamProject from "./pages/TeamProject";
 import TeamSprint from "./pages/TeamSprint";
@@ -257,6 +258,7 @@ const AppContent = () => {
           <Route path="/pricing/team" element={<TeamPricing />} />
            <Route path="/success-diary" element={<SuccessDiary />} />
           <Route path="/team-focus" element={<TeamFocus />} />
+          <Route path="/team/sphere/:sphereKey" element={<TeamSphereDetail />} />
           <Route path="/team/workspace/:workspaceId" element={<TeamWorkspace />} />
           <Route path="/team/project/:projectId" element={<TeamProject />} />
           <Route path="/team/sprint/:sprintId" element={<TeamSprint />} />
