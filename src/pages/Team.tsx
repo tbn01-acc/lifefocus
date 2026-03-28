@@ -50,6 +50,12 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
   const isTest = experience.mode === 'test';
   const d = experience.data;
 
+  const TEAM_TYPE_LABELS: Record<string, string> = {
+    office: isRu ? 'Офис' : 'Office',
+    remote: isRu ? 'Удалённо' : 'Remote',
+    hybrid: isRu ? 'Гибрид' : 'Hybrid',
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       <AnimatePresence>
@@ -72,10 +78,14 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
           </div>
         </div>
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="w-full grid grid-cols-4 h-9">
+          <TabsList className="w-full grid grid-cols-7 h-9">
             <TabsTrigger value="overview" className="text-xs gap-1">
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{isRu ? 'Обзор' : 'Overview'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="workspaces" className="text-xs gap-1">
+              <FolderKanban className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRu ? 'Проекты' : 'Projects'}</span>
             </TabsTrigger>
             <TabsTrigger value="kanban" className="text-xs gap-1">
               <Columns3 className="w-3.5 h-3.5" />
@@ -87,19 +97,75 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
             </TabsTrigger>
             <TabsTrigger value="members" className="text-xs gap-1">
               <Users className="w-3.5 h-3.5" />
-              <span className="hidden sm:inline">{isRu ? 'Состав' : 'Members'}</span>
+              <span className="hidden sm:inline">{isRu ? 'Состав' : 'Team'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="profile" className="text-xs gap-1">
+              <Building2 className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRu ? 'Профиль' : 'Profile'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="test" className="text-xs gap-1">
+              <FlaskConical className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRu ? 'Тест' : 'Test'}</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Overview */}
           <TabsContent value="overview" className="space-y-4">
             <DemoTeamOverview data={d} />
             <DemoBurndownChart data={d} />
           </TabsContent>
+
+          {/* Projects / Workspaces */}
+          <TabsContent value="workspaces">
+            <div className="space-y-4">
+              {d.workspaces?.map((ws: any, wi: number) => (
+                <motion.div key={ws.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: wi * 0.05 }}>
+                  <Card className="border-border/50 bg-card/80 backdrop-blur">
+                    <CardContent className="p-4">
+                      <div className="flex items-center gap-2 mb-3">
+                        <span className="text-lg">{ws.icon}</span>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="text-sm font-semibold">{ws.name}</h3>
+                          {ws.description && <p className="text-[10px] text-muted-foreground">{ws.description}</p>}
+                        </div>
+                        <Badge variant="secondary" className="text-[10px]">{ws.projects.length} {isRu ? 'проектов' : 'projects'}</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        {ws.projects.map((proj: any) => (
+                          <div key={proj.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="text-xs font-medium truncate">{proj.name}</span>
+                                <Badge variant={proj.status === 'completed' ? 'default' : proj.status === 'paused' ? 'secondary' : 'outline'} className="text-[10px] h-4 px-1.5">
+                                  {proj.status === 'active' ? (isRu ? 'Активен' : 'Active') : proj.status === 'completed' ? (isRu ? 'Завершён' : 'Done') : (isRu ? 'Пауза' : 'Paused')}
+                                </Badge>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <Progress value={proj.progress} className="h-1.5 flex-1" />
+                                <span className="text-[10px] text-muted-foreground whitespace-nowrap">{proj.completedTasks}/{proj.tasksCount}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              ))}
+            </div>
+          </TabsContent>
+
+          {/* Kanban */}
           <TabsContent value="kanban">
             <DemoKanban data={d} onUpdateStatus={experience.updateTaskStatus} isReadOnly={!isTest} />
           </TabsContent>
+
+          {/* Retro */}
           <TabsContent value="retro">
             <RetroPodium members={d.members} onAward={experience.awardMember} isTest={isTest} />
           </TabsContent>
+
+          {/* Members */}
           <TabsContent value="members">
             <div className="space-y-2">
               {d.members.map((m: any, i: number) => (
@@ -117,6 +183,7 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
                     <p className="text-xs font-medium">{m.name}</p>
                     <p className="text-[10px] text-muted-foreground">{m.role}</p>
                   </div>
+                  <Badge variant="outline" className="text-[10px] h-5">{m.rank}</Badge>
                   <span className="text-[10px]">{m.status}</span>
                   <span className="text-[10px] text-yellow-500 font-medium">{m.xp.toLocaleString()} XP</span>
                   {isTest && (
@@ -124,6 +191,101 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
                   )}
                 </motion.div>
               ))}
+            </div>
+          </TabsContent>
+
+          {/* Profile */}
+          <TabsContent value="profile">
+            {d.teamProfile && (
+              <div className="space-y-4">
+                <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
+                  <Card className="border-border/50 bg-card/80 backdrop-blur">
+                    <CardContent className="p-4 space-y-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-14 h-14 rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center">
+                          <Building2 className="w-7 h-7 text-primary" />
+                        </div>
+                        <div>
+                          <h2 className="text-base font-bold">{d.teamName}</h2>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            <Badge variant="outline" className="text-[10px]">
+                              {TEAM_TYPE_LABELS[d.teamProfile.team_type] || d.teamProfile.team_type}
+                            </Badge>
+                            {d.teamProfile.location && (
+                              <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
+                                📍 {d.teamProfile.location}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <p className="text-xs text-muted-foreground leading-relaxed">{d.teamProfile.description}</p>
+                      {d.teamProfile.website && (
+                        <div className="flex items-center gap-1.5 text-xs text-primary">
+                          🌐 {d.teamProfile.website}
+                        </div>
+                      )}
+                      {d.teamProfile.vacancies && (
+                        <div className="p-2.5 rounded-lg bg-green-500/10 border border-green-500/20">
+                          <p className="text-[10px] font-medium text-green-600 dark:text-green-400 mb-0.5">
+                            {isRu ? '🔥 Открытые вакансии' : '🔥 Open positions'}
+                          </p>
+                          <p className="text-xs">{d.teamProfile.vacancies}</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </motion.div>
+
+                {d.teamProfile.stats && (
+                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        { label: isRu ? 'Спринтов' : 'Sprints', value: d.teamProfile.stats.totalSprints, icon: '🏁' },
+                        { label: isRu ? 'Ср. Velocity' : 'Avg Velocity', value: `${d.teamProfile.stats.avgVelocity} SP`, icon: '⚡' },
+                        { label: isRu ? 'Общий XP' : 'Total XP', value: d.teamProfile.stats.totalXP.toLocaleString(), icon: '✨' },
+                        { label: isRu ? 'Успешность' : 'Success Rate', value: `${d.teamProfile.stats.successRate}%`, icon: '🎯' },
+                      ].map((stat, i) => (
+                        <Card key={i} className="border-border/50 bg-card/80">
+                          <CardContent className="p-3 text-center">
+                            <span className="text-lg">{stat.icon}</span>
+                            <p className="text-lg font-bold mt-1">{stat.value}</p>
+                            <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </motion.div>
+                )}
+              </div>
+            )}
+          </TabsContent>
+
+          {/* Test tab — entry point back to demo/test selection */}
+          <TabsContent value="test">
+            <div className="text-center py-8">
+              <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
+                <p className="text-sm text-muted-foreground mb-4">
+                  {experience.mode === 'demo'
+                    ? (isRu ? 'Вы в режиме просмотра. Переключитесь на Тест-драйв для редактирования.' : 'You are in view mode. Switch to Test Drive to edit.')
+                    : (isRu ? 'Вы в режиме Песочницы. Все изменения локальные.' : 'You are in Sandbox mode. All changes are local.')}
+                </p>
+                <div className="flex gap-2 justify-center">
+                  {experience.mode === 'demo' && (
+                    <Button size="sm" onClick={experience.switchToTest}>
+                      {isRu ? '🧪 Тест-драйв' : '🧪 Test Drive'}
+                    </Button>
+                  )}
+                  {experience.mode === 'test' && (
+                    <Button size="sm" variant="outline" onClick={experience.resetTest}>
+                      {isRu ? '🔄 Сбросить данные' : '🔄 Reset Data'}
+                    </Button>
+                  )}
+                  <Button size="sm" variant="ghost" onClick={experience.exitMode}>
+                    {isRu ? 'Выйти' : 'Exit'}
+                  </Button>
+                </div>
+              </motion.div>
             </div>
           </TabsContent>
         </Tabs>
