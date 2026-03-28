@@ -569,7 +569,8 @@ function SpiderChart({
   allSpheres,
   language,
   onPetalClick,
-  getSphereStats
+  getSphereStats,
+  customOrderedSpheres,
 }: {
   sphereIndices: SphereIndex[];
   lifeIndex: number;
@@ -577,27 +578,21 @@ function SpiderChart({
   language: 'ru' | 'en' | 'es';
   onPetalClick: (sphere: Sphere) => void;
   getSphereStats: (sphereId: number) => { taskCount: number; lastActivity: string | null };
+  customOrderedSpheres?: Sphere[];
 }) {
   const size = 500;
   const center = size / 2;
   const maxRadius = 180;
   const levels = 5;
 
-  // Evenly distribute 8 spheres (45° each), Personal on left, Social on right
-  const personalSpheres = getPersonalSpheres();
-  const socialSpheres = getSocialSpheres();
-  
-  // Order matching flower: Personal in left hemisphere, Social in right hemisphere
-  const orderedSpheres = [
-    personalSpheres[0], // Body - 112.5°
-    personalSpheres[1], // Mind - 157.5°
-    personalSpheres[2], // Spirit - 202.5°
-    personalSpheres[3], // Rest - 247.5°
-    socialSpheres[0],   // Work - 292.5°
-    socialSpheres[1],   // Money - 337.5°
-    socialSpheres[2],   // Family - 22.5°
-    socialSpheres[3],   // Social - 67.5°
-  ].filter(Boolean);
+  const orderedSpheres = customOrderedSpheres || (() => {
+    const personalSpheres = getPersonalSpheres();
+    const socialSpheres = getSocialSpheres();
+    return [
+      personalSpheres[0], personalSpheres[1], personalSpheres[2], personalSpheres[3],
+      socialSpheres[0], socialSpheres[1], socialSpheres[2], socialSpheres[3],
+    ].filter(Boolean);
+  })();
 
   // Calculate points for radar chart - using same angles as flower
   const baseAngles = [112.5, 157.5, 202.5, 247.5, 292.5, 337.5, 22.5, 67.5];
