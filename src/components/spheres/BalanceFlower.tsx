@@ -319,11 +319,13 @@ function BalanceScalesWidget({
   socialValue, 
   language,
   spreadLevel,
+  customScaleLabels,
 }: { 
   personalValue: number; 
   socialValue: number; 
   language: 'ru' | 'en' | 'es';
   spreadLevel: SpreadLevel;
+  customScaleLabels?: { left: Record<string, string>; right: Record<string, string> };
 }) {
   const diff = personalValue - socialValue;
   // Calculate tilt angle (max 18 degrees)
