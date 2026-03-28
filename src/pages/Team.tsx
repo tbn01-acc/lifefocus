@@ -265,7 +265,7 @@ export default function TeamPage() {
 
         {/* Main Tabs */}
         <Tabs defaultValue="overview" className="space-y-4">
-          <TabsList className="w-full grid grid-cols-6 h-9">
+          <TabsList className="w-full grid grid-cols-7 h-9">
             <TabsTrigger value="overview" className="text-xs gap-1">
               <LayoutDashboard className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{isRu ? 'Обзор' : 'Overview'}</span>
@@ -289,6 +289,10 @@ export default function TeamPage() {
             <TabsTrigger value="profile" className="text-xs gap-1">
               <Building2 className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">{isRu ? 'Профиль' : 'Profile'}</span>
+            </TabsTrigger>
+            <TabsTrigger value="test" className="text-xs gap-1">
+              <FlaskConical className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">{isRu ? 'Тест' : 'Test'}</span>
             </TabsTrigger>
           </TabsList>
 
