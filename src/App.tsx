@@ -255,8 +255,13 @@ const AppContent = () => {
           <Route path="/team" element={<Team />} />
           <Route path="/team-plan" element={<TeamPlan />} />
           <Route path="/pricing/team" element={<TeamPricing />} />
-          <Route path="/success-diary" element={<SuccessDiary />} />
+           <Route path="/success-diary" element={<SuccessDiary />} />
           <Route path="/team-focus" element={<TeamFocus />} />
+          <Route path="/team/workspace/:workspaceId" element={<TeamWorkspace />} />
+          <Route path="/team/project/:projectId" element={<TeamProject />} />
+          <Route path="/team/sprint/:sprintId" element={<TeamSprint />} />
+          <Route path="/team/profile/:teamId" element={<TeamPublicProfilePage />} />
+          <Route path="/team/member/:memberId" element={<TeamMember />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
         <BottomNavigation
