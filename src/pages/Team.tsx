@@ -182,7 +182,8 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
               {d.members.map((m: any, i: number) => (
                 <motion.div
                   key={m.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card/80 border border-border/50"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card/80 border border-border/50 cursor-pointer hover:border-primary/30 transition-colors"
+                  onClick={() => navigate(`/team/member/${m.id}`)}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
