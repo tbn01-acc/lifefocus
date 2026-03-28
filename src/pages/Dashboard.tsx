@@ -383,7 +383,13 @@ export default function Dashboard() {
               />
             </div>
           </TabsContent>
-        </Tabs>
+
+          {hasTeam && (
+            <TabsContent value="team" className="mt-0">
+              <TeamWorkTab />
+            </TabsContent>
+          )}
+
 
         <TopWidgetsSection />
       </div>
