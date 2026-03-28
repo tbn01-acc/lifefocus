@@ -131,11 +131,11 @@ export default function TeamSprint() {
         </div>
 
         {/* Members in sprint */}
-        {isDemo && members.length > 0 && (
+        {isDemo && demoMembers.length > 0 && (
           <div className="space-y-2">
             <h2 className="text-sm font-semibold text-muted-foreground">{isRu ? 'Участники' : 'Participants'}</h2>
             <div className="grid grid-cols-2 gap-2">
-              {members.slice(0, 6).map((m) => (
+              {demoMembers.slice(0, 6).map((m) => (
                 <Card key={m.id} className="border-border/50 cursor-pointer hover:border-primary/30 transition-colors"
                   onClick={() => navigate(`/team/member/${m.id}`)}
                 >
