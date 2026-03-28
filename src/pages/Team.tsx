@@ -73,9 +73,19 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
             <h1 className="text-lg font-bold">{d.teamName}</h1>
             <p className="text-xs text-muted-foreground">{d.sprint.title}</p>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-medium">
-            <Zap className="w-4 h-4 text-yellow-500" />
-            <span>{d.sprint.completedSP}/{d.sprint.totalSP} SP</span>
+          <div className="flex items-center gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => navigate('/team-focus')} className="gap-1">
+              <Compass className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRu ? 'Фокус' : 'Focus'}</span>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => navigate(`/team/sprint/${d.sprint.id}`)} className="gap-1">
+              <Zap className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRu ? 'Спринт' : 'Sprint'}</span>
+            </Button>
+            <div className="flex items-center gap-1.5 text-xs font-medium ml-2">
+              <Zap className="w-4 h-4 text-yellow-500" />
+              <span>{d.sprint.completedSP}/{d.sprint.totalSP} SP</span>
+            </div>
           </div>
         </div>
         <Tabs defaultValue="overview" className="space-y-4">
