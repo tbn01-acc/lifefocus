@@ -269,6 +269,9 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
                     </div>
                   </motion.div>
                 )}
+                <Button variant="outline" className="w-full" onClick={() => navigate('/team/profile/demo')}>
+                  {isRu ? 'Открыть полный профиль' : 'Open Full Profile'}
+                </Button>
               </div>
             )}
           </TabsContent>
