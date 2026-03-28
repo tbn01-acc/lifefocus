@@ -824,6 +824,8 @@ export default function PartnerProgram() {
         <AffiliateRulesDocument open={showRules} onOpenChange={setShowRules} />
         <ReferralsListModal open={showActiveList} onClose={() => setShowActiveList(false)} title={isRussian ? 'Активные рефералы' : 'Active Referrals'} userId={user?.id} filterType="active" isPro={isPro} />
         <ReferralsListModal open={showPaidList} onClose={() => setShowPaidList(false)} title={isRussian ? 'Оплатившие рефералы' : 'Paid Referrals'} userId={user?.id} filterType="paid" isPro={isPro} />
+        </>
+        )}
       </div>
     </div>
   );
