@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { Target, CheckSquare, Wallet, Sparkles, Calendar, BarChart3, Users } from "lucide-react";
+import { TeamWorkTab } from "@/components/team/TeamWorkTab";
+import { useTeam } from "@/hooks/useTeam";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useHabits, getTodayString } from "@/hooks/useHabits";
@@ -36,6 +38,8 @@ export default function Dashboard() {
   const { profile, user } = useAuth();
   const { recordDailyLogin } = useStars();
   const { isProActive } = useSubscription();
+  const { team } = useTeam();
+  const hasTeam = !!team;
   const dailyLoginRecordedRef = useRef(false);
   const needsReflection = useReflectionCheck();
   const [reflectionOpen, setReflectionOpen] = useState(false);
@@ -237,9 +241,14 @@ export default function Dashboard() {
 
         {/* Section: Сделать/Выполнено (Tabbed) */}
         <Tabs defaultValue="todo" className="mb-6">
-          <TabsList className="grid w-full grid-cols-2 mb-4">
+          <TabsList className={`grid w-full mb-4 ${hasTeam ? 'grid-cols-3' : 'grid-cols-2'}`}>
             <TabsTrigger value="todo">{t("todoTab")}</TabsTrigger>
             <TabsTrigger value="done">{t("doneTab")}</TabsTrigger>
+            {hasTeam && (
+              <TabsTrigger value="team" className="gap-1">
+                <Users className="w-4 h-4" />
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <TabsContent value="todo" className="mt-0">
@@ -374,6 +383,12 @@ export default function Dashboard() {
               />
             </div>
           </TabsContent>
+
+          {hasTeam && (
+            <TabsContent value="team" className="mt-0">
+              <TeamWorkTab />
+            </TabsContent>
+          )}
         </Tabs>
 
         <TopWidgetsSection />
