@@ -843,14 +843,14 @@ export function BalanceFlower({ sphereIndices, lifeIndex, customSpheres, scaleLa
 
   // Calculate averages for balance scales
   const personalAvg = useMemo(() => {
-    const personal = personalSpheres.map(s => sphereIndices.find(si => si.sphereId === s.id)?.index || 0);
-    return personal.reduce((a, b) => a + b, 0) / personal.length;
-  }, [sphereIndices, personalSpheres]);
+    const vals = leftSpheres.map(s => sphereIndices.find(si => si.sphereId === s.id)?.index || 0);
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  }, [sphereIndices, leftSpheres]);
 
   const socialAvg = useMemo(() => {
-    const social = socialSpheres.map(s => sphereIndices.find(si => si.sphereId === s.id)?.index || 0);
-    return social.reduce((a, b) => a + b, 0) / social.length;
-  }, [sphereIndices, socialSpheres]);
+    const vals = rightSpheres.map(s => sphereIndices.find(si => si.sphereId === s.id)?.index || 0);
+    return vals.reduce((a, b) => a + b, 0) / vals.length;
+  }, [sphereIndices, rightSpheres]);
 
   // SVG dimensions - full width for larger display
   const size = 500;
