@@ -131,7 +131,7 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
             <div className="space-y-4">
               {d.workspaces?.map((ws: any, wi: number) => (
                 <motion.div key={ws.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: wi * 0.05 }}>
-                  <Card className="border-border/50 bg-card/80 backdrop-blur">
+                  <Card className="border-border/50 bg-card/80 backdrop-blur cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/team/workspace/${ws.id}`)}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg">{ws.icon}</span>
