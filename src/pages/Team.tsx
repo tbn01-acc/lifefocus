@@ -47,6 +47,7 @@ function SkeletonTeam() {
 
 // Demo mode view extracted
 function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
+  const navigate = useNavigate();
   const isTest = experience.mode === 'test';
   const d = experience.data;
 
@@ -72,9 +73,19 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
             <h1 className="text-lg font-bold">{d.teamName}</h1>
             <p className="text-xs text-muted-foreground">{d.sprint.title}</p>
           </div>
-          <div className="flex items-center gap-1.5 text-xs font-medium">
-            <Zap className="w-4 h-4 text-yellow-500" />
-            <span>{d.sprint.completedSP}/{d.sprint.totalSP} SP</span>
+          <div className="flex items-center gap-1.5">
+            <Button size="sm" variant="outline" onClick={() => navigate('/team-focus')} className="gap-1">
+              <Compass className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRu ? 'Фокус' : 'Focus'}</span>
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => navigate(`/team/sprint/${d.sprint.id}`)} className="gap-1">
+              <Zap className="w-4 h-4" />
+              <span className="hidden sm:inline">{isRu ? 'Спринт' : 'Sprint'}</span>
+            </Button>
+            <div className="flex items-center gap-1.5 text-xs font-medium ml-2">
+              <Zap className="w-4 h-4 text-yellow-500" />
+              <span>{d.sprint.completedSP}/{d.sprint.totalSP} SP</span>
+            </div>
           </div>
         </div>
         <Tabs defaultValue="overview" className="space-y-4">
@@ -120,7 +131,7 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
             <div className="space-y-4">
               {d.workspaces?.map((ws: any, wi: number) => (
                 <motion.div key={ws.id} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: wi * 0.05 }}>
-                  <Card className="border-border/50 bg-card/80 backdrop-blur">
+                  <Card className="border-border/50 bg-card/80 backdrop-blur cursor-pointer hover:border-primary/30 transition-colors" onClick={() => navigate(`/team/workspace/${ws.id}`)}>
                     <CardContent className="p-4">
                       <div className="flex items-center gap-2 mb-3">
                         <span className="text-lg">{ws.icon}</span>
@@ -132,7 +143,7 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
                       </div>
                       <div className="space-y-2">
                         {ws.projects.map((proj: any) => (
-                          <div key={proj.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 border border-border/30">
+                          <div key={proj.id} className="flex items-center gap-3 p-2.5 rounded-lg bg-muted/30 border border-border/30 cursor-pointer hover:bg-muted/50 transition-colors" onClick={(e) => { e.stopPropagation(); navigate(`/team/project/${proj.id}`); }}>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-2 mb-1">
                                 <span className="text-xs font-medium truncate">{proj.name}</span>
@@ -171,7 +182,8 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
               {d.members.map((m: any, i: number) => (
                 <motion.div
                   key={m.id}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card/80 border border-border/50"
+                  className="flex items-center gap-3 p-3 rounded-xl bg-card/80 border border-border/50 cursor-pointer hover:border-primary/30 transition-colors"
+                  onClick={() => navigate(`/team/member/${m.id}`)}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: i * 0.03 }}
@@ -257,6 +269,9 @@ function DemoView({ experience, isRu }: { experience: any; isRu: boolean }) {
                     </div>
                   </motion.div>
                 )}
+                <Button variant="outline" className="w-full" onClick={() => navigate('/team/profile/demo')}>
+                  {isRu ? 'Открыть полный профиль' : 'Open Full Profile'}
+                </Button>
               </div>
             )}
           </TabsContent>
