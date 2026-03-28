@@ -79,6 +79,34 @@ export default function PartnerProgram() {
 
   const progress = getProgressToNextMilestone();
 
+  const [programSection, setProgramSection] = useState<'referral' | 'loyalty'>('referral');
+  const [isRegistered, setIsRegistered] = useState(false);
+  const [registeredType, setRegisteredType] = useState<string | null>(null);
+  const [showRegistration, setShowRegistration] = useState(false);
+
+  // Check registration status from localStorage
+  useEffect(() => {
+    const stored = localStorage.getItem('topfocus_partner_registration');
+    if (stored) {
+      const data = JSON.parse(stored);
+      setIsRegistered(true);
+      setRegisteredType(data.type);
+      if (data.type === 'individual') {
+        setProgramSection('loyalty');
+      }
+    }
+  }, []);
+
+  const handleRegister = (type: string) => {
+    localStorage.setItem('topfocus_partner_registration', JSON.stringify({ type, date: new Date().toISOString() }));
+    setIsRegistered(true);
+    setRegisteredType(type);
+    if (type === 'individual') {
+      setProgramSection('loyalty');
+    }
+    setShowRegistration(false);
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24">
       
@@ -97,6 +125,65 @@ export default function PartnerProgram() {
             </p>
           </div>
         </div>
+
+        {/* Global Section Toggle: Referral / Loyalty */}
+        <div className="flex gap-2 mb-6">
+          <Button
+            variant={programSection === 'referral' ? 'default' : 'outline'}
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => setProgramSection('referral')}
+          >
+            <Users className="w-4 h-4" />
+            {isRussian ? 'Реферальная' : 'Referral'}
+          </Button>
+          <Button
+            variant={programSection === 'loyalty' ? 'default' : 'outline'}
+            size="sm"
+            className="flex-1 gap-1.5"
+            onClick={() => setProgramSection('loyalty')}
+          >
+            <Gift className="w-4 h-4" />
+            {isRussian ? 'Лояльность' : 'Loyalty'}
+          </Button>
+        </div>
+
+        {/* Registration CTA for non-registered users */}
+        {!isRegistered && !showRegistration && (
+          <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
+            <Card className="border-primary/30 bg-gradient-to-br from-primary/10 to-transparent">
+              <CardContent className="pt-4 text-center space-y-3">
+                <p className="text-sm text-muted-foreground">
+                  {isRussian
+                    ? 'Зарегистрируйтесь в программе, чтобы начать зарабатывать'
+                    : 'Register in the program to start earning'}
+                </p>
+                <Button onClick={() => setShowRegistration(true)} className="gap-2">
+                  <Star className="w-4 h-4" />
+                  {isRussian ? 'Зарегистрироваться' : 'Register'}
+                </Button>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+
+        {/* Registration Form */}
+        {showRegistration && (
+          <div className="mb-6">
+            <PartnerRegistrationForm onRegister={handleRegister} />
+          </div>
+        )}
+
+        {/* Loyalty Section */}
+        {programSection === 'loyalty' && (
+          <div className="mb-6">
+            <LoyaltyProgram isRegistered={isRegistered && registeredType === 'individual'} />
+          </div>
+        )}
+
+        {/* Referral Section - show existing content */}
+        {programSection === 'referral' && (
+          <>
 
         {/* Status Badge */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="mb-6">
