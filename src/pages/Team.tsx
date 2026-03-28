@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Users, Zap, LayoutDashboard, Columns3, Trophy, Plus, 
-  FolderKanban, Building2, Target, ArrowLeft, Compass
+  FolderKanban, Building2, Target, ArrowLeft, Compass, FlaskConical
 } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
