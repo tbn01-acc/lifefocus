@@ -207,67 +207,81 @@ export function useCloudSync() {
     return settings;
   }, []);
 
-  // Save settings to cloud
+  /**
+   * Flush the persisted mutation queue through a single transactional RPC.
+   * Guarded so only one flush can be in flight at a time; on failure the
+   * queue is left intact and retried on the next tick (offline-safe).
+   */
+  const flushQueue = useCallback(async (): Promise<boolean> => {
+    if (!user || !isProActive) return false;
+    if (flushingRef.current) return false;
+
+    const queue = readQueue();
+    if (queue.length === 0) return true;
+
+    flushingRef.current = true;
+    try {
+      const { error } = await supabase.rpc('batch_sync_mutations', {
+        p_mutations: queue.map(m => ({ scope: m.scope, payload: m.payload })) as any,
+      });
+
+      if (error) throw error;
+
+      // Drop only the mutations we just sent; anything queued meanwhile stays.
+      const sentIds = new Set(queue.map(m => m.id));
+      const remaining = readQueue().filter(m => !sentIds.has(m.id));
+      writeQueue(remaining);
+      setState(prev => ({ ...prev, pendingMutations: remaining.length }));
+
+      const dataMutation = [...queue].reverse().find(m => m.scope === 'data');
+      if (dataMutation) {
+        lastSyncedDataRef.current = JSON.stringify(dataMutation.payload);
+      }
+      return true;
+    } catch (error) {
+      console.error('Batch sync failed, keeping mutations queued:', error);
+      setState(prev => ({ ...prev, pendingMutations: readQueue().length }));
+      return false;
+    } finally {
+      flushingRef.current = false;
+    }
+  }, [user, isProActive]);
+
+  // Queue settings snapshot, then flush
   const saveSettingsToCloud = useCallback(async () => {
     if (!user || !isProActive) return;
 
     const settings = getLocalSettings();
-    
-    try {
-      const { error } = await supabase
-        .from('cloud_user_settings')
-        .upsert({
-          user_id: user.id,
-          widget_settings: settings.widget_settings,
-          theme_settings: settings.theme_settings,
-          celebration_settings: settings.celebration_settings,
-          notification_settings: settings.notification_settings,
-          general_settings: settings.general_settings,
-          dashboard_layout: settings.dashboard_layout,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+    enqueueMutation('settings', {
+      widget_settings: settings.widget_settings,
+      theme_settings: settings.theme_settings,
+      celebration_settings: settings.celebration_settings,
+      notification_settings: settings.notification_settings,
+      general_settings: settings.general_settings,
+      dashboard_layout: settings.dashboard_layout,
+    });
+    setState(prev => ({ ...prev, pendingMutations: readQueue().length }));
 
-      if (error) throw error;
-    } catch (error) {
-      console.error('Error saving settings to cloud:', error);
-    }
-  }, [user, isProActive, getLocalSettings]);
+    await flushQueue();
+  }, [user, isProActive, getLocalSettings, flushQueue]);
 
-  // Save data to cloud
+  // Queue data snapshot, then flush
   const saveDataToCloud = useCallback(async () => {
     if (!user || !isProActive) return;
 
     const data = getLocalData();
     const dataHash = JSON.stringify(data);
-    
-    // Skip if data hasn't changed
-    if (dataHash === lastSyncedDataRef.current) {
+
+    // Skip if data hasn't changed and nothing is pending
+    if (dataHash === lastSyncedDataRef.current && readQueue().length === 0) {
       return;
     }
 
-    try {
-      const { error } = await supabase
-        .from('cloud_user_data')
-        .upsert({
-          user_id: user.id,
-          habits: data.habits,
-          tasks: data.tasks,
-          transactions: data.transactions,
-          time_entries: data.time_entries,
-          notes: data.notes,
-          checklists: data.checklists,
-          counters: data.counters,
-          pomodoro_sessions: data.pomodoro_sessions,
-          reflections: data.reflections,
-          updated_at: new Date().toISOString(),
-        }, { onConflict: 'user_id' });
+    enqueueMutation('data', data);
+    setState(prev => ({ ...prev, pendingMutations: readQueue().length }));
 
-      if (error) throw error;
-      
-      lastSyncedDataRef.current = dataHash;
-    } catch (error) {
-      console.error('Error saving data to cloud:', error);
-    }
+    await flushQueue();
+
   }, [user, isProActive, getLocalData]);
 
   // Load settings from cloud
