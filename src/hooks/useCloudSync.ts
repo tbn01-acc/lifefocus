@@ -281,8 +281,8 @@ export function useCloudSync() {
     setState(prev => ({ ...prev, pendingMutations: readQueue().length }));
 
     await flushQueue();
+  }, [user, isProActive, getLocalData, flushQueue]);
 
-  }, [user, isProActive, getLocalData]);
 
   // Load settings from cloud
   const loadSettingsFromCloud = useCallback(async () => {
