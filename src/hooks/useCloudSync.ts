@@ -132,11 +132,15 @@ export function useCloudSync() {
     isSyncing: false,
     lastSyncTime: null,
     autoSyncEnabled: true,
+    pendingMutations: 0,
   });
   const [isProActive, setIsProActive] = useState(false);
   const syncTimeoutRef = useRef<TimerId | null>(null);
   const lastSyncedDataRef = useRef<string>('');
   const proCheckedRef = useRef(false);
+  // Guards against concurrent flushes (race conditions / duplicate writes)
+  const flushingRef = useRef(false);
+
 
   // Check PRO status on mount and user change
   useEffect(() => {
