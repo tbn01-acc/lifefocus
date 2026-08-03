@@ -39,8 +39,12 @@ export function useStars() {
   const [transactions, setTransactions] = useState<StarTransaction[]>([]);
   const [dailyVerifiedCount, setDailyVerifiedCount] = useState(0);
   const [loading, setLoading] = useState(true);
+  // Permanent set of entities that already produced a star for this user.
+  // Mirrors public.star_award_ledger — un-completing an item never clears it.
+  const [awardedRefs, setAwardedRefs] = useState<Set<string>>(new Set());
 
   const multiplier = isProActive ? 2 : 1;
+
 
   const fetchUserStars = useCallback(async () => {
     if (!user) return;
