@@ -36,11 +36,61 @@ const ADDITIONAL_SETTINGS_KEYS = [
   'cachingEnabled',
 ];
 
+// Offline mutation queue (survives reloads / network loss)
+const MUTATION_QUEUE_KEY = 'topfocus_sync_queue';
+const SYNC_DEBOUNCE_MS = 5000;
+const MAX_QUEUE_SIZE = 200;
+
+type MutationScope = 'data' | 'settings';
+
+interface SyncMutation {
+  id: string;
+  scope: MutationScope;
+  payload: Record<string, unknown>;
+  queuedAt: number;
+}
+
+function readQueue(): SyncMutation[] {
+  try {
+    const raw = localStorage.getItem(MUTATION_QUEUE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeQueue(queue: SyncMutation[]) {
+  try {
+    localStorage.setItem(MUTATION_QUEUE_KEY, JSON.stringify(queue.slice(-MAX_QUEUE_SIZE)));
+  } catch (e) {
+    console.error('Failed to persist sync queue:', e);
+  }
+}
+
+/**
+ * Enqueue a mutation, collapsing it with any pending mutation of the same
+ * scope — the latest snapshot per scope always wins, so network instability
+ * can never produce duplicate or out-of-order writes.
+ */
+function enqueueMutation(scope: MutationScope, payload: Record<string, unknown>) {
+  const queue = readQueue().filter(m => m.scope !== scope);
+  queue.push({
+    id: crypto.randomUUID(),
+    scope,
+    payload,
+    queuedAt: Date.now(),
+  });
+  writeQueue(queue);
+}
+
 interface CloudSyncState {
   isSyncing: boolean;
   lastSyncTime: string | null;
   autoSyncEnabled: boolean;
+  pendingMutations: number;
 }
+
 
 // Check if user has PRO subscription directly
 async function checkProStatus(userId: string): Promise<boolean> {
