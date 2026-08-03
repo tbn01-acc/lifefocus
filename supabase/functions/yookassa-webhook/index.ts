@@ -1,10 +1,58 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-app-source, x-application-name, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+// This endpoint is a server-to-server webhook. It is NEVER called from a
+// browser, so CORS is deliberately closed: no wildcard origin, no preflight.
+const jsonHeaders = {
+  "Content-Type": "application/json",
+  "Cache-Control": "no-store",
 };
+
+// Official YooKassa notification source networks.
+// https://yookassa.ru/developers/using-api/webhooks
+const YOOKASSA_CIDRS = [
+  "185.71.76.0/27",
+  "185.71.77.0/27",
+  "77.75.153.0/25",
+  "77.75.156.11/32",
+  "77.75.156.35/32",
+  "77.75.154.128/25",
+];
+
+function ipv4ToInt(ip: string): number | null {
+  const parts = ip.trim().split(".");
+  if (parts.length !== 4) return null;
+  let n = 0;
+  for (const p of parts) {
+    const v = Number(p);
+    if (!Number.isInteger(v) || v < 0 || v > 255) return null;
+    n = (n << 8) | v;
+  }
+  return n >>> 0;
+}
+
+function ipInCidr(ip: string, cidr: string): boolean {
+  const [range, bitsStr] = cidr.split("/");
+  const ipInt = ipv4ToInt(ip);
+  const rangeInt = ipv4ToInt(range);
+  if (ipInt === null || rangeInt === null) return false;
+  const bits = Number(bitsStr);
+  const mask = bits === 0 ? 0 : (0xffffffff << (32 - bits)) >>> 0;
+  return (ipInt & mask) === (rangeInt & mask);
+}
+
+function getClientIp(req: Request): string | null {
+  const fwd = req.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return req.headers.get("x-real-ip");
+}
+
+// Constant-time string comparison
+function safeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) return false;
+  let diff = 0;
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  return diff === 0;
+}
 
 // Period -> days mapping
 const periodDaysMap: Record<string, number | null> = {
@@ -27,9 +75,36 @@ const PLAN_PRICE_TABLE: Record<string, Record<string, number>> = {
 const MIN_DISCOUNT_FACTOR = 0.5;
 
 Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+  // No browser access at all — reject preflight and non-POST outright.
+  if (req.method !== "POST") {
+    return new Response(JSON.stringify({ error: "Method not allowed" }), {
+      status: 405,
+      headers: jsonHeaders,
+    });
   }
+
+  // ---- ORIGIN AUTHENTICATION ----
+  // 1) Shared secret header (configured in the YooKassa webhook URL/headers).
+  // 2) Source IP must belong to YooKassa's published notification ranges.
+  const expectedSecret = Deno.env.get("YOOKASSA_WEBHOOK_SECRET");
+  const providedSecret =
+    req.headers.get("x-yookassa-webhook-secret") ??
+    new URL(req.url).searchParams.get("secret") ??
+    "";
+
+  const secretOk = !!expectedSecret && safeEqual(providedSecret, expectedSecret);
+
+  const clientIp = getClientIp(req);
+  const ipOk = !!clientIp && YOOKASSA_CIDRS.some((c) => ipInCidr(clientIp, c));
+
+  if (!secretOk && !ipOk) {
+    console.error("Rejected webhook: bad secret and untrusted IP", { clientIp });
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: jsonHeaders,
+    });
+  }
+
 
   try {
     const body = await req.json();
