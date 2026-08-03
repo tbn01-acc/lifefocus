@@ -114,7 +114,7 @@ Deno.serve(async (req) => {
     if (event !== "payment.succeeded") {
       return new Response(JSON.stringify({ ok: true }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -127,7 +127,7 @@ Deno.serve(async (req) => {
       console.error("No user_id in payment metadata", paymentId);
       return new Response(JSON.stringify({ error: "Missing user_id" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -135,7 +135,7 @@ Deno.serve(async (req) => {
       console.error("Invalid payment ID");
       return new Response(JSON.stringify({ error: "Invalid payment_id" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -144,7 +144,7 @@ Deno.serve(async (req) => {
       console.error("Invalid period value:", period);
       return new Response(JSON.stringify({ error: "Invalid period" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -167,7 +167,7 @@ Deno.serve(async (req) => {
     if (alreadyPaid) {
       return new Response(JSON.stringify({ ok: true, already_processed: true }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -179,7 +179,7 @@ Deno.serve(async (req) => {
       console.error("YooKassa credentials not configured");
       return new Response(JSON.stringify({ error: "Payment system not configured" }), {
         status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -199,7 +199,7 @@ Deno.serve(async (req) => {
       console.error("Failed to verify payment with YooKassa:", verifyResponse.status);
       return new Response(JSON.stringify({ error: "Payment verification failed" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -210,7 +210,7 @@ Deno.serve(async (req) => {
       console.error(`Payment ${paymentId} status is "${verifiedPayment.status}", not "succeeded"`);
       return new Response(JSON.stringify({ error: "Payment not succeeded" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -220,7 +220,7 @@ Deno.serve(async (req) => {
       console.error(`User ID mismatch: webhook=${userId}, YooKassa=${verifiedUserId}`);
       return new Response(JSON.stringify({ error: "User ID mismatch" }), {
         status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -230,7 +230,7 @@ Deno.serve(async (req) => {
       console.error("Invalid verified period:", verifiedPeriod);
       return new Response(JSON.stringify({ error: "Invalid period" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -242,7 +242,7 @@ Deno.serve(async (req) => {
       console.error(`Unknown plan/period: ${verifiedPlan}/${verifiedPeriod}`);
       return new Response(JSON.stringify({ error: "Unknown plan/period" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
     const basePrice = planRow[verifiedPeriod];
@@ -252,7 +252,7 @@ Deno.serve(async (req) => {
       console.error(`Underpayment for ${verifiedPlan}/${verifiedPeriod}: paid=${paidAmount}, min=${minAcceptable}`);
       return new Response(JSON.stringify({ error: "Amount below minimum price" }), {
         status: 400,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -267,7 +267,7 @@ Deno.serve(async (req) => {
       console.log(`Payment ${paymentId} already processed, skipping.`);
       return new Response(JSON.stringify({ ok: true, already_processed: true }), {
         status: 200,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        headers: { ...jsonHeaders },
       });
     }
 
@@ -309,7 +309,7 @@ Deno.serve(async (req) => {
         JSON.stringify({ error: "Failed to activate subscription" }),
         {
           status: 500,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
+          headers: { ...jsonHeaders },
         }
       );
     }
@@ -318,13 +318,13 @@ Deno.serve(async (req) => {
 
     return new Response(JSON.stringify({ ok: true }), {
       status: 200,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...jsonHeaders },
     });
   } catch (err) {
     console.error("Webhook error:", err);
     return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+      headers: { ...jsonHeaders },
     });
   }
 });
