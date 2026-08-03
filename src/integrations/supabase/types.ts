@@ -768,6 +768,7 @@ export type Database = {
           postpone_count: number | null
           postponed_until: string | null
           sphere_id: number | null
+          stars_awarded: boolean
           streak: number
           tags: string[] | null
           target_days: number[]
@@ -788,6 +789,7 @@ export type Database = {
           postpone_count?: number | null
           postponed_until?: string | null
           sphere_id?: number | null
+          stars_awarded?: boolean
           streak?: number
           tags?: string[] | null
           target_days?: number[]
@@ -808,6 +810,7 @@ export type Database = {
           postpone_count?: number | null
           postponed_until?: string | null
           sphere_id?: number | null
+          stars_awarded?: boolean
           streak?: number
           tags?: string[] | null
           target_days?: number[]
@@ -1984,6 +1987,30 @@ export type Database = {
           },
         ]
       }
+      star_award_ledger: {
+        Row: {
+          awarded_at: string
+          entity_id: string
+          entity_kind: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          awarded_at?: string
+          entity_id: string
+          entity_kind: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          awarded_at?: string
+          entity_id?: string
+          entity_kind?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       star_transactions: {
         Row: {
           amount: number
@@ -2181,6 +2208,7 @@ export type Database = {
           priority: string
           recurrence: string | null
           sphere_id: number | null
+          stars_awarded: boolean
           status: string
           subtasks: Json | null
           tags: string[] | null
@@ -2205,6 +2233,7 @@ export type Database = {
           priority?: string
           recurrence?: string | null
           sphere_id?: number | null
+          stars_awarded?: boolean
           status?: string
           subtasks?: Json | null
           tags?: string[] | null
@@ -2229,6 +2258,7 @@ export type Database = {
           priority?: string
           recurrence?: string | null
           sphere_id?: number | null
+          stars_awarded?: boolean
           status?: string
           subtasks?: Json | null
           tags?: string[] | null
@@ -3023,6 +3053,7 @@ export type Database = {
         Args: { p_kind: string; p_reference: string; p_timer_minutes: number }
         Returns: Json
       }
+      batch_sync_mutations: { Args: { p_mutations: Json }; Returns: Json }
       calculate_level_from_xp: {
         Args: { xp: number }
         Returns: {
@@ -3071,6 +3102,7 @@ export type Database = {
       }
       finish_sprint: { Args: { target_sprint_id: string }; Returns: Json }
       generate_invite_code: { Args: never; Returns: string }
+      get_affiliate_summary: { Args: never; Returns: Json }
       get_group_chat_invite_code: {
         Args: { _chat_id: string }
         Returns: string
@@ -3148,6 +3180,10 @@ export type Database = {
       link_telegram_account: {
         Args: { tg_id: number; tg_username?: string }
         Returns: Json
+      }
+      process_referral_commission: {
+        Args: { p_payment_id: string }
+        Returns: undefined
       }
       process_withdrawal: {
         Args: { p_action: string; p_withdrawal_id: string }
