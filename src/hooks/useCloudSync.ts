@@ -513,7 +513,10 @@ export function useCloudSync() {
     }
   }, [user, isProActive, state.isSyncing, loadSettingsFromCloud, loadDataFromCloud, saveSettingsToCloud, saveDataToCloud, toast]);
 
-  // Debounced auto-sync
+  /**
+   * Debounced enqueue: coalesces bursts of local changes into a single
+   * queued snapshot per scope, flushed once after the quiet period.
+   */
   const debouncedSync = useCallback(() => {
     if (!user || !isProActive || !state.autoSyncEnabled) return;
 
@@ -522,10 +525,24 @@ export function useCloudSync() {
     }
 
     syncTimeoutRef.current = setTimeout(() => {
-      saveDataToCloud();
-      saveSettingsToCloud();
-    }, 5000); // 5 second debounce
-  }, [user, isProActive, state.autoSyncEnabled, saveDataToCloud, saveSettingsToCloud]);
+      // Queue both scopes, then flush them in one transactional batch.
+      const data = getLocalData();
+      const settings = getLocalSettings();
+
+      enqueueMutation('data', data);
+      enqueueMutation('settings', {
+        widget_settings: settings.widget_settings,
+        theme_settings: settings.theme_settings,
+        celebration_settings: settings.celebration_settings,
+        notification_settings: settings.notification_settings,
+        general_settings: settings.general_settings,
+        dashboard_layout: settings.dashboard_layout,
+      });
+      setState(prev => ({ ...prev, pendingMutations: readQueue().length }));
+
+      void flushQueue();
+    }, SYNC_DEBOUNCE_MS);
+  }, [user, isProActive, state.autoSyncEnabled, getLocalData, getLocalSettings, flushQueue]);
 
   // Listen for storage changes
   useEffect(() => {
@@ -555,6 +572,18 @@ export function useCloudSync() {
     };
   }, [user, isProActive, debouncedSync]);
 
+  // Drain any mutations left over from a previous session / offline period
+  useEffect(() => {
+    if (!user || !isProActive) return;
+
+    setState(prev => ({ ...prev, pendingMutations: readQueue().length }));
+    void flushQueue();
+
+    const handleOnline = () => { void flushQueue(); };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [user, isProActive, flushQueue]);
+
   // Initial sync on login - only once
   useEffect(() => {
     if (user && isProActive && proCheckedRef.current) {
@@ -575,6 +604,7 @@ export function useCloudSync() {
     isSyncing: state.isSyncing,
     lastSyncTime: state.lastSyncTime,
     autoSyncEnabled: state.autoSyncEnabled,
+    pendingMutations: state.pendingMutations,
     syncAll,
     saveDataToCloud,
     saveSettingsToCloud,
@@ -583,6 +613,8 @@ export function useCloudSync() {
     restoreFromCloud,
     checkCloudData,
     isLocalStorageEmpty,
+    flushQueue,
     triggerSync: debouncedSync,
   };
+
 }
