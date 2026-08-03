@@ -255,7 +255,9 @@ export function useStars() {
     minFocusMinutes: MIN_FOCUS_MINUTES,
     freezeCost: FREEZE_COST,
     addStars,
+    isStarAwarded,
     awardTaskCompletion,
+
     awardHabitCompletion,
     recordDailyLogin,
     purchaseFreeze,
