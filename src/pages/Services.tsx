@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Wrench, Timer, Clock, FileText, DollarSign, 
-  Calculator, Droplets, Shuffle, Globe, CheckCircle, Scale, Lightbulb 
+  Calculator, Droplets, Shuffle, Globe, CheckCircle, Scale 
 } from 'lucide-react';
 import { PageHeader } from '@/components/PageHeader';
 
@@ -17,7 +17,6 @@ import { RandomDecision } from '@/components/services/RandomDecision';
 import { WorldTime } from '@/components/services/WorldTime';
 import { Checklists } from '@/components/services/Checklists';
 import { UnitConverter } from '@/components/services/UnitConverter';
-import { IdeasBoard } from '@/components/services/IdeasBoard';
 import { cn } from '@/lib/utils';
 
 type ServiceType = 
@@ -30,8 +29,7 @@ type ServiceType =
   | 'random' 
   | 'worldTime' 
   | 'checklists' 
-  | 'converter'
-  | 'ideas';
+  | 'converter';
 
 const services: { id: ServiceType; icon: typeof Timer; labelKey: string }[] = [
   { id: 'pomodoro', icon: Timer, labelKey: 'pomodoroTimer' },
@@ -44,7 +42,6 @@ const services: { id: ServiceType; icon: typeof Timer; labelKey: string }[] = [
   { id: 'worldTime', icon: Globe, labelKey: 'worldTime' },
   { id: 'checklists', icon: CheckCircle, labelKey: 'checklists' },
   { id: 'converter', icon: Scale, labelKey: 'unitConverter' },
-  { id: 'ideas', icon: Lightbulb, labelKey: 'ideas' },
 ];
 
 export default function Services() {
@@ -73,8 +70,6 @@ export default function Services() {
         return <Checklists />;
       case 'converter':
         return <UnitConverter />;
-      case 'ideas':
-        return <IdeasBoard />;
       default:
         return null;
     }
