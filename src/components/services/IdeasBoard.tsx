@@ -25,12 +25,20 @@ const ACTION_META: Record<IdeaActionType, { icon: typeof Target; label: string }
 
 function scoreTone(score: number) {
   if (score >= 70) return 'text-success';
-  if (score >= 40) return 'text-warning';
+  if (score >= 40) return 'text-primary';
   return 'text-destructive';
 }
 
-function IdeaCard({ idea }: { idea: Idea }) {
-  const { analyzeIdea, applyIdea, deleteIdea, scheduleFollowup, analyzingId } = useIdeas();
+interface IdeaCardProps {
+  idea: Idea;
+  analyzingId: string | null;
+  onAnalyze: (idea: Idea) => void;
+  onApply: (id: string, actions: IdeaAction[]) => Promise<boolean>;
+  onDelete: (id: string) => void;
+  onFollowup: (id: string, days: number) => void;
+}
+
+function IdeaCard({ idea, analyzingId, onAnalyze, onApply, onDelete, onFollowup }: IdeaCardProps) {
   const [expanded, setExpanded] = useState(false);
   const [selected, setSelected] = useState<Record<number, boolean>>({});
   const [applying, setApplying] = useState(false);
@@ -44,7 +52,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
   const handleApply = async () => {
     const chosen: IdeaAction[] = actions.filter((_, i) => selected[i] !== false);
     setApplying(true);
-    await applyIdea(idea.id, chosen);
+    await onApply(idea.id, chosen);
     setApplying(false);
   };
 
@@ -63,7 +71,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
           </div>
           <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">{idea.raw_text}</p>
         </div>
-        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => deleteIdea(idea.id)}>
+        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => onDelete(idea.id)}>
           <Trash2 className="w-4 h-4 text-muted-foreground" />
         </Button>
       </div>
@@ -85,7 +93,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
 
       <div className="flex flex-wrap gap-2">
         {!analysis ? (
-          <Button size="sm" onClick={() => analyzeIdea(idea)} disabled={isAnalyzing} className="gap-1.5">
+          <Button size="sm" onClick={() => onAnalyze(idea)} disabled={isAnalyzing} className="gap-1.5">
             {isAnalyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
             Оценить идею
           </Button>
@@ -95,11 +103,11 @@ function IdeaCard({ idea }: { idea: Idea }) {
               {expanded ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
               Декомпозиция ({actions.length})
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => analyzeIdea(idea)} disabled={isAnalyzing} className="gap-1.5">
+            <Button size="sm" variant="ghost" onClick={() => onAnalyze(idea)} disabled={isAnalyzing} className="gap-1.5">
               {isAnalyzing ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
               Пересчитать
             </Button>
-            <Button size="sm" variant="ghost" onClick={() => scheduleFollowup(idea.id, 7)} className="gap-1.5">
+            <Button size="sm" variant="ghost" onClick={() => onFollowup(idea.id, 7)} className="gap-1.5">
               <Bell className="w-3.5 h-3.5" />
               Напомнить
             </Button>
@@ -172,7 +180,7 @@ function IdeaCard({ idea }: { idea: Idea }) {
 }
 
 export function IdeasBoard() {
-  const { ideas, loading, createIdea } = useIdeas();
+  const { ideas, loading, createIdea, analyzeIdea, applyIdea, deleteIdea, scheduleFollowup, analyzingId } = useIdeas();
   const [title, setTitle] = useState('');
   const [text, setText] = useState('');
   const [saving, setSaving] = useState(false);
@@ -224,7 +232,17 @@ export function IdeasBoard() {
           </p>
         </Card>
       ) : (
-        ideas.map((idea) => <IdeaCard key={idea.id} idea={idea} />)
+        ideas.map((idea) => (
+          <IdeaCard
+            key={idea.id}
+            idea={idea}
+            analyzingId={analyzingId}
+            onAnalyze={analyzeIdea}
+            onApply={applyIdea}
+            onDelete={deleteIdea}
+            onFollowup={scheduleFollowup}
+          />
+        ))
       )}
     </div>
   );
