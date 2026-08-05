@@ -317,12 +317,13 @@ export default function Upgrade() {
       return;
     }
 
-    // Bonus payment → apply from partner balance (TODO: implement server-side)
+    // Bonus payment → must be verified and debited server-side before any
+    // entitlement is granted. No client-side plan/limit writes.
     if (paymentMethod === 'bonus') {
-      await updateProfileLimits(user.id, planId);
       toast.info('Оплата бонусным балансом в разработке');
       return;
     }
+
 
     // Card / SBP → call YooKassa edge function
     setPurchasing(true);
